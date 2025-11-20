@@ -12,6 +12,9 @@ import android.view.View
 import android.widget.*
 import com.google.gson.GsonBuilder
 import java.io.Serializable
+// --- NEW IMPORTS FOR API TEST ---
+import okhttp3.*
+import java.io.IOException
 
 // Data Models
 data class AppConfig(
@@ -37,6 +40,9 @@ class MainActivity : Activity() {
     private val gson = GsonBuilder().setPrettyPrinting().create()
     private var currentConfig = AppConfig()
     private lateinit var listContainer: LinearLayout
+    
+    // --- HTTP CLIENT FOR VERIFICATION ---
+    private val client = OkHttpClient()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -93,7 +99,6 @@ class MainActivity : Activity() {
             val trig = etTrigger.text.toString().trim()
             val prom = etPrompt.text.toString().trim()
             if (trig.isNotEmpty() && prom.isNotEmpty()) {
-                // Remove existing if updating
                 currentConfig.triggers.removeIf { it.pattern == trig }
                 currentConfig.triggers.add(Trigger(trig, prom))
                 saveConfig()
@@ -115,18 +120,27 @@ class MainActivity : Activity() {
              }
         }
 
-        // --- SETTINGS PAGE LOGIC ---
+        // --- SETTINGS PAGE LOGIC (UPDATED WITH VERIFICATION) ---
         findViewById<Button>(R.id.btnSaveSettings).setOnClickListener {
-            currentConfig.apiKey = findViewById<EditText>(R.id.etApiKey).text.toString().trim()
+            val newKey = findViewById<EditText>(R.id.etApiKey).text.toString().trim()
+            currentConfig.apiKey = newKey
             currentConfig.model = findViewById<EditText>(R.id.etModel).text.toString().trim()
+            
             try {
                 val t = findViewById<EditText>(R.id.etTemp).text.toString()
                 val p = findViewById<EditText>(R.id.etTopP).text.toString()
                 if(t.isNotEmpty()) currentConfig.generationConfig.temperature = t.toDouble()
                 if(p.isNotEmpty()) currentConfig.generationConfig.topP = p.toDouble()
             } catch(e:Exception){}
+            
             saveConfig()
-            Toast.makeText(this, "Settings Saved", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Settings Saved. Verifying...", Toast.LENGTH_SHORT).show()
+            
+            // Verify the API Key immediately
+            if (newKey.isNotEmpty()) {
+                verifyApiConnection(newKey)
+            }
+            
             goHome.onClick(it)
         }
 
@@ -149,6 +163,36 @@ class MainActivity : Activity() {
         }
     }
 
+    // --- API VERIFICATION FUNCTION ---
+    private fun verifyApiConnection(apiKey: String) {
+        // "List Models" is a lightweight way to check if the Key is valid
+        val request = Request.Builder()
+            .url("https://generativelanguage.googleapis.com/v1beta/models?key=$apiKey")
+            .build()
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                runOnUiThread { 
+                    Toast.makeText(this@MainActivity, "Network Check Failed: Check Internet", Toast.LENGTH_LONG).show() 
+                }
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                response.use {
+                    if (it.isSuccessful) {
+                        runOnUiThread { 
+                            Toast.makeText(this@MainActivity, "API Key Verified! ✅", Toast.LENGTH_SHORT).show() 
+                        }
+                    } else {
+                        runOnUiThread { 
+                            Toast.makeText(this@MainActivity, "Invalid API Key (Error ${it.code}) ❌", Toast.LENGTH_LONG).show() 
+                        }
+                    }
+                }
+            }
+        })
+    }
+
     // Helpers
     private fun loadConfig() {
         try {
@@ -158,7 +202,6 @@ class MainActivity : Activity() {
                 resetToDefaults()
             } else {
                 currentConfig = gson.fromJson(json, AppConfig::class.java)
-                // Null safety
                 if(currentConfig.triggers == null) currentConfig.triggers = mutableListOf()
                 if(currentConfig.generationConfig == null) currentConfig.generationConfig = GenConfig()
             }
@@ -184,7 +227,6 @@ class MainActivity : Activity() {
         for (trigger in currentConfig.triggers) {
             val btn = Button(this)
             btn.text = trigger.pattern
-            // When clicked, load into edit boxes
             btn.setOnClickListener { 
                 etTrigger.setText(trigger.pattern)
                 etPrompt.setText(trigger.prompt)

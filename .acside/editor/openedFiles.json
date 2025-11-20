@@ -1,32 +1,47 @@
 {
   "allFiles": [
     {
-      "file": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/kotlin/com/typeassist/app/MainActivity.kt",
+      "file": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/kotlin/com/typeassist/app/MyAccessibilityService.kt",
       "selection": {
         "end": {
-          "column": 0,
-          "index": 8501,
-          "line": 205
+          "column": 17,
+          "index": 199,
+          "line": 6
         },
         "start": {
-          "column": 0,
-          "index": 8501,
-          "line": 205
+          "column": 17,
+          "index": 199,
+          "line": 6
         }
       }
     },
     {
-      "file": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/res/layout/activity_main.xml",
+      "file": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/kotlin/com/typeassist/app/MainActivity.kt",
       "selection": {
         "end": {
-          "column": 0,
-          "index": 12606,
-          "line": 189
+          "column": 15,
+          "index": 759,
+          "line": 27
+        },
+        "start": {
+          "column": 15,
+          "index": 759,
+          "line": 27
+        }
+      }
+    },
+    {
+      "file": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/res/values/colors.xml",
+      "selection": {
+        "end": {
+          "column": 12,
+          "index": 64,
+          "line": 3
         },
         "start": {
           "column": 0,
-          "index": 12606,
-          "line": 189
+          "index": 0,
+          "line": 0
         }
       }
     },
@@ -40,56 +55,11 @@
         },
         "start": {
           "column": 0,
-          "index": 302,
-          "line": 8
-        }
-      }
-    },
-    {
-      "file": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/AndroidManifest.xml",
-      "selection": {
-        "end": {
-          "column": 0,
-          "index": 1512,
-          "line": 40
-        },
-        "start": {
-          "column": 0,
-          "index": 1512,
-          "line": 40
-        }
-      }
-    },
-    {
-      "file": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/app/build.gradle",
-      "selection": {
-        "end": {
-          "column": 0,
-          "index": 1100,
-          "line": 44
-        },
-        "start": {
-          "column": 0,
-          "index": 1100,
-          "line": 44
-        }
-      }
-    },
-    {
-      "file": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/kotlin/com/typeassist/app/MyAccessibilityService.kt",
-      "selection": {
-        "end": {
-          "column": 0,
-          "index": 0,
-          "line": 0
-        },
-        "start": {
-          "column": 0,
           "index": 0,
           "line": 0
         }
       }
     }
   ],
-  "selectedFile": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/kotlin/com/typeassist/app/MyAccessibilityService.kt"
+  "selectedFile": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/res/values/colors.xml"
 }
