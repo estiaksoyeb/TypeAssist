@@ -1,5 +1,14 @@
 R_DEF: Internal format may change without notice
 local
+color accent
+color background
+color danger
+color primary
+color primary_dark
+color surface
+color text_primary
+color text_secondary
+drawable bg_card_white
 drawable ic_launcher_background
 drawable ic_launcher_foreground
 id btnBackFromCmd
@@ -31,6 +40,7 @@ id pageJson
 id pageSettings
 id pageTest
 id switchServiceActive
+id txtErrorLog
 layout activity_main
 mipmap ic_launcher
 mipmap ic_launcher_round

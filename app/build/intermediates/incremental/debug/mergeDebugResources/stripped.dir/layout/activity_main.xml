@@ -3,91 +3,165 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true"
-    android:background="#F5F5F5">
+    android:background="#F3F4F6">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/txtErrorLog"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="No Errors"
+            android:textColor="#FFFFFF"
+            android:background="#EF4444"
+            android:padding="10dp"
+            android:visibility="gone" />
 
         <LinearLayout
             android:id="@+id/pageHome"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="center">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="TypeAssist"
-                android:textSize="32sp"
-                android:textStyle="bold"
-                android:textColor="#333"
-                android:layout_marginBottom="8dp"/>
-            
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="AI Assistant for your keyboard"
-                android:textSize="14sp"
-                android:layout_marginBottom="24dp"/>
+            android:orientation="vertical">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:background="#FFFFFF"
-                android:padding="16dp"
-                android:gravity="center_vertical"
-                android:layout_marginBottom="16dp">
-                
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-                    <TextView 
-                        android:layout_width="wrap_content" 
-                        android:layout_height="wrap_content" 
-                        android:text="Master Switch" 
-                        android:textStyle="bold"/>
-                    <TextView 
-                        android:layout_width="wrap_content" 
-                        android:layout_height="wrap_content" 
-                        android:text="Enable/Disable App Service" 
-                        android:textSize="12sp"/>
-                </LinearLayout>
-                <Switch
-                    android:id="@+id/switchServiceActive"
+                android:orientation="vertical"
+                android:background="#4F46E5"
+                android:paddingStart="24dp"
+                android:paddingEnd="24dp"
+                android:paddingTop="40dp"
+                android:paddingBottom="60dp">
+
+                <TextView
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"/>
-            </LinearLayout>
+                    android:layout_height="wrap_content"
+                    android:text="TypeAssist"
+                    android:textSize="34sp"
+                    android:textStyle="bold"
+                    android:textColor="#FFFFFF" />
 
-            <Button
-                android:id="@+id/btnSysPermission"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Open Accessibility Settings"
-                android:backgroundTint="#555555"
-                android:layout_marginBottom="24dp"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="AI Power for your keyboard"
+                    android:textSize="16sp"
+                    android:textColor="#E0E7FF" />
+            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="8dp">
-                <Button android:id="@+id/navCommands" android:text="Commands" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:layout_marginEnd="4dp"/>
-                <Button android:id="@+id/navSettings" android:text="API Setup" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:layout_marginStart="4dp"/>
-            </LinearLayout>
-            
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-                <Button android:id="@+id/navJson" android:text="JSON / Backup" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:layout_marginEnd="4dp"/>
-                <Button android:id="@+id/navTest" android:text="Test Lab" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:layout_marginStart="4dp" android:backgroundTint="#00796B"/>
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:layout_marginTop="-40dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_card_white"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:padding="20dp"
+                    android:layout_marginBottom="20dp">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Master Switch"
+                            android:textStyle="bold"
+                            android:textSize="18sp"
+                            android:textColor="#111827"/>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Enable/Disable App"
+                            android:textSize="13sp"
+                            android:textColor="#6B7280"/>
+                    </LinearLayout>
+                    <Switch
+                        android:id="@+id/switchServiceActive"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/btnSysPermission"
+                    android:layout_width="match_parent"
+                    android:layout_height="60dp"
+                    android:text="Enable Accessibility"
+                    android:backgroundTint="#111827"
+                    android:textColor="#FFFFFF"
+                    android:layout_marginBottom="20dp"/>
+
+                <TextView 
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Menu" 
+                    android:textStyle="bold" 
+                    android:textColor="#6B7280" 
+                    android:layout_marginBottom="8dp"/>
+
+                <LinearLayout 
+                    android:layout_width="match_parent" 
+                    android:layout_height="wrap_content" 
+                    android:orientation="horizontal" 
+                    android:layout_marginBottom="10dp">
+                    <Button
+                        android:id="@+id/navCommands"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="100dp"
+                        android:text="Commands"
+                        android:backgroundTint="#FFFFFF"
+                        android:textColor="#4F46E5"
+                        android:layout_marginEnd="5dp"
+                        android:elevation="4dp"/>
+                    <Button
+                        android:id="@+id/navSettings"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="100dp"
+                        android:text="API Setup"
+                        android:backgroundTint="#FFFFFF"
+                        android:textColor="#4F46E5"
+                        android:layout_marginStart="5dp"
+                        android:elevation="4dp"/>
+                </LinearLayout>
+
+                <LinearLayout 
+                    android:layout_width="match_parent" 
+                    android:layout_height="wrap_content" 
+                    android:orientation="horizontal">
+                    <Button
+                        android:id="@+id/navJson"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="100dp"
+                        android:text="Backup"
+                        android:backgroundTint="#FFFFFF"
+                        android:textColor="#6B7280"
+                        android:layout_marginEnd="5dp"
+                        android:elevation="4dp"/>
+                    <Button
+                        android:id="@+id/navTest"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="100dp"
+                        android:text="Test Lab"
+                        android:backgroundTint="#10B981"
+                        android:textColor="#FFFFFF"
+                        android:layout_marginStart="5dp"
+                        android:elevation="4dp"/>
+                </LinearLayout>
             </LinearLayout>
         </LinearLayout>
 
@@ -96,29 +170,55 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
+            android:padding="20dp"
             android:visibility="gone">
 
-            <TextView android:text="Command Customization" android:textSize="22sp" android:textStyle="bold" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="16dp"/>
-            
-            <TextView android:text="Available Commands (Tap to Edit):" android:textStyle="bold" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+            <TextView 
+                android:layout_width="wrap_content" 
+                android:layout_height="wrap_content"
+                android:text="Edit Commands" 
+                android:textSize="24sp" 
+                android:textStyle="bold" 
+                android:textColor="#111827" 
+                android:layout_marginBottom="20dp"/>
+
             <LinearLayout
                 android:id="@+id/listCommandsInternal"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="8dp"
-                android:background="#EEEEEE"
-                android:layout_marginBottom="16dp"/>
+                android:padding="10dp"
+                android:background="@drawable/bg_card_white"
+                android:layout_marginBottom="20dp"/>
 
-            <EditText android:id="@+id/etTrigger" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Trigger (e.g. @fix)" android:background="#FFFFFF" android:padding="12dp" android:layout_marginBottom="8dp"/>
-            <EditText android:id="@+id/etPrompt" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Instruction Prompt" android:background="#FFFFFF" android:padding="12dp" android:minLines="3" android:gravity="top" android:layout_marginBottom="16dp"/>
-
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
-                <Button android:id="@+id/btnDeleteCmd" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="Delete" android:backgroundTint="#D32F2F" android:layout_marginEnd="4dp"/>
-                <Button android:id="@+id/btnSaveCmd" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="Save / Add" android:layout_marginStart="4dp"/>
-            </LinearLayout>
+            <EditText 
+                android:id="@+id/etTrigger" 
+                android:layout_width="match_parent" 
+                android:layout_height="wrap_content" 
+                android:hint="Trigger (e.g. @fix)" 
+                android:background="@drawable/bg_card_white" 
+                android:padding="15dp" 
+                android:layout_marginBottom="10dp"/>
             
-            <Button android:id="@+id/btnBackFromCmd" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Back Home" android:backgroundTint="#777777" android:layout_marginTop="16dp"/>
+            <EditText 
+                android:id="@+id/etPrompt" 
+                android:layout_width="match_parent" 
+                android:layout_height="wrap_content" 
+                android:hint="Instruction Prompt" 
+                android:background="@drawable/bg_card_white" 
+                android:padding="15dp" 
+                android:minLines="3" 
+                android:gravity="top" 
+                android:layout_marginBottom="20dp"/>
+
+            <LinearLayout 
+                android:layout_width="match_parent" 
+                android:layout_height="wrap_content" 
+                android:orientation="horizontal">
+                <Button android:id="@+id/btnDeleteCmd" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="Delete" android:backgroundTint="#EF4444" android:layout_marginEnd="5dp"/>
+                <Button android:id="@+id/btnSaveCmd" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="Save" android:backgroundTint="#4F46E5" android:layout_marginStart="5dp"/>
+            </LinearLayout>
+            <Button android:id="@+id/btnBackFromCmd" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Back" android:backgroundTint="#6B7280" android:layout_marginTop="20dp"/>
         </LinearLayout>
 
         <LinearLayout
@@ -126,29 +226,46 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
+            android:padding="20dp"
             android:visibility="gone">
 
-            <TextView android:text="API Settings" android:textSize="22sp" android:textStyle="bold" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="16dp"/>
+            <TextView 
+                android:layout_width="wrap_content" 
+                android:layout_height="wrap_content"
+                android:text="API Setup" 
+                android:textSize="24sp" 
+                android:textStyle="bold" 
+                android:textColor="#111827" 
+                android:layout_marginBottom="20dp"/>
 
-            <TextView android:text="API Key" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
-            <EditText android:id="@+id/etApiKey" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Paste key here" android:background="#FFFFFF" android:padding="12dp" android:layout_marginBottom="12dp"/>
+            <EditText 
+                android:id="@+id/etApiKey" 
+                android:layout_width="match_parent" 
+                android:layout_height="wrap_content" 
+                android:hint="API Key" 
+                android:background="@drawable/bg_card_white" 
+                android:padding="15dp" 
+                android:layout_marginBottom="15dp"/>
             
-            <TextView android:text="Model Name" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
-            <EditText android:id="@+id/etModel" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="gemini-2.5-flash" android:background="#FFFFFF" android:padding="12dp" android:layout_marginBottom="12dp"/>
-            
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
-                <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginEnd="4dp">
-                    <TextView android:text="Temperature" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
-                    <EditText android:id="@+id/etTemp" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="0.2" android:inputType="numberDecimal" android:background="#FFFFFF" android:padding="12dp"/>
-                </LinearLayout>
-                <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginStart="4dp">
-                    <TextView android:text="Top P" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
-                    <EditText android:id="@+id/etTopP" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="0.95" android:inputType="numberDecimal" android:background="#FFFFFF" android:padding="12dp"/>
-                </LinearLayout>
+            <EditText 
+                android:id="@+id/etModel" 
+                android:layout_width="match_parent" 
+                android:layout_height="wrap_content" 
+                android:hint="Model" 
+                android:background="@drawable/bg_card_white" 
+                android:padding="15dp" 
+                android:layout_marginBottom="15dp"/>
+
+            <LinearLayout 
+                android:layout_width="match_parent" 
+                android:layout_height="wrap_content" 
+                android:orientation="horizontal">
+                <EditText android:id="@+id/etTemp" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:hint="Temp (0.2)" android:background="@drawable/bg_card_white" android:padding="15dp" android:layout_marginEnd="5dp"/>
+                <EditText android:id="@+id/etTopP" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:hint="Top P (0.95)" android:background="@drawable/bg_card_white" android:padding="15dp" android:layout_marginStart="5dp"/>
             </LinearLayout>
 
-            <Button android:id="@+id/btnSaveSettings" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Save Settings" android:layout_marginTop="24dp"/>
-            <Button android:id="@+id/btnBackFromSettings" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Back" android:backgroundTint="#777777"/>
+            <Button android:id="@+id/btnSaveSettings" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Save &amp; Verify" android:backgroundTint="#4F46E5" android:layout_marginTop="30dp"/>
+            <Button android:id="@+id/btnBackFromSettings" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Back" android:backgroundTint="#6B7280" android:layout_marginTop="10dp"/>
         </LinearLayout>
 
         <LinearLayout
@@ -156,18 +273,37 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
+            android:padding="20dp"
             android:visibility="gone">
 
-            <TextView android:text="JSON Editor / Backup" android:textSize="22sp" android:textStyle="bold" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
-            <TextView android:text="Edits here sync with the UI automatically." android:textSize="12sp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="16dp"/>
+            <TextView 
+                android:layout_width="wrap_content" 
+                android:layout_height="wrap_content"
+                android:text="Backup" 
+                android:textSize="24sp" 
+                android:textStyle="bold" 
+                android:textColor="#111827" 
+                android:layout_marginBottom="20dp"/>
 
-            <EditText android:id="@+id/etJsonRaw" android:layout_width="match_parent" android:layout_height="300dp" android:gravity="top" android:background="#FFFFFF" android:padding="12dp" android:textSize="12sp" android:typeface="monospace"/>
-            
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="16dp">
-                <Button android:id="@+id/btnCopyJson" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="Copy" android:backgroundTint="#555555" android:layout_marginEnd="4dp"/>
-                <Button android:id="@+id/btnSaveJson" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="Apply" android:layout_marginStart="4dp"/>
+            <EditText 
+                android:id="@+id/etJsonRaw" 
+                android:layout_width="match_parent" 
+                android:layout_height="350dp" 
+                android:gravity="top" 
+                android:background="@drawable/bg_card_white" 
+                android:padding="15dp" 
+                android:textSize="12sp" 
+                android:typeface="monospace" 
+                android:layout_marginBottom="15dp"/>
+
+            <LinearLayout 
+                android:layout_width="match_parent" 
+                android:layout_height="wrap_content" 
+                android:orientation="horizontal">
+                <Button android:id="@+id/btnCopyJson" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="Copy" android:backgroundTint="#6B7280" android:layout_marginEnd="5dp"/>
+                <Button android:id="@+id/btnSaveJson" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="Apply" android:backgroundTint="#4F46E5" android:layout_marginStart="5dp"/>
             </LinearLayout>
-            <Button android:id="@+id/btnBackFromJson" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Back" android:backgroundTint="#777777"/>
+            <Button android:id="@+id/btnBackFromJson" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Back" android:backgroundTint="#6B7280" android:layout_marginTop="10dp"/>
         </LinearLayout>
 
         <LinearLayout
@@ -175,14 +311,29 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
+            android:padding="20dp"
             android:visibility="gone">
 
-            <TextView android:text="Live Test Lab" android:textSize="22sp" android:textStyle="bold" android:textColor="#00796B" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
-            <TextView android:text="Type commands here to test without switching apps." android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="16dp"/>
-
-            <EditText android:id="@+id/etTestField" android:layout_width="match_parent" android:layout_height="200dp" android:hint="Type here (e.g. Hello @fix)..." android:background="#FFFFFF" android:gravity="top" android:padding="16dp"/>
+            <TextView 
+                android:layout_width="wrap_content" 
+                android:layout_height="wrap_content"
+                android:text="Test Lab" 
+                android:textSize="24sp" 
+                android:textStyle="bold" 
+                android:textColor="#10B981" 
+                android:layout_marginBottom="20dp"/>
             
-            <Button android:id="@+id/btnBackFromTest" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Close Lab" android:layout_marginTop="16dp"/>
+            <EditText 
+                android:id="@+id/etTestField" 
+                android:layout_width="match_parent" 
+                android:layout_height="250dp" 
+                android:hint="Type here..." 
+                android:background="@drawable/bg_card_white" 
+                android:gravity="top" 
+                android:padding="15dp" 
+                android:layout_marginBottom="20dp"/>
+            
+            <Button android:id="@+id/btnBackFromTest" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Close" android:backgroundTint="#111827"/>
         </LinearLayout>
 
     </LinearLayout>

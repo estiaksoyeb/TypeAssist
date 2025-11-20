@@ -24,7 +24,7 @@
 17-->[androidx.core:core:1.12.0] /data/user/0/com.tom.rv2ide/files/home/.gradle/caches/9.0.0/transforms/347fa5f033d0e884a9daf3eaa5599a0f/transformed/core-1.12.0/AndroidManifest.xml:26:22-94
 18
 19    <application
-19-->/storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/AndroidManifest.xml:7:5-39:19
+19-->/storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/AndroidManifest.xml:7:5-38:19
 20        android:allowBackup="true"
 20-->/storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/AndroidManifest.xml:8:9-35
 21        android:appComponentFactory="androidx.core.app.CoreComponentFactory"

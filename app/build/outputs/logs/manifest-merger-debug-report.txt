@@ -1,9 +1,9 @@
 -- Merging decision tree log ---
 manifest
-ADDED from /storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/AndroidManifest.xml:2:1-40:12
-INJECTED from /storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/AndroidManifest.xml:2:1-40:12
-INJECTED from /storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/AndroidManifest.xml:2:1-40:12
-INJECTED from /storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/AndroidManifest.xml:2:1-40:12
+ADDED from /storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/AndroidManifest.xml:2:1-39:12
+INJECTED from /storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/AndroidManifest.xml:2:1-39:12
+INJECTED from /storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/AndroidManifest.xml:2:1-39:12
+INJECTED from /storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/AndroidManifest.xml:2:1-39:12
 MERGED from [androidx.databinding:viewbinding:8.13.0] /data/user/0/com.tom.rv2ide/files/home/.gradle/caches/9.0.0/transforms/4cabc3c304e2e8253e2c01b3a4d17105/transformed/viewbinding-8.13.0/AndroidManifest.xml:2:1-7:12
 MERGED from [com.google.android.material:material:1.11.0] /data/user/0/com.tom.rv2ide/files/home/.gradle/caches/9.0.0/transforms/d8d758d7263c92f234e1aecb6d909431/transformed/material-1.11.0/AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] /data/user/0/com.tom.rv2ide/files/home/.gradle/caches/9.0.0/transforms/1bc86af98b22e823c254a4adc120abb1/transformed/constraintlayout-2.1.4/AndroidManifest.xml:2:1-11:12
@@ -61,8 +61,8 @@ ADDED from /storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/Androi
 	android:name
 		ADDED from /storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/AndroidManifest.xml:5:22-64
 application
-ADDED from /storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/AndroidManifest.xml:7:5-39:19
-INJECTED from /storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/AndroidManifest.xml:7:5-39:19
+ADDED from /storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/AndroidManifest.xml:7:5-38:19
+INJECTED from /storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/AndroidManifest.xml:7:5-38:19
 MERGED from [com.google.android.material:material:1.11.0] /data/user/0/com.tom.rv2ide/files/home/.gradle/caches/9.0.0/transforms/d8d758d7263c92f234e1aecb6d909431/transformed/material-1.11.0/AndroidManifest.xml:22:5-20
 MERGED from [com.google.android.material:material:1.11.0] /data/user/0/com.tom.rv2ide/files/home/.gradle/caches/9.0.0/transforms/d8d758d7263c92f234e1aecb6d909431/transformed/material-1.11.0/AndroidManifest.xml:22:5-20
 MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] /data/user/0/com.tom.rv2ide/files/home/.gradle/caches/9.0.0/transforms/1bc86af98b22e823c254a4adc120abb1/transformed/constraintlayout-2.1.4/AndroidManifest.xml:9:5-20

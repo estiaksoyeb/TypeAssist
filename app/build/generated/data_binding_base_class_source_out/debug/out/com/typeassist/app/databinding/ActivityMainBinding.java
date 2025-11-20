@@ -9,6 +9,7 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Switch;
+import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.viewbinding.ViewBinding;
@@ -109,6 +110,9 @@ public final class ActivityMainBinding implements ViewBinding {
   @NonNull
   public final Switch switchServiceActive;
 
+  @NonNull
+  public final TextView txtErrorLog;
+
   private ActivityMainBinding(@NonNull ScrollView rootView, @NonNull Button btnBackFromCmd,
       @NonNull Button btnBackFromJson, @NonNull Button btnBackFromSettings,
       @NonNull Button btnBackFromTest, @NonNull Button btnCopyJson, @NonNull Button btnDeleteCmd,
@@ -120,7 +124,8 @@ public final class ActivityMainBinding implements ViewBinding {
       @NonNull Button navJson, @NonNull Button navSettings, @NonNull Button navTest,
       @NonNull LinearLayout pageCommands, @NonNull LinearLayout pageHome,
       @NonNull LinearLayout pageJson, @NonNull LinearLayout pageSettings,
-      @NonNull LinearLayout pageTest, @NonNull Switch switchServiceActive) {
+      @NonNull LinearLayout pageTest, @NonNull Switch switchServiceActive,
+      @NonNull TextView txtErrorLog) {
     this.rootView = rootView;
     this.btnBackFromCmd = btnBackFromCmd;
     this.btnBackFromJson = btnBackFromJson;
@@ -151,6 +156,7 @@ public final class ActivityMainBinding implements ViewBinding {
     this.pageSettings = pageSettings;
     this.pageTest = pageTest;
     this.switchServiceActive = switchServiceActive;
+    this.txtErrorLog = txtErrorLog;
   }
 
   @Override
@@ -354,11 +360,18 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.txtErrorLog;
+      TextView txtErrorLog = ViewBindings.findChildViewById(rootView, id);
+      if (txtErrorLog == null) {
+        break missingId;
+      }
+
       return new ActivityMainBinding((ScrollView) rootView, btnBackFromCmd, btnBackFromJson,
           btnBackFromSettings, btnBackFromTest, btnCopyJson, btnDeleteCmd, btnSaveCmd, btnSaveJson,
           btnSaveSettings, btnSysPermission, etApiKey, etJsonRaw, etModel, etPrompt, etTemp,
           etTestField, etTopP, etTrigger, listCommandsInternal, navCommands, navJson, navSettings,
-          navTest, pageCommands, pageHome, pageJson, pageSettings, pageTest, switchServiceActive);
+          navTest, pageCommands, pageHome, pageJson, pageSettings, pageTest, switchServiceActive,
+          txtErrorLog);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

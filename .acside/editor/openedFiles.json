@@ -1,17 +1,17 @@
 {
   "allFiles": [
     {
-      "file": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/kotlin/com/typeassist/app/MyAccessibilityService.kt",
+      "file": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/AndroidManifest.xml",
       "selection": {
         "end": {
-          "column": 17,
-          "index": 199,
-          "line": 6
+          "column": 0,
+          "index": 1511,
+          "line": 39
         },
         "start": {
-          "column": 17,
-          "index": 199,
-          "line": 6
+          "column": 0,
+          "index": 1511,
+          "line": 39
         }
       }
     },
@@ -19,47 +19,32 @@
       "file": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/kotlin/com/typeassist/app/MainActivity.kt",
       "selection": {
         "end": {
-          "column": 15,
-          "index": 759,
-          "line": 27
+          "column": 0,
+          "index": 9704,
+          "line": 230
         },
         "start": {
-          "column": 15,
-          "index": 759,
-          "line": 27
+          "column": 0,
+          "index": 9704,
+          "line": 230
         }
       }
     },
     {
-      "file": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/res/values/colors.xml",
-      "selection": {
-        "end": {
-          "column": 12,
-          "index": 64,
-          "line": 3
-        },
-        "start": {
-          "column": 0,
-          "index": 0,
-          "line": 0
-        }
-      }
-    },
-    {
-      "file": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/res/values/themes.xml",
+      "file": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/res/layout/activity_main.xml",
       "selection": {
         "end": {
           "column": 0,
-          "index": 302,
-          "line": 8
+          "index": 15933,
+          "line": 340
         },
         "start": {
           "column": 0,
-          "index": 0,
-          "line": 0
+          "index": 15933,
+          "line": 340
         }
       }
     }
   ],
-  "selectedFile": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/res/values/colors.xml"
+  "selectedFile": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/res/layout/activity_main.xml"
 }
