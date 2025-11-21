@@ -1,50 +1,50 @@
 {
   "allFiles": [
     {
+      "file": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/res/values/themes.xml",
+      "selection": {
+        "end": {
+          "column": 0,
+          "index": 165,
+          "line": 5
+        },
+        "start": {
+          "column": 0,
+          "index": 165,
+          "line": 5
+        }
+      }
+    },
+    {
+      "file": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/res/values/colors.xml",
+      "selection": {
+        "end": {
+          "column": 0,
+          "index": 68,
+          "line": 3
+        },
+        "start": {
+          "column": 0,
+          "index": 68,
+          "line": 3
+        }
+      }
+    },
+    {
       "file": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/AndroidManifest.xml",
       "selection": {
         "end": {
-          "column": 0,
-          "index": 1511,
-          "line": 39
+          "column": 29,
+          "index": 517,
+          "line": 13
         },
         "start": {
-          "column": 0,
-          "index": 1511,
-          "line": 39
-        }
-      }
-    },
-    {
-      "file": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/kotlin/com/typeassist/app/MainActivity.kt",
-      "selection": {
-        "end": {
-          "column": 0,
-          "index": 9704,
-          "line": 230
-        },
-        "start": {
-          "column": 0,
-          "index": 9704,
-          "line": 230
-        }
-      }
-    },
-    {
-      "file": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/res/layout/activity_main.xml",
-      "selection": {
-        "end": {
-          "column": 0,
-          "index": 15933,
-          "line": 340
-        },
-        "start": {
-          "column": 0,
-          "index": 15933,
-          "line": 340
+          "column": 29,
+          "index": 517,
+          "line": 13
         }
       }
     }
   ],
-  "selectedFile": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/res/layout/activity_main.xml"
+  "selectedFile": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/res/values/themes.xml"
 }

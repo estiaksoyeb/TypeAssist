@@ -25,7 +25,7 @@
         android:label="TypeAssist"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@android:style/Theme.DeviceDefault.Light.NoActionBar" >
+        android:theme="@style/AppTheme" >
         <activity
             android:name="com.typeassist.app.MainActivity"
             android:exported="true"
