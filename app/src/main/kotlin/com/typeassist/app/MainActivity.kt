@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -22,12 +23,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb // Required for System Bars
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.view.WindowCompat // Required for Icon Colors
+import androidx.core.view.WindowCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.google.gson.GsonBuilder
 import java.io.Serializable
 import okhttp3.*
@@ -35,7 +39,7 @@ import java.io.IOException
 
 // --- DATA MODELS ---
 data class AppConfig(
-    var isAppEnabled: Boolean = true,
+    var isAppEnabled: Boolean = false,
     var apiKey: String = "",
     var model: String = "gemini-2.5-flash",
     var generationConfig: GenConfig = GenConfig(),
@@ -54,25 +58,19 @@ data class Trigger(
 
 class MainActivity : ComponentActivity() {
     
-    private val client = OkHttpClient() // Client for API verification
+    private val client = OkHttpClient()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // --- SYSTEM BAR COLORING LOGIC ---
-        // 1. Define Colors
-        val statusBarColor = Color(0xFF4F46E5) // Indigo (Matches Header)
-        val navBarColor = Color(0xFFF3F4F6)    // Light Grey (Matches Background)
-
-        // 2. Apply to Window
+        // System Bar Colors
+        val statusBarColor = Color(0xFF4F46E5)
+        val navBarColor = Color(0xFFF3F4F6)
         window.statusBarColor = statusBarColor.toArgb()
         window.navigationBarColor = navBarColor.toArgb()
-
-        // 3. Fix Icon Colors (White icons on Top, Black icons on Bottom)
         val insetsController = WindowCompat.getInsetsController(window, window.decorView)
-        insetsController.isAppearanceLightStatusBars = false // False = White text
-        insetsController.isAppearanceLightNavigationBars = true // True = Black icons
-        // ---------------------------------
+        insetsController.isAppearanceLightStatusBars = false
+        insetsController.isAppearanceLightNavigationBars = true
 
         setContent {
             MaterialTheme(
@@ -88,6 +86,12 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+    
+    // Helper to check if Accessibility is actually ON
+    fun isAccessibilityEnabled(): Boolean {
+        val prefString = Settings.Secure.getString(contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES)
+        return prefString?.contains("$packageName/$packageName.MyAccessibilityService") == true
+    }
 }
 
 @Composable
@@ -97,6 +101,7 @@ fun TypeAssistApp(client: OkHttpClient) {
     val gson = GsonBuilder().setPrettyPrinting().create()
     val prefs = context.getSharedPreferences("GeminiConfig", Context.MODE_PRIVATE)
     
+    // Load Config
     var config by remember { 
         mutableStateOf(try {
             val json = prefs.getString("config_json", null)
@@ -109,32 +114,73 @@ fun TypeAssistApp(client: OkHttpClient) {
         prefs.edit().putString("config_json", gson.toJson(newConfig)).apply()
     }
 
+    // --- FIX 1: BACK BUTTON HANDLER ---
+    // Intercepts the android back gesture
+    BackHandler(enabled = currentScreen != "home") {
+        currentScreen = "home"
+    }
+
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         when (currentScreen) {
             "home" -> HomeScreen(
                 config = config,
-                onToggle = { saveConfig(config.copy(isAppEnabled = it)) },
+                context = context,
+                onToggle = { newState -> 
+                    // --- FIX 3: MASTER SWITCH LOGIC ---
+                    val activity = context as MainActivity
+                    if (newState) {
+                        // Trying to enable
+                        if (!activity.isAccessibilityEnabled()) {
+                            Toast.makeText(context, "Please Enable Accessibility Permission first", Toast.LENGTH_SHORT).show()
+                            return@HomeScreen
+                        }
+                        if (config.apiKey.isBlank()) {
+                            Toast.makeText(context, "Please setup API Key first", Toast.LENGTH_SHORT).show()
+                            return@HomeScreen
+                        }
+                    }
+                    saveConfig(config.copy(isAppEnabled = newState)) 
+                },
                 onNavigate = { currentScreen = it }
             )
             "commands" -> CommandsScreen(config, { saveConfig(it) }, { currentScreen = "home" })
             "settings" -> SettingsScreen(
                 config = config,
-                client = client, // Pass client for verification
+                client = client,
                 onSave = { saveConfig(it) },
                 onBack = { currentScreen = "home" }
             )
             "json" -> JsonScreen(config, { saveConfig(it) }, { currentScreen = "home" })
-            "test" -> TestScreen({ currentScreen = "home" })
+            "test" -> TestScreen(
+                // --- FIX 2: TEST MODE FLAG ---
+                onStartTest = { prefs.edit().putBoolean("is_testing_active", true).apply() },
+                onStopTest = { prefs.edit().putBoolean("is_testing_active", false).apply() },
+                onBack = { currentScreen = "home" }
+            )
         }
     }
 }
 
 // ================== SCREEN 1: HOME ==================
 @Composable
-fun HomeScreen(config: AppConfig, onToggle: (Boolean) -> Unit, onNavigate: (String) -> Unit) {
-    val context = LocalContext.current
+fun HomeScreen(config: AppConfig, context: Context, onToggle: (Boolean) -> Unit, onNavigate: (String) -> Unit) {
+    
+    val activity = context as MainActivity
+    var hasPermission by remember { mutableStateOf(false) }
+    
+    // Re-check permission when screen resumes
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                hasPermission = activity.isAccessibilityEnabled()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
     Column(modifier = Modifier.fillMaxSize()) {
-        // Blue Header (Matches Status Bar)
         Box(modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.primary).padding(24.dp).padding(top = 10.dp, bottom = 40.dp)) {
             Column {
                 Text("TypeAssist", color = Color.White, fontSize = 32.sp, fontWeight = FontWeight.Bold)
@@ -142,21 +188,27 @@ fun HomeScreen(config: AppConfig, onToggle: (Boolean) -> Unit, onNavigate: (Stri
             }
         }
         
-        // Content
         Column(modifier = Modifier.padding(horizontal = 16.dp).offset(y = (-30).dp)) {
             Card(colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(4.dp)) {
                 Row(modifier = Modifier.padding(20.dp).fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Column {
                         Text("Master Switch", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                        Text(if(config.isAppEnabled) "Service Active" else "Service Paused", color = Color.Gray, fontSize = 12.sp)
+                        Text(if(config.isAppEnabled) "Service Active" else "Service Paused", color = if(config.isAppEnabled) MaterialTheme.colorScheme.secondary else Color.Gray, fontSize = 12.sp)
                     }
                     Switch(checked = config.isAppEnabled, onCheckedChange = onToggle)
                 }
             }
             Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = { context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }, modifier = Modifier.fillMaxWidth().height(56.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF111827)), shape = RoundedCornerShape(12.dp)) {
-                Text("Enable Accessibility Permission")
+            
+            Button(
+                onClick = { context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }, 
+                modifier = Modifier.fillMaxWidth().height(56.dp), 
+                colors = ButtonDefaults.buttonColors(containerColor = if (hasPermission) Color(0xFF10B981) else Color(0xFF111827)), 
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(if (hasPermission) "Permission Granted ✅" else "Enable Accessibility Permission ⚠️")
             }
+            
             Spacer(modifier = Modifier.height(24.dp))
             Text("Menu", fontWeight = FontWeight.Bold, color = Color.Gray)
             Spacer(modifier = Modifier.height(8.dp))
@@ -211,7 +263,7 @@ fun CommandsScreen(config: AppConfig, onSave: (AppConfig) -> Unit, onBack: () ->
     }
 }
 
-// ================== SCREEN 3: SETTINGS (Verified) ==================
+// ================== SCREEN 3: SETTINGS ==================
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(config: AppConfig, client: OkHttpClient, onSave: (AppConfig) -> Unit, onBack: () -> Unit) {
@@ -248,26 +300,44 @@ fun SettingsScreen(config: AppConfig, client: OkHttpClient, onSave: (AppConfig) 
     }
 }
 
-// ================== SCREEN 4 & 5 ==================
+// ================== SCREEN 4: JSON ==================
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun JsonScreen(config: AppConfig, onSave: (AppConfig) -> Unit, onBack: () -> Unit) {
     val gson = GsonBuilder().setPrettyPrinting().create()
     var txt by remember { mutableStateOf(gson.toJson(config)) }
+    val context = LocalContext.current
     Scaffold(topBar = { TopAppBar(title = { Text("Backup") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Back") } }) }) { p ->
         Column(modifier = Modifier.padding(p).padding(16.dp)) {
             OutlinedTextField(value = txt, onValueChange = { txt=it }, modifier = Modifier.weight(1f).fillMaxWidth(), textStyle = androidx.compose.ui.text.TextStyle(fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace))
-            Button(onClick = { try { onSave(gson.fromJson(txt, AppConfig::class.java)); onBack() } catch(e:Exception){} }, modifier = Modifier.fillMaxWidth()) { Text("Apply") }
+            Row(modifier = Modifier.padding(top = 16.dp)) {
+                Button(onClick = { 
+                    val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                    cm.setPrimaryClip(ClipData.newPlainText("Config", txt))
+                    Toast.makeText(context, "Copied", Toast.LENGTH_SHORT).show()
+                }, modifier = Modifier.weight(1f)) { Text("Copy") }
+                Spacer(Modifier.width(8.dp))
+                Button(onClick = { try { onSave(gson.fromJson(txt, AppConfig::class.java)); onBack() } catch(e:Exception){} }, modifier = Modifier.weight(1f)) { Text("Apply") }
+            }
         }
     }
 }
 
+// ================== SCREEN 5: TEST LAB ==================
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TestScreen(onBack: () -> Unit) {
+fun TestScreen(onStartTest: () -> Unit, onStopTest: () -> Unit, onBack: () -> Unit) {
     var t by remember { mutableStateOf("") }
+    
+    // Enable test mode when screen opens, disable when closed
+    DisposableEffect(Unit) {
+        onStartTest()
+        onDispose { onStopTest() }
+    }
+
     Scaffold(topBar = { TopAppBar(title = { Text("Test Lab") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Back") } }) }) { p ->
         Column(modifier = Modifier.padding(p).padding(16.dp)) {
+            Text("The Accessibility Service is active in this box.", color = Color.Gray, fontSize = 12.sp, modifier = Modifier.padding(bottom=8.dp))
             OutlinedTextField(value = t, onValueChange = { t=it }, label = { Text("Type here (@fix)...") }, modifier = Modifier.fillMaxWidth().height(200.dp))
         }
     }

@@ -31,7 +31,6 @@ class MyAccessibilityService : AccessibilityService() {
     // --- UI Elements ---
     private var loadingView: FrameLayout? = null
     private var undoView: FrameLayout? = null
-    private var isLoaderVisible = false
     
     // --- Undo Cache ---
     private var lastNode: AccessibilityNodeInfo? = null
@@ -47,23 +46,28 @@ class MyAccessibilityService : AccessibilityService() {
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event == null) return
 
-        // 1. PREVENT SELF-TRIGGERING
-        // If typing inside TypeAssist app, ignore it.
-        if (event.packageName?.toString() == packageName) return
+        // --- FIXED SELF-TRIGGER LOGIC ---
+        // Check if the user is typing inside OUR app
+        if (event.packageName?.toString() == packageName) {
+            // Check if "Test Mode" is active
+            val prefs = getSharedPreferences("GeminiConfig", Context.MODE_PRIVATE)
+            val isTesting = prefs.getBoolean("is_testing_active", false)
+            
+            // If we are NOT in the test lab, ignore this event (prevents JSON loops)
+            if (!isTesting) return
+        }
 
         if (event.eventType == AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED) {
             val inputNode = event.source ?: return
             val currentText = inputNode.text?.toString() ?: ""
 
-            // Load Config
             val prefs = getSharedPreferences("GeminiConfig", Context.MODE_PRIVATE)
             val configJson = prefs.getString("config_json", null) ?: return
 
             try {
                 val configObj = JSONObject(configJson)
                 
-                // 2. CHECK MASTER SWITCH
-                // If the switch in the App UI is OFF, stop here.
+                // Check Master Switch
                 if (configObj.has("isAppEnabled") && !configObj.getBoolean("isAppEnabled")) {
                     return
                 }
@@ -71,7 +75,6 @@ class MyAccessibilityService : AccessibilityService() {
                 val apiKey = configObj.getString("apiKey").trim()
                 val model = configObj.getString("model").trim()
                 
-                // Get Generation Settings
                 var temp = 0.2
                 var topP = 0.95
                 if (configObj.has("generationConfig")) {
@@ -82,7 +85,6 @@ class MyAccessibilityService : AccessibilityService() {
 
                 val triggers = configObj.getJSONArray("triggers")
 
-                // Check Triggers
                 for (i in 0 until triggers.length()) {
                     val triggerObj = triggers.getJSONObject(i)
                     val pattern = triggerObj.getString("pattern")
@@ -92,29 +94,22 @@ class MyAccessibilityService : AccessibilityService() {
                         val textToProcess = currentText.replace(pattern, "").trim()
                         
                         if (textToProcess.length > 1) {
-                            // Save for Undo
                             originalTextCache = currentText
                             lastNode = inputNode
 
-                            // Show Visuals
                             showLoading()
-                            hideUndoButton() // Hide old undo if visible
+                            hideUndoButton() 
 
-                            // Call API
                             callGemini(inputNode, apiKey, model, prompt, textToProcess, temp, topP)
                         }
                         return 
                     }
                 }
             } catch (e: Exception) {
-                // Silent fail (don't crash while typing)
+                // Silent fail
             }
         }
     }
-
-    // ----------------------------------------------------------
-    // API CALL
-    // ----------------------------------------------------------
 
     private fun callGemini(node: AccessibilityNodeInfo, apiKey: String, model: String, prompt: String, userText: String, temp: Double, topP: Double) {
         val jsonBody = JSONObject()
@@ -122,7 +117,6 @@ class MyAccessibilityService : AccessibilityService() {
         val contentObject = JSONObject()
         val partsArray = JSONArray()
         val partObject = JSONObject()
-        
         partObject.put("text", "$prompt\n\nInput: $userText")
         partsArray.put(partObject)
         contentObject.put("parts", partsArray)
@@ -152,139 +146,69 @@ class MyAccessibilityService : AccessibilityService() {
                     try {
                         val responseData = it.body?.string()
                         val jsonResponse = JSONObject(responseData)
-                        val resultText = jsonResponse.getJSONArray("candidates")
-                            .getJSONObject(0)
-                            .getJSONObject("content")
-                            .getJSONArray("parts")
-                            .getJSONObject(0)
-                            .getString("text")
-                        
-                        // Paste and Show Undo
+                        val resultText = jsonResponse.getJSONArray("candidates").getJSONObject(0).getJSONObject("content").getJSONArray("parts").getJSONObject(0).getString("text")
                         pasteText(node, resultText.trim())
                         showUndoButton()
-                        
                     } catch (e: Exception) { showToast("AI parsing error") }
                 }
             }
         })
     }
 
-    // ----------------------------------------------------------
-    // UI HELPERS (Loading & Undo)
-    // ----------------------------------------------------------
-
     private fun showLoading() {
         Handler(Looper.getMainLooper()).post {
             if (loadingView != null) return@post
-
             loadingView = FrameLayout(this).apply {
                 setBackgroundColor(0x77000000.toInt())
                 setPadding(30, 30, 30, 30)
-                background = GradientDrawable().apply {
-                    setColor(0x99000000.toInt())
-                    cornerRadius = 40f
-                }
+                background = GradientDrawable().apply { setColor(0x99000000.toInt()); cornerRadius = 40f }
             }
-
             val progressBar = ProgressBar(this)
             progressBar.indeterminateTintList = android.content.res.ColorStateList.valueOf(Color.WHITE)
             loadingView?.addView(progressBar)
-
-            val params = WindowManager.LayoutParams(
-                WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-                PixelFormat.TRANSLUCENT
-            )
+            val params = WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, PixelFormat.TRANSLUCENT)
             params.gravity = Gravity.CENTER
-
-            try {
-                windowManager?.addView(loadingView, params)
-                isLoaderVisible = true
-            } catch (e: Exception) { e.printStackTrace() }
+            try { windowManager?.addView(loadingView, params) } catch (e: Exception) {}
         }
     }
 
     private fun hideLoading() {
         Handler(Looper.getMainLooper()).post {
-            if (loadingView != null) {
-                try {
-                    windowManager?.removeView(loadingView)
-                    loadingView = null
-                    isLoaderVisible = false
-                } catch (e: Exception) { e.printStackTrace() }
-            }
+            if (loadingView != null) { try { windowManager?.removeView(loadingView); loadingView = null } catch (e: Exception) {} }
         }
     }
 
     private fun showUndoButton() {
         Handler(Looper.getMainLooper()).post {
             if (undoView != null) return@post
-
             undoView = FrameLayout(this)
             val btn = Button(this).apply {
-                text = "UNDO CHANGE"
+                text = "UNDO"
                 textSize = 14f
                 setTextColor(Color.WHITE)
-                isAllCaps = true
-                setPadding(40, 20, 40, 20)
-                
-                background = GradientDrawable().apply {
-                    setColor(0xEE333333.toInt()) 
-                    cornerRadius = 50f
-                    setStroke(2, Color.WHITE)
-                }
-                
+                background = GradientDrawable().apply { setColor(0xEE333333.toInt()); cornerRadius = 50f; setStroke(2, Color.WHITE) }
                 setOnClickListener { performUndo() }
             }
             undoView?.addView(btn)
-
-            val params = WindowManager.LayoutParams(
-                WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-                PixelFormat.TRANSLUCENT
-            )
-            // CENTER GRAVITY (As requested)
+            val params = WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, PixelFormat.TRANSLUCENT)
             params.gravity = Gravity.CENTER
-            params.y = 0 
-
-            try {
-                windowManager?.addView(undoView, params)
-                undoHandler.postDelayed(hideUndoRunnable, 5000)
-            } catch (e: Exception) { e.printStackTrace() }
+            try { windowManager?.addView(undoView, params); undoHandler.postDelayed(hideUndoRunnable, 5000) } catch (e: Exception) {}
         }
     }
 
     private fun hideUndoButton() {
         undoHandler.removeCallbacks(hideUndoRunnable)
         Handler(Looper.getMainLooper()).post {
-            if (undoView != null) {
-                try {
-                    windowManager?.removeView(undoView)
-                    undoView = null
-                } catch (e: Exception) { e.printStackTrace() }
-            }
+            if (undoView != null) { try { windowManager?.removeView(undoView); undoView = null } catch (e: Exception) {} }
         }
     }
 
     private fun performUndo() {
         if (lastNode != null && originalTextCache.isNotEmpty()) {
-            if (lastNode!!.refresh()) {
-                pasteText(lastNode!!, originalTextCache)
-                Toast.makeText(this, "Restored!", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(this, "Cannot Undo (Field lost)", Toast.LENGTH_SHORT).show()
-            }
+            if (lastNode!!.refresh()) { pasteText(lastNode!!, originalTextCache); showToast("Undone!") }
         }
         hideUndoButton()
     }
-
-    // ----------------------------------------------------------
-    // UTILS
-    // ----------------------------------------------------------
 
     private fun pasteText(node: AccessibilityNodeInfo, text: String) {
         val arguments = Bundle()
@@ -297,8 +221,5 @@ class MyAccessibilityService : AccessibilityService() {
         Handler(Looper.getMainLooper()).post { Toast.makeText(applicationContext, message, Toast.LENGTH_SHORT).show() }
     }
 
-    override fun onInterrupt() {
-        hideLoading()
-        hideUndoButton()
-    }
+    override fun onInterrupt() { hideLoading(); hideUndoButton() }
 }

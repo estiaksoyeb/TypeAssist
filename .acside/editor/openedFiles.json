@@ -50,13 +50,13 @@
       "selection": {
         "end": {
           "column": 0,
-          "index": 14851,
-          "line": 274
+          "index": 17919,
+          "line": 344
         },
         "start": {
           "column": 0,
-          "index": 14851,
-          "line": 274
+          "index": 17919,
+          "line": 344
         }
       }
     },
@@ -74,7 +74,67 @@
           "line": 61
         }
       }
+    },
+    {
+      "file": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/.github/workflows/preview.yml",
+      "selection": {
+        "end": {
+          "column": 0,
+          "index": 469,
+          "line": 25
+        },
+        "start": {
+          "column": 0,
+          "index": 469,
+          "line": 25
+        }
+      }
+    },
+    {
+      "file": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/.github/workflows/pre-release.yml",
+      "selection": {
+        "end": {
+          "column": 0,
+          "index": 657,
+          "line": 31
+        },
+        "start": {
+          "column": 0,
+          "index": 657,
+          "line": 31
+        }
+      }
+    },
+    {
+      "file": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/.github/workflows/release.yml",
+      "selection": {
+        "end": {
+          "column": 0,
+          "index": 877,
+          "line": 39
+        },
+        "start": {
+          "column": 0,
+          "index": 877,
+          "line": 39
+        }
+      }
+    },
+    {
+      "file": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/kotlin/com/typeassist/app/MyAccessibilityService.kt",
+      "selection": {
+        "end": {
+          "column": 39,
+          "index": 1841,
+          "line": 52
+        },
+        "start": {
+          "column": 39,
+          "index": 1841,
+          "line": 52
+        }
+      }
     }
   ],
-  "selectedFile": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/.gitignore"
+  "selectedFile": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/kotlin/com/typeassist/app/MainActivity.kt"
 }
