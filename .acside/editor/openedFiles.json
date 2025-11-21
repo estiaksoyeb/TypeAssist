@@ -44,7 +44,37 @@
           "line": 13
         }
       }
+    },
+    {
+      "file": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/kotlin/com/typeassist/app/MainActivity.kt",
+      "selection": {
+        "end": {
+          "column": 0,
+          "index": 14851,
+          "line": 274
+        },
+        "start": {
+          "column": 0,
+          "index": 14851,
+          "line": 274
+        }
+      }
+    },
+    {
+      "file": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/.gitignore",
+      "selection": {
+        "end": {
+          "column": 0,
+          "index": 898,
+          "line": 61
+        },
+        "start": {
+          "column": 0,
+          "index": 898,
+          "line": 61
+        }
+      }
     }
   ],
-  "selectedFile": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/res/values/themes.xml"
+  "selectedFile": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/.gitignore"
 }
