@@ -4,6 +4,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.widget.Toast
@@ -15,18 +16,28 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.ClickableText
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
@@ -63,13 +74,13 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // System Bar Colors
         val statusBarColor = Color(0xFF4F46E5)
         val navBarColor = Color(0xFFF3F4F6)
         window.statusBarColor = statusBarColor.toArgb()
         window.navigationBarColor = navBarColor.toArgb()
+        
         val insetsController = WindowCompat.getInsetsController(window, window.decorView)
-        insetsController.isAppearanceLightStatusBars = false
+        insetsController.isAppearanceLightStatusBars = false 
         insetsController.isAppearanceLightNavigationBars = true
 
         setContent {
@@ -87,7 +98,6 @@ class MainActivity : ComponentActivity() {
         }
     }
     
-    // Helper to check if Accessibility is actually ON
     fun isAccessibilityEnabled(): Boolean {
         val prefString = Settings.Secure.getString(contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES)
         return prefString?.contains("$packageName/$packageName.MyAccessibilityService") == true
@@ -101,12 +111,11 @@ fun TypeAssistApp(client: OkHttpClient) {
     val gson = GsonBuilder().setPrettyPrinting().create()
     val prefs = context.getSharedPreferences("GeminiConfig", Context.MODE_PRIVATE)
     
-    // Load Config
     var config by remember { 
         mutableStateOf(try {
             val json = prefs.getString("config_json", null)
-            if (json != null) gson.fromJson(json, AppConfig::class.java) else AppConfig()
-        } catch (e: Exception) { AppConfig() })
+            if (json != null) gson.fromJson(json, AppConfig::class.java) else createDefaultConfig()
+        } catch (e: Exception) { createDefaultConfig() })
     }
 
     fun saveConfig(newConfig: AppConfig) {
@@ -114,8 +123,6 @@ fun TypeAssistApp(client: OkHttpClient) {
         prefs.edit().putString("config_json", gson.toJson(newConfig)).apply()
     }
 
-    // --- FIX 1: BACK BUTTON HANDLER ---
-    // Intercepts the android back gesture
     BackHandler(enabled = currentScreen != "home") {
         currentScreen = "home"
     }
@@ -126,16 +133,16 @@ fun TypeAssistApp(client: OkHttpClient) {
                 config = config,
                 context = context,
                 onToggle = { newState -> 
-                    // --- FIX 3: MASTER SWITCH LOGIC ---
                     val activity = context as MainActivity
                     if (newState) {
-                        // Trying to enable
                         if (!activity.isAccessibilityEnabled()) {
-                            Toast.makeText(context, "Please Enable Accessibility Permission first", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "⚠️ Please Enable Accessibility Service first", Toast.LENGTH_SHORT).show()
+                            context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
                             return@HomeScreen
                         }
                         if (config.apiKey.isBlank()) {
-                            Toast.makeText(context, "Please setup API Key first", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "⚠️ Please setup API Key first", Toast.LENGTH_SHORT).show()
+                            currentScreen = "settings"
                             return@HomeScreen
                         }
                     }
@@ -152,7 +159,7 @@ fun TypeAssistApp(client: OkHttpClient) {
             )
             "json" -> JsonScreen(config, { saveConfig(it) }, { currentScreen = "home" })
             "test" -> TestScreen(
-                // --- FIX 2: TEST MODE FLAG ---
+                // FIX: Re-added Test Logic
                 onStartTest = { prefs.edit().putBoolean("is_testing_active", true).apply() },
                 onStopTest = { prefs.edit().putBoolean("is_testing_active", false).apply() },
                 onBack = { currentScreen = "home" }
@@ -161,20 +168,32 @@ fun TypeAssistApp(client: OkHttpClient) {
     }
 }
 
+fun createDefaultConfig(): AppConfig {
+    return AppConfig(
+        isAppEnabled = false,
+        apiKey = "", 
+        model = "gemini-2.5-flash",
+        generationConfig = GenConfig(temperature = 0.2, topP = 0.95),
+        triggers = mutableListOf(
+            Trigger("@ta", "Give only the most relevant and complete answer to the query. \nDo not explain, do not add introductions, disclaimers, or extra text. \nOutput only the answer."),
+            Trigger("!g", "Fix grammar, spelling, and punctuation. Return only the corrected text."),
+            Trigger("@polite", "Rewrite the text in a polite and professional tone. Return only the rewritten text."),
+            Trigger("@casual", "Rewrite in a casual, friendly tone. Return only the rewritten text."),
+            Trigger("@improve", "Improve the writing quality and clarity. Return only the improved text."),
+            Trigger("!tr", "Translate to English. Return only the translated text.")
+        )
+    )
+}
+
 // ================== SCREEN 1: HOME ==================
 @Composable
 fun HomeScreen(config: AppConfig, context: Context, onToggle: (Boolean) -> Unit, onNavigate: (String) -> Unit) {
-    
     val activity = context as MainActivity
     var hasPermission by remember { mutableStateOf(false) }
-    
-    // Re-check permission when screen resumes
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                hasPermission = activity.isAccessibilityEnabled()
-            }
+            if (event == Lifecycle.Event.ON_RESUME) { hasPermission = activity.isAccessibilityEnabled() }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
@@ -263,14 +282,23 @@ fun CommandsScreen(config: AppConfig, onSave: (AppConfig) -> Unit, onBack: () ->
     }
 }
 
-// ================== SCREEN 3: SETTINGS ==================
+// ================== SCREEN 3: SETTINGS (Verified & Improved) ==================
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(config: AppConfig, client: OkHttpClient, onSave: (AppConfig) -> Unit, onBack: () -> Unit) {
     var key by remember { mutableStateOf(config.apiKey) }
-    var model by remember { mutableStateOf(config.model) }
-    var temp by remember { mutableStateOf(config.generationConfig.temperature.toString()) }
-    var topP by remember { mutableStateOf(config.generationConfig.topP.toString()) }
+    var selectedModel by remember { mutableStateOf(config.model) }
+    var isKeyVisible by remember { mutableStateOf(false) }
+    var expanded by remember { mutableStateOf(false) }
+    
+    // FIX: Restored Model Dropdown
+    val models = listOf(
+        "gemini-2.5-flash-lite", 
+        "gemini-2.5-flash", 
+        "gemini-2.5-pro", 
+        "gemma-3n-e2b-it",
+        "gemma-3n-e4b-it"
+    )
     val context = LocalContext.current
 
     fun verify(k: String) {
@@ -281,21 +309,105 @@ fun SettingsScreen(config: AppConfig, client: OkHttpClient, onSave: (AppConfig) 
         })
     }
 
-    Scaffold(topBar = { TopAppBar(title = { Text("API Setup") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Back") } }) }) { p ->
-        Column(modifier = Modifier.padding(p).padding(16.dp)) {
-            OutlinedTextField(value = key, onValueChange = { key=it }, label = { Text("API Key") }, modifier = Modifier.fillMaxWidth())
-            Spacer(Modifier.height(8.dp))
-            OutlinedTextField(value = model, onValueChange = { model=it }, label = { Text("Model") }, modifier = Modifier.fillMaxWidth())
-            Spacer(Modifier.height(8.dp))
-            Row { OutlinedTextField(value = temp, onValueChange = { temp=it }, label = { Text("Temp") }, modifier = Modifier.weight(1f)); Spacer(Modifier.width(8.dp)); OutlinedTextField(value = topP, onValueChange = { topP=it }, label = { Text("Top P") }, modifier = Modifier.weight(1f)) }
+    Scaffold(
+        topBar = { TopAppBar(title = { Text("Gemini API Key") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Back") } }) }
+    ) { p ->
+        Column(
+            modifier = Modifier
+                .padding(p)
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState())
+        ) {
+            OutlinedTextField(
+                value = key,
+                onValueChange = { key = it },
+                label = { Text("API Key") },
+                modifier = Modifier.fillMaxWidth(),
+                visualTransformation = if (isKeyVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                trailingIcon = { IconButton(onClick = { isKeyVisible = !isKeyVisible }) { Icon(if (isKeyVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff, null) } }
+            )
+            
+            Spacer(Modifier.height(16.dp))
+
+            ExposedDropdownMenuBox(
+                expanded = expanded,
+                onExpandedChange = { expanded = !expanded },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                OutlinedTextField(
+                    value = selectedModel,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Select Model") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                    colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+                    modifier = Modifier.menuAnchor().fillMaxWidth()
+                )
+                ExposedDropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    models.forEach { item ->
+                        DropdownMenuItem(
+                            text = { Text(text = item) },
+                            onClick = { selectedModel = item; expanded = false }
+                        )
+                    }
+                }
+            }
+
             Spacer(Modifier.height(24.dp))
-            Button(onClick = {
-                val nGen = config.generationConfig.copy(temperature=temp.toDoubleOrNull()?:0.2, topP=topP.toDoubleOrNull()?:0.95)
-                onSave(config.copy(apiKey=key.trim(), model=model.trim(), generationConfig=nGen))
-                Toast.makeText(context, "Saved", Toast.LENGTH_SHORT).show()
-                if(key.isNotEmpty()) verify(key.trim())
-                onBack()
-            }, modifier = Modifier.fillMaxWidth().height(50.dp)) { Text("Save & Verify") }
+
+            Button(
+                onClick = {
+                    val validKey = key.trim()
+                    val shouldEnable = validKey.isNotEmpty()
+                    onSave(config.copy(apiKey = validKey, model = selectedModel, isAppEnabled = if (shouldEnable) true else config.isAppEnabled))
+                    Toast.makeText(context, "Saved", Toast.LENGTH_SHORT).show()
+                    if (validKey.isNotEmpty()) verify(validKey)
+                    onBack()
+                },
+                modifier = Modifier.fillMaxWidth().height(50.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+            ) { Text("Test and Save API Key") }
+
+            Spacer(Modifier.height(32.dp))
+
+            // FIX: Restored Instructions
+            Text("How to get Gemini API Key?", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+            Spacer(Modifier.height(16.dp))
+
+            val steps = listOf(
+                "1. Visit Google AI Studio at ",
+                "2. Sign in with your Google account.",
+                "3. Click 'Get API key' in the sidebar.",
+                "4. Click 'Create API key' to generate a new key.",
+                "5. Copy the key and paste it above.",
+                "6. Select your preferred model.",
+                "7. Click Save."
+            )
+
+            val annotatedString = buildAnnotatedString {
+                steps.forEach { step ->
+                    if (step.contains("Google AI Studio")) {
+                        append("1. Visit Google AI Studio at ")
+                        pushStringAnnotation(tag = "URL", annotation = "https://aistudio.google.com/")
+                        withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary, textDecoration = TextDecoration.Underline, fontWeight = FontWeight.Bold)) { append("aistudio.google.com") }
+                        pop()
+                        append(".\n")
+                    } else { append(step + "\n") }
+                }
+            }
+
+            ClickableText(
+                text = annotatedString,
+                style = LocalTextStyle.current.copy(fontSize = 14.sp, lineHeight = 20.sp, color = Color.Black),
+                onClick = { offset ->
+                    annotatedString.getStringAnnotations(tag = "URL", start = offset, end = offset).firstOrNull()?.let { annotation ->
+                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(annotation.item)))
+                    }
+                }
+            )
         }
     }
 }
@@ -329,7 +441,7 @@ fun JsonScreen(config: AppConfig, onSave: (AppConfig) -> Unit, onBack: () -> Uni
 fun TestScreen(onStartTest: () -> Unit, onStopTest: () -> Unit, onBack: () -> Unit) {
     var t by remember { mutableStateOf("") }
     
-    // Enable test mode when screen opens, disable when closed
+    // FIX: Restored Test Mode Logic
     DisposableEffect(Unit) {
         onStartTest()
         onDispose { onStopTest() }
@@ -338,7 +450,7 @@ fun TestScreen(onStartTest: () -> Unit, onStopTest: () -> Unit, onBack: () -> Un
     Scaffold(topBar = { TopAppBar(title = { Text("Test Lab") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Back") } }) }) { p ->
         Column(modifier = Modifier.padding(p).padding(16.dp)) {
             Text("The Accessibility Service is active in this box.", color = Color.Gray, fontSize = 12.sp, modifier = Modifier.padding(bottom=8.dp))
-            OutlinedTextField(value = t, onValueChange = { t=it }, label = { Text("Type here (@fix)...") }, modifier = Modifier.fillMaxWidth().height(200.dp))
+            OutlinedTextField(value = t, onValueChange = { t=it }, label = { Text("Type here (!g)...") }, modifier = Modifier.fillMaxWidth().height(200.dp))
         }
     }
 }

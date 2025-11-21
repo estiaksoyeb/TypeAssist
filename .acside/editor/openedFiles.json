@@ -49,14 +49,14 @@
       "file": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/kotlin/com/typeassist/app/MainActivity.kt",
       "selection": {
         "end": {
-          "column": 0,
-          "index": 17919,
-          "line": 344
+          "column": 79,
+          "index": 22540,
+          "line": 452
         },
         "start": {
-          "column": 0,
-          "index": 17919,
-          "line": 344
+          "column": 79,
+          "index": 22540,
+          "line": 452
         }
       }
     },
