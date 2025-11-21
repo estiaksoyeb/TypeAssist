@@ -1,140 +1,20 @@
 {
   "allFiles": [
     {
-      "file": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/res/values/themes.xml",
-      "selection": {
-        "end": {
-          "column": 0,
-          "index": 165,
-          "line": 5
-        },
-        "start": {
-          "column": 0,
-          "index": 165,
-          "line": 5
-        }
-      }
-    },
-    {
-      "file": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/res/values/colors.xml",
-      "selection": {
-        "end": {
-          "column": 0,
-          "index": 68,
-          "line": 3
-        },
-        "start": {
-          "column": 0,
-          "index": 68,
-          "line": 3
-        }
-      }
-    },
-    {
-      "file": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/AndroidManifest.xml",
-      "selection": {
-        "end": {
-          "column": 29,
-          "index": 517,
-          "line": 13
-        },
-        "start": {
-          "column": 29,
-          "index": 517,
-          "line": 13
-        }
-      }
-    },
-    {
-      "file": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/kotlin/com/typeassist/app/MainActivity.kt",
-      "selection": {
-        "end": {
-          "column": 79,
-          "index": 22540,
-          "line": 452
-        },
-        "start": {
-          "column": 79,
-          "index": 22540,
-          "line": 452
-        }
-      }
-    },
-    {
-      "file": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/.gitignore",
-      "selection": {
-        "end": {
-          "column": 0,
-          "index": 898,
-          "line": 61
-        },
-        "start": {
-          "column": 0,
-          "index": 898,
-          "line": 61
-        }
-      }
-    },
-    {
-      "file": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/.github/workflows/preview.yml",
-      "selection": {
-        "end": {
-          "column": 0,
-          "index": 469,
-          "line": 25
-        },
-        "start": {
-          "column": 0,
-          "index": 469,
-          "line": 25
-        }
-      }
-    },
-    {
-      "file": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/.github/workflows/pre-release.yml",
-      "selection": {
-        "end": {
-          "column": 0,
-          "index": 657,
-          "line": 31
-        },
-        "start": {
-          "column": 0,
-          "index": 657,
-          "line": 31
-        }
-      }
-    },
-    {
       "file": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/.github/workflows/release.yml",
       "selection": {
         "end": {
           "column": 0,
-          "index": 877,
-          "line": 39
-        },
-        "start": {
-          "column": 0,
-          "index": 877,
-          "line": 39
-        }
-      }
-    },
-    {
-      "file": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/kotlin/com/typeassist/app/MyAccessibilityService.kt",
-      "selection": {
-        "end": {
-          "column": 39,
-          "index": 1841,
+          "index": 1315,
           "line": 52
         },
         "start": {
-          "column": 39,
-          "index": 1841,
+          "column": 0,
+          "index": 1315,
           "line": 52
         }
       }
     }
   ],
-  "selectedFile": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/kotlin/com/typeassist/app/MainActivity.kt"
+  "selectedFile": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/.github/workflows/release.yml"
 }
