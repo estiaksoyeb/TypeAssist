@@ -1,50 +1,35 @@
 {
   "allFiles": [
     {
-      "file": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/keystore.properties",
+      "file": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/kotlin/com/typeassist/app/MainActivity.kt",
       "selection": {
         "end": {
-          "column": 36,
-          "index": 75,
-          "line": 1
+          "column": 1,
+          "index": 21701,
+          "line": 435
         },
         "start": {
-          "column": 36,
-          "index": 75,
-          "line": 1
+          "column": 1,
+          "index": 21701,
+          "line": 435
         }
       }
     },
     {
-      "file": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/.gitignore",
-      "selection": {
-        "end": {
-          "column": 19,
-          "index": 810,
-          "line": 51
-        },
-        "start": {
-          "column": 19,
-          "index": 810,
-          "line": 51
-        }
-      }
-    },
-    {
-      "file": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/app/build.gradle",
+      "file": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/kotlin/com/typeassist/app/MyAccessibilityService.kt",
       "selection": {
         "end": {
           "column": 0,
-          "index": 2541,
-          "line": 87
+          "index": 0,
+          "line": 0
         },
         "start": {
           "column": 0,
-          "index": 2541,
-          "line": 87
+          "index": 0,
+          "line": 0
         }
       }
     }
   ],
-  "selectedFile": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/keystore.properties"
+  "selectedFile": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/kotlin/com/typeassist/app/MainActivity.kt"
 }
