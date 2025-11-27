@@ -1,0 +1,20 @@
+{
+  "allFiles": [
+    {
+      "file": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/kotlin/com/typeassist/app/MainActivity.kt",
+      "selection": {
+        "end": {
+          "column": 42,
+          "index": 997,
+          "line": 28
+        },
+        "start": {
+          "column": 42,
+          "index": 997,
+          "line": 28
+        }
+      }
+    }
+  ],
+  "selectedFile": "/storage/emulated/0/AndroidIDEProjects/TypeAssist/app/src/main/kotlin/com/typeassist/app/MainActivity.kt"
+}
