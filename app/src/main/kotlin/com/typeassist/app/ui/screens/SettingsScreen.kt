@@ -44,16 +44,6 @@ fun SettingsScreen(config: AppConfig, client: OkHttpClient, onSave: (AppConfig) 
     val models = listOf("gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-2.5-pro", "gemma-3n-e2b-it", "gemma-3n-e4b-it")
     val context = LocalContext.current
 
-    val view = LocalView.current
-    val surfaceColor = MaterialTheme.colorScheme.surface
-    if (!view.isInEditMode) {
-        SideEffect {
-            val window = (view.context as Activity).window
-            window.statusBarColor = surfaceColor.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = true
-        }
-    }
-
     fun verify(k: String) {
         val req = Request.Builder().url("https://generativelanguage.googleapis.com/v1beta/models?key=$k").build()
         client.newCall(req).enqueue(object : Callback {
@@ -62,7 +52,17 @@ fun SettingsScreen(config: AppConfig, client: OkHttpClient, onSave: (AppConfig) 
         })
     }
 
-    Scaffold(topBar = { TopAppBar(title = { Text("Gemini API Key") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Back") } }) }) {
+    val view = LocalView.current
+    val primaryColor = MaterialTheme.colorScheme.primary
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = (view.context as Activity).window
+            window.statusBarColor = primaryColor.toArgb()
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
+        }
+    }
+
+    Scaffold(topBar = { TopAppBar(title = { Text("Gemini API Key") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Back") } }, colors = TopAppBarDefaults.topAppBarColors(containerColor = primaryColor, titleContentColor = Color.White, navigationIconContentColor = Color.White)) }) {
         Column(modifier = Modifier.padding(it).padding(16.dp).verticalScroll(rememberScrollState())) {
             OutlinedTextField(value = key, onValueChange = { key = it }, label = { Text("API Key") }, modifier = Modifier.fillMaxWidth(), visualTransformation = if (isKeyVisible) VisualTransformation.None else PasswordVisualTransformation(), trailingIcon = { IconButton(onClick = { isKeyVisible = !isKeyVisible }) { Icon(if (isKeyVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff, null) } })
             Spacer(Modifier.height(16.dp))

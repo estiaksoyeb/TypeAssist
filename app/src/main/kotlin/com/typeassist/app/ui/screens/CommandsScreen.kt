@@ -35,12 +35,12 @@ fun CommandsScreen(config: AppConfig, onSave: (AppConfig) -> Unit, onBack: () ->
     val triggers = config.triggers ?: mutableListOf()
 
     val view = LocalView.current
-    val surfaceColor = MaterialTheme.colorScheme.surface
+    val primaryColor = MaterialTheme.colorScheme.primary
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = surfaceColor.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = true
+            window.statusBarColor = primaryColor.toArgb()
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
         }
     }
 
@@ -48,7 +48,8 @@ fun CommandsScreen(config: AppConfig, onSave: (AppConfig) -> Unit, onBack: () ->
         topBar = { 
             TopAppBar(
                 title = { Text("Commands") }, 
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Back") } }
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Back") } },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = primaryColor, titleContentColor = Color.White, navigationIconContentColor = Color.White)
             ) 
         },
         floatingActionButtonPosition = FabPosition.Center,

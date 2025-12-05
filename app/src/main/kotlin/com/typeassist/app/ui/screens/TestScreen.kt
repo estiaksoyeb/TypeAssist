@@ -28,15 +28,14 @@ fun TestScreen(onStartTest: () -> Unit, onStopTest: () -> Unit, onBack: () -> Un
     var t by remember { mutableStateOf("") }
     
     val view = LocalView.current
-    val surfaceColor = MaterialTheme.colorScheme.surface
+    val primaryColor = MaterialTheme.colorScheme.primary
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = surfaceColor.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = true
+            window.statusBarColor = primaryColor.toArgb()
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
         }
     }
-    
     DisposableEffect(Unit) { onStartTest(); onDispose { onStopTest() } }
 
     val presets = listOf(
@@ -45,7 +44,7 @@ fun TestScreen(onStartTest: () -> Unit, onStopTest: () -> Unit, onBack: () -> Un
         "এটি একটি এআই ভিত্তিক অ্যাপ। !tr"
     )
 
-    Scaffold(topBar = { TopAppBar(title = { Text("Test Lab") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Back") } }) }) { p ->
+    Scaffold(topBar = { TopAppBar(title = { Text("Test Lab") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Back") } }, colors = TopAppBarDefaults.topAppBarColors(containerColor = primaryColor, titleContentColor = Color.White, navigationIconContentColor = Color.White)) }) { p ->
         Column(modifier = Modifier.padding(p).padding(16.dp).verticalScroll(rememberScrollState())) {
             Text("The Accessibility Service is active here.", color = Color.Gray, fontSize = 12.sp, modifier = Modifier.padding(bottom=8.dp))
             OutlinedTextField(value = t, onValueChange = { t=it }, label = { Text("Type or tap a preset...") }, modifier = Modifier.fillMaxWidth().height(150.dp))
