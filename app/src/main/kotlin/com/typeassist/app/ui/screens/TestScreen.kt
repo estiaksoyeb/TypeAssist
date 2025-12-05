@@ -26,7 +26,6 @@ import androidx.core.view.WindowCompat
 @Composable
 fun TestScreen(onStartTest: () -> Unit, onStopTest: () -> Unit, onBack: () -> Unit) {
     var t by remember { mutableStateOf("") }
-    val focusRequester = remember { FocusRequester() }
     
     val view = LocalView.current
     val surfaceColor = MaterialTheme.colorScheme.surface
@@ -49,12 +48,12 @@ fun TestScreen(onStartTest: () -> Unit, onStopTest: () -> Unit, onBack: () -> Un
     Scaffold(topBar = { TopAppBar(title = { Text("Test Lab") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Back") } }) }) { p ->
         Column(modifier = Modifier.padding(p).padding(16.dp).verticalScroll(rememberScrollState())) {
             Text("The Accessibility Service is active here.", color = Color.Gray, fontSize = 12.sp, modifier = Modifier.padding(bottom=8.dp))
-            OutlinedTextField(value = t, onValueChange = { t=it }, label = { Text("Type or tap a preset...") }, modifier = Modifier.fillMaxWidth().height(150.dp).focusRequester(focusRequester))
+            OutlinedTextField(value = t, onValueChange = { t=it }, label = { Text("Type or tap a preset...") }, modifier = Modifier.fillMaxWidth().height(150.dp))
             Spacer(Modifier.height(24.dp))
             Text("Quick Test Triggers:", fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(8.dp))
             presets.forEach { item ->
-                Card(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).clickable { t = item; focusRequester.requestFocus() }, colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(2.dp)) {
+                Card(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).clickable { t = item }, colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(2.dp)) {
                     Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Default.TouchApp, null, tint = MaterialTheme.colorScheme.primary); Spacer(Modifier.width(12.dp)); Text(item, fontSize = 14.sp) }
                 }
             }
