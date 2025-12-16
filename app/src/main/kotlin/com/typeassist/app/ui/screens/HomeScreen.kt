@@ -16,7 +16,15 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.*
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withStyle
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -137,7 +145,7 @@ fun HomeScreen(config: AppConfig, context: Context, onToggle: (Boolean) -> Unit,
                     StepItem("1", "Enable Master Switch & Permission above.")
                     StepItem("2", "Go to API Setup and add your Gemini Key.")
                     StepItem("3", "Open any app (WhatsApp, Notes, etc).")
-                    StepItem("4", "Type text + trigger (e.g. 'Hello @ta').")
+                    StepItem("4", "Type text + trigger (e.g. 'Hello .ta').")
                 }
             }
 
@@ -145,11 +153,15 @@ fun HomeScreen(config: AppConfig, context: Context, onToggle: (Boolean) -> Unit,
             Spacer(modifier = Modifier.height(24.dp))
             Text("Command Reference", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.Gray, modifier = Modifier.padding(bottom = 8.dp))
             
-            CommandItem("@ta", "Ask AI", "Sends your text to AI and replaces it with the answer.")
-            CommandItem("!g", "Grammar Fix", "Fixes spelling, punctuation, and grammar errors.")
-            CommandItem("!tr", "Translate", "Translates your text into English.")
-            CommandItem("@polite", "Polite Tone", "Rewrites your text to be more professional.")
+            CommandItem(".ta", "Ask AI", "Sends your text to AI and replaces it with the answer.")
+            CommandItem(".g", "Grammar Fix", "Fixes spelling, punctuation, and grammar errors.")
+            CommandItem(".tr", "Translate", "Translates your text into English.")
+            CommandItem(".polite", "Polite Tone", "Rewrites your text to be more professional.")
             
+            Spacer(modifier = Modifier.height(40.dp))
+
+            DeveloperCreditSection()
+
             Spacer(modifier = Modifier.height(40.dp))
         }
     }
@@ -207,5 +219,91 @@ fun MenuCard(modifier: Modifier, title: String, icon: androidx.compose.ui.graphi
         Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(icon, null, tint = color); Spacer(modifier = Modifier.height(8.dp)); Text(title, fontWeight = FontWeight.Bold, color = color)
         }
+    }
+}
+
+@Composable
+fun DeveloperCreditSection() {
+    val uriHandler = LocalUriHandler.current
+    Card(
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(1.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Info, null, tint = MaterialTheme.colorScheme.primary)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    "DEVELOPER",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                "This app was created by Istiak Ahmmed Soyeb. You can find him on the following platforms:",
+                color = Color.Gray,
+                fontSize = 14.sp,
+                lineHeight = 20.sp
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Column {
+                SocialLink(
+                    icon = Icons.Filled.Info,
+                    text = "Twitter",
+                    url = "https://twitter.com/estiaksoyeb"
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                SocialLink(
+                    icon = Icons.Filled.Build,
+                    text = "GitHub",
+                    url = "https://github.com/estiaksoyeb"
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                SocialLink(
+                    icon = Icons.Filled.Send,
+                    text = "Telegram",
+                    url = "https://t.me/estiaksoyeb"
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            Text(
+                "Feel free to reach out for any questions or feedback!",
+                color = Color.Gray,
+                fontSize = 12.sp
+            )
+        }
+    }
+}
+
+@Composable
+fun SocialLink(icon: androidx.compose.ui.graphics.vector.ImageVector, text: String, url: String) {
+    val uriHandler = LocalUriHandler.current
+    val annotatedString = buildAnnotatedString {
+        withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary, textDecoration = TextDecoration.Underline)) {
+            append(text)
+        }
+    }
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.clickable { uriHandler.openUri(url) }
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = text,
+            tint = MaterialTheme.colorScheme.secondary,
+            modifier = Modifier.size(24.dp)
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(
+            text = annotatedString,
+            fontSize = 16.sp
+        )
     }
 }

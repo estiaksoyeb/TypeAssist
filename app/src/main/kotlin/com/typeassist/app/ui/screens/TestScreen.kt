@@ -39,9 +39,9 @@ fun TestScreen(onStartTest: () -> Unit, onStopTest: () -> Unit, onBack: () -> Un
     DisposableEffect(Unit) { onStartTest(); onDispose { onStopTest() } }
 
     val presets = listOf(
-        "What is the capital of Bangladesh? @ta",
-        "Sp3ll1ng and gr@mm3r mistake shall be fixing !g",
-        "এটি একটি এআই ভিত্তিক অ্যাপ। !tr"
+        "What is the capital of Bangladesh? .ta",
+        "Sp3ll1ng and gr@mm3r mistake shall be fixing .g",
+        "এটি একটি এআই ভিত্তিক অ্যাপ। .tr"
     )
 
     Scaffold(topBar = { TopAppBar(title = { Text("Test Lab") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Back") } }, colors = TopAppBarDefaults.topAppBarColors(containerColor = primaryColor, titleContentColor = Color.White, navigationIconContentColor = Color.White)) }) { p ->
