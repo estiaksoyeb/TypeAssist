@@ -48,7 +48,10 @@ class GeminiApiClient(private val client: OkHttpClient) {
             override fun onResponse(call: Call, response: Response) {
                 response.use {
                     if (!it.isSuccessful) {
-                        callback(Result.failure(IOException("Unexpected code ".plus(it.code))))
+                        val errorBody = it.body?.string()
+                        val errorCode = it.code
+                        val errorMessage = getErrorMessage(errorCode, errorBody)
+                        callback(Result.failure(IOException(errorMessage)))
                         return
                     }
                     try {
@@ -64,5 +67,27 @@ class GeminiApiClient(private val client: OkHttpClient) {
                 }
             }
         })
+    }
+
+    private fun getErrorMessage(code: Int, body: String?): String {
+        val message = try {
+            JSONObject(body).getJSONObject("error").getString("message")
+        } catch (e: Exception) {
+            getErrorMessageForCode(code)
+        }
+        return "$code: $message"
+    }
+
+    private fun getErrorMessageForCode(code: Int): String {
+        return when (code) {
+            400 -> "Bad Request"
+            401 -> "Unauthorized"
+            403 -> "Forbidden"
+            404 -> "Not Found"
+            429 -> "Too Many Requests"
+            500 -> "Internal Server Error"
+            503 -> "Service Unavailable"
+            else -> "Unexpected code $code"
+        }
     }
 }

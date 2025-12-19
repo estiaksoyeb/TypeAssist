@@ -98,7 +98,7 @@ class MyAccessibilityService : AccessibilityService() {
                                     pasteText(inputNode, it)
                                     showUndoButton()
                                 }.onFailure {
-                                    showToast("AI Error: ${it.message}")
+                                    showToast(it.message ?: "Unknown error")
                                 }
                             }
                         }
