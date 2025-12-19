@@ -82,8 +82,8 @@ class MyAccessibilityService : AccessibilityService() {
                     val pattern = triggerObj.getString("pattern")
                     val prompt = triggerObj.getString("prompt")
 
-                    if (currentText.contains(pattern)) {
-                        val textToProcess = currentText.replace(pattern, "").trim()
+                    if (isTriggerValid(currentText, pattern)) {
+                        val textToProcess = currentText.substring(0, currentText.length - pattern.length).trim()
                         
                         if (textToProcess.length > 1) {
                             originalTextCache = currentText
@@ -109,6 +109,21 @@ class MyAccessibilityService : AccessibilityService() {
                 // Silent fail
             }
         }
+    }
+
+    private fun isTriggerValid(text: String, trigger: String): Boolean {
+        if (!text.endsWith(trigger)) {
+            return false
+        }
+
+        val triggerStartIndex = text.length - trigger.length
+        if (triggerStartIndex > 0) {
+            val charBefore = text[triggerStartIndex - 1]
+            if (!charBefore.isWhitespace()) {
+                return false
+            }
+        }
+        return true
     }
 
     private fun showLoading() {
