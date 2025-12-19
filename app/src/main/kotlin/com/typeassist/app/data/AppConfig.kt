@@ -7,7 +7,8 @@ data class AppConfig(
     var apiKey: String = "",
     var model: String = "gemini-2.5-flash-lite",
     var generationConfig: GenConfig = GenConfig(),
-    var triggers: MutableList<Trigger> = mutableListOf()
+    var triggers: MutableList<Trigger> = mutableListOf(),
+    var undoCommandPattern: String = ".undo" // New field for undo command
 ) : Serializable
 
 data class GenConfig(
@@ -33,6 +34,7 @@ fun createDefaultConfig(): AppConfig {
             Trigger(".casual", "Rewrite in a casual, friendly tone. Return only the rewritten text."),
             Trigger(".improve", "Improve the writing quality and clarity. Return only the improved text."),
             Trigger(".tr", "Translate to English. Return only the translated text.")
-        )
+        ),
+        undoCommandPattern = ".undo" // Default value for the undo command
     )
 }

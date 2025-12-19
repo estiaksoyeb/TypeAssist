@@ -11,6 +11,7 @@ import android.os.Looper
 import android.view.Gravity
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
+import android.text.InputType
 import android.view.accessibility.AccessibilityNodeInfo
 import android.widget.Button
 import android.widget.FrameLayout
@@ -33,6 +34,7 @@ class MyAccessibilityService : AccessibilityService() {
     // --- Undo Cache ---
     private var lastNode: AccessibilityNodeInfo? = null
     private var originalTextCache: String = ""
+    private var undoCacheTimestamp: Long = 0L
     private val undoHandler = Handler(Looper.getMainLooper())
     private val hideUndoRunnable = Runnable { hideUndoButton() }
 
@@ -66,6 +68,14 @@ class MyAccessibilityService : AccessibilityService() {
 
                 val apiKey = configObj.getString("apiKey").trim()
                 val model = configObj.getString("model").trim()
+                val undoCommandPattern = configObj.getString("undoCommandPattern").trim()
+
+                // Handle .undo command
+                val timeSinceCache = System.currentTimeMillis() - undoCacheTimestamp
+                if (currentText.endsWith(undoCommandPattern) && originalTextCache.isNotEmpty() && timeSinceCache < 120000) { // 2 minutes
+                    pasteText(inputNode, originalTextCache) // Paste into the current node
+                    return // Consume the event
+                }
                 
                 var temp = 0.2
                 var topP = 0.95
@@ -86,8 +96,9 @@ class MyAccessibilityService : AccessibilityService() {
                         val textToProcess = currentText.substring(0, currentText.length - pattern.length).trim()
                         
                         if (textToProcess.length > 1) {
-                            originalTextCache = currentText
+                            originalTextCache = textToProcess
                             lastNode = inputNode
+                            undoCacheTimestamp = System.currentTimeMillis()
 
                             showLoading()
                             hideUndoButton() 
@@ -175,8 +186,12 @@ class MyAccessibilityService : AccessibilityService() {
     }
 
     private fun performUndo() {
-        if (lastNode != null && originalTextCache.isNotEmpty()) {
-            if (lastNode!!.refresh()) { pasteText(lastNode!!, originalTextCache); showToast("Undone!") }
+        val timeSinceCache = System.currentTimeMillis() - undoCacheTimestamp
+        if (lastNode != null && originalTextCache.isNotEmpty() && timeSinceCache < 120000) { // 2 minutes
+            if (lastNode!!.refresh()) {
+                pasteText(lastNode!!, originalTextCache)
+                showToast("Undone!")
+            }
         }
         hideUndoButton()
     }
