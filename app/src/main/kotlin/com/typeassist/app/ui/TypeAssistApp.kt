@@ -74,19 +74,6 @@ fun TypeAssistApp(client: OkHttpClient) {
                     config = config,
                     context = context,
                     onToggle = { newState -> 
-                        val activity = context as MainActivity
-                        if (newState) {
-                            if (!activity.isAccessibilityEnabled()) {
-                                Toast.makeText(context, "⚠️ Please Enable Accessibility Service first", Toast.LENGTH_SHORT).show()
-                                context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
-                                return@HomeScreen
-                            }
-                            if (config.apiKey.isBlank()) {
-                                Toast.makeText(context, "⚠️ Please setup API Key first", Toast.LENGTH_SHORT).show()
-                                navigateTo("settings") // Use custom navigate
-                                return@HomeScreen
-                            }
-                        }
                         saveConfig(config.copy(isAppEnabled = newState)) 
                     },
                     onNavigate = { navigateTo(it) } // Use custom navigate

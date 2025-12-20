@@ -49,6 +49,7 @@ import androidx.compose.material.icons.filled.Star
 fun HomeScreen(config: AppConfig, context: Context, onToggle: (Boolean) -> Unit, onNavigate: (String) -> Unit) {
     val activity = context as MainActivity
     var hasPermission by remember { mutableStateOf(false) }
+    var showApiKeyDialog by remember { mutableStateOf(false) }
     val lifecycleOwner = LocalLifecycleOwner.current
     
     val view = LocalView.current
@@ -67,6 +68,26 @@ fun HomeScreen(config: AppConfig, context: Context, onToggle: (Boolean) -> Unit,
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    if (showApiKeyDialog) {
+        AlertDialog(
+            onDismissRequest = { showApiKeyDialog = false },
+            title = { Text("API Key Missing") },
+            text = { Text("You haven't set up a Gemini API Key.\n\nAI features will not work, but you can still use offline features like Snippets.") },
+            confirmButton = {
+                Button(onClick = { 
+                    showApiKeyDialog = false
+                    onNavigate("settings") 
+                }) { Text("Setup API") }
+            },
+            dismissButton = {
+                TextButton(onClick = { 
+                    showApiKeyDialog = false
+                    onToggle(true) // Enable offline mode
+                }) { Text("Use Offline") }
+            }
+        )
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -101,7 +122,23 @@ fun HomeScreen(config: AppConfig, context: Context, onToggle: (Boolean) -> Unit,
                             Text("Master Switch", fontWeight = FontWeight.Bold, fontSize = 18.sp)
                             Text(if(config.isAppEnabled) "Service Active" else "Service Paused", color = if(config.isAppEnabled) MaterialTheme.colorScheme.secondary else Color.Gray, fontSize = 12.sp)
                         }
-                        Switch(checked = config.isAppEnabled, onCheckedChange = onToggle)
+                        Switch(
+                            checked = config.isAppEnabled, 
+                            onCheckedChange = { newState ->
+                                if (newState) {
+                                    if (!activity.isAccessibilityEnabled()) {
+                                        android.widget.Toast.makeText(context, "⚠️ Please Enable Accessibility Service first", android.widget.Toast.LENGTH_SHORT).show()
+                                        context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                                        return@Switch
+                                    }
+                                    if (config.apiKey.isBlank()) {
+                                        showApiKeyDialog = true
+                                        return@Switch
+                                    }
+                                }
+                                onToggle(newState)
+                            }
+                        )
                     }
                 }
             }
