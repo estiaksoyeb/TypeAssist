@@ -42,6 +42,9 @@ import androidx.lifecycle.LifecycleEventObserver
 import com.typeassist.app.MainActivity
 import com.typeassist.app.data.AppConfig
 
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Star
+
 @Composable
 fun HomeScreen(config: AppConfig, context: Context, onToggle: (Boolean) -> Unit, onNavigate: (String) -> Unit) {
     val activity = context as MainActivity
@@ -130,6 +133,11 @@ fun HomeScreen(config: AppConfig, context: Context, onToggle: (Boolean) -> Unit,
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 MenuCard(Modifier.weight(1f), "Backup", Icons.Default.Code, Color.Gray) { onNavigate("json") }
                 MenuCard(Modifier.weight(1f), "Test Lab", Icons.Default.Science, MaterialTheme.colorScheme.secondary) { onNavigate("test") }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                MenuCard(Modifier.weight(1f), "History", Icons.Default.List, Color(0xFF8E24AA)) { onNavigate("history") }
+                MenuCard(Modifier.weight(1f), "Snippets", Icons.Default.Star, Color(0xFFF59E0B)) { onNavigate("snippets") }
             }
 
             // Instructions

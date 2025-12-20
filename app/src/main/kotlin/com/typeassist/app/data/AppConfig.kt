@@ -8,8 +8,11 @@ data class AppConfig(
     var model: String = "gemini-2.5-flash-lite",
     var generationConfig: GenConfig = GenConfig(),
     var triggers: MutableList<Trigger> = mutableListOf(),
-    var inlineCommands: MutableList<InlineCommand> = mutableListOf(), // New field for inline commands
-    var undoCommandPattern: String = ".undo"
+    var inlineCommands: MutableList<InlineCommand> = mutableListOf(),
+    var snippets: MutableList<Snippet> = mutableListOf(), // New field for snippets
+    var undoCommandPattern: String = ".undo",
+    var snippetTriggerPrefix: String = "ta#", // Default prefix for using snippets
+    var saveSnippetPattern: String = "(.save:%:%)" // Default pattern for saving snippets
 ) : Serializable
 
 data class GenConfig(
@@ -23,8 +26,13 @@ data class Trigger(
 ) : Serializable
 
 data class InlineCommand(
-    var pattern: String, // e.g., "(.ta:%)"
-    var prompt: String // e.g., "Give only the most relevant..."
+    var pattern: String,
+    var prompt: String
+) : Serializable
+
+data class Snippet(
+    var trigger: String, // e.g., "email1"
+    var content: String  // e.g., "my.email@example.com"
 ) : Serializable
 
 fun createDefaultConfig(): AppConfig {
@@ -41,11 +49,17 @@ fun createDefaultConfig(): AppConfig {
             Trigger(".improve", "Improve the writing quality and clarity. Return only the improved text."),
             Trigger(".tr", "Translate to English. Return only the translated text.")
         ),
-        inlineCommands = mutableListOf( // Default inline commands
+        inlineCommands = mutableListOf(
             InlineCommand("(.ta:%)", "Give only the most relevant and complete answer to the query. Do not explain, do not add introductions, disclaimers, or extra text. Output only the answer."),
             InlineCommand("[.g:%]", "Fix grammar, spelling, and punctuation. Return only the corrected text."),
             InlineCommand("{{.polite:%}}", "Rewrite the text in a polite and professional tone. Return only the rewritten text.")
         ),
-        undoCommandPattern = ".undo" // Default value for the undo command
+        snippets = mutableListOf( // Default snippets
+            Snippet("email", "user@example.com"),
+            Snippet("sign", "Best regards,\nUser")
+        ),
+        undoCommandPattern = ".undo",
+        snippetTriggerPrefix = "ta#",
+        saveSnippetPattern = "(.save:%:%)"
     )
 }

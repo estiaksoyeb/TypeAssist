@@ -19,7 +19,9 @@ import android.widget.ProgressBar
 import java.util.regex.Pattern
 import android.widget.Toast
 import com.typeassist.app.api.GeminiApiClient
+import com.typeassist.app.data.HistoryManager
 import okhttp3.*
+import org.json.JSONArray
 import org.json.JSONObject
 
 class MyAccessibilityService : AccessibilityService() {
@@ -69,6 +71,60 @@ class MyAccessibilityService : AccessibilityService() {
 
                 val apiKey = configObj.getString("apiKey").trim()
                 val model = configObj.getString("model").trim()
+                
+                // --- Snippets Logic ---
+                val snippetPrefix = configObj.optString("snippetTriggerPrefix", "ta#")
+                val saveSnippetPattern = configObj.optString("saveSnippetPattern", "(.save:%:%)")
+                val snippets = configObj.optJSONArray("snippets") ?: JSONArray()
+
+                // 1. Check for Snippet Usage
+                for (i in 0 until snippets.length()) {
+                    val s = snippets.getJSONObject(i)
+                    val trig = s.getString("trigger")
+                    val content = s.getString("content")
+                    val fullTrigger = snippetPrefix + trig
+
+                    if (currentText.endsWith(fullTrigger)) {
+                        val newText = currentText.substring(0, currentText.length - fullTrigger.length) + content
+                        pasteText(inputNode, newText)
+                        return
+                    }
+                }
+
+                // 2. Check for Snippet Saving
+                val saveMatcher = Pattern.compile(buildSaveSnippetRegex(saveSnippetPattern)).matcher(currentText)
+                if (saveMatcher.find()) {
+                    val fullMatch = saveMatcher.group(0) ?: ""
+                    val newTrigger = saveMatcher.group(1)?.trim() ?: ""
+                    val newContent = saveMatcher.group(2)?.trim() ?: ""
+
+                    if (newTrigger.isNotEmpty() && newContent.isNotEmpty()) {
+                        // Remove existing if exists
+                        val newSnippets = JSONArray()
+                        for (i in 0 until snippets.length()) {
+                            val s = snippets.getJSONObject(i)
+                            if (s.getString("trigger") != newTrigger) {
+                                newSnippets.put(s)
+                            }
+                        }
+                        // Add new
+                        val newSnippet = JSONObject()
+                        newSnippet.put("trigger", newTrigger)
+                        newSnippet.put("content", newContent)
+                        newSnippets.put(newSnippet)
+
+                        // Save Config
+                        configObj.put("snippets", newSnippets)
+                        prefs.edit().putString("config_json", configObj.toString()).apply()
+
+                        // Remove command from text
+                        val cleanText = currentText.replace(fullMatch, newContent)
+                        pasteText(inputNode, cleanText)
+                        showToast("Snippet '$newTrigger' saved!")
+                        return
+                    }
+                }
+
                 val undoCommandPattern = configObj.getString("undoCommandPattern").trim()
 
                 // Handle .undo command
@@ -103,6 +159,7 @@ class MyAccessibilityService : AccessibilityService() {
                         val userPrompt = matcher.group(1) ?: continue // '%' is replaced by this group
 
                         originalTextCache = currentText // Store the full current text for undo
+                        HistoryManager.add(originalTextCache) // Save to history
                         lastNode = inputNode
 
                         showLoading()
@@ -135,6 +192,7 @@ class MyAccessibilityService : AccessibilityService() {
                             originalTextCache = textToProcess
                             lastNode = inputNode
                             undoCacheTimestamp = System.currentTimeMillis()
+                            HistoryManager.add(originalTextCache) // Save to history
 
                             showLoading()
                             hideUndoButton() 
@@ -248,6 +306,22 @@ class MyAccessibilityService : AccessibilityService() {
         val escapedPattern = Pattern.quote(inlinePattern).replace("%", "\\E(.+?)\\Q")
             .replace("\\Q\\E", "") // Clean up empty escapes
         return escapedPattern
+    }
+
+    private fun buildSaveSnippetRegex(pattern: String): String {
+        // Pattern has two % placeholders: first for name, second for content
+        // e.g. "(.save:%:%)" -> "\Q(.save:\E(.+?)\Q:\E(.+?)\Q)\E"
+        val parts = pattern.split("%", limit = 3)
+        if (parts.size != 3) return Pattern.quote(pattern) // Fallback if invalid pattern
+
+        val sb = StringBuilder()
+        sb.append(Pattern.quote(parts[0]))
+        sb.append("(.+?)") // Group 1: Name
+        sb.append(Pattern.quote(parts[1]))
+        sb.append("(.+?)") // Group 2: Content
+        sb.append(Pattern.quote(parts[2]))
+        
+        return sb.toString()
     }
 
     override fun onInterrupt() { hideLoading(); hideUndoButton() }

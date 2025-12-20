@@ -33,7 +33,7 @@ fun TypeAssistApp(client: OkHttpClient) {
     val gson = GsonBuilder().setPrettyPrinting().create()
     val prefs = context.getSharedPreferences("GeminiConfig", Context.MODE_PRIVATE)
     
-    var config by remember { 
+    var config by remember(currentScreen) { 
         mutableStateOf(try {
             val json = prefs.getString("config_json", null)
             if (json != null) gson.fromJson(json, AppConfig::class.java) else createDefaultConfig()
@@ -99,6 +99,8 @@ fun TypeAssistApp(client: OkHttpClient) {
                     onBack = { navigateTo("home") } // Use custom navigate
                 )
                 "json" -> JsonScreen(config, { saveConfig(it) }, { navigateTo("home") }) // Use custom navigate
+                "history" -> HistoryScreen({ navigateTo("home") }) // Use custom navigate
+                "snippets" -> SnippetsScreen(config, { saveConfig(it) }, { navigateTo("home") })
                 "test" -> TestScreen(
                     onStartTest = { prefs.edit().putBoolean("is_testing_active", true).apply() },
                     onStopTest = { prefs.edit().putBoolean("is_testing_active", false).apply() },
