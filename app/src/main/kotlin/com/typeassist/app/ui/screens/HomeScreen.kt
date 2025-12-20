@@ -16,8 +16,6 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Build
-import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.*
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontFamily
@@ -44,6 +42,8 @@ import com.typeassist.app.data.AppConfig
 
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.ui.res.painterResource
+import com.typeassist.app.R
 
 @Composable
 fun HomeScreen(config: AppConfig, context: Context, onToggle: (Boolean) -> Unit, onNavigate: (String) -> Unit) {
@@ -297,19 +297,19 @@ fun DeveloperCreditSection() {
 
             Column {
                 SocialLink(
-                    icon = Icons.Filled.Info,
+                    icon = R.drawable.ic_fab_twitter,
                     text = "Twitter",
                     url = "https://twitter.com/estiaksoyeb"
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 SocialLink(
-                    icon = Icons.Filled.Build,
+                    icon = R.drawable.ic_fab_github,
                     text = "GitHub",
                     url = "https://github.com/estiaksoyeb"
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 SocialLink(
-                    icon = Icons.Filled.Send,
+                    icon = R.drawable.ic_fab_telegram,
                     text = "Telegram",
                     url = "https://t.me/estiaksoyeb"
                 )
@@ -327,7 +327,7 @@ fun DeveloperCreditSection() {
 }
 
 @Composable
-fun SocialLink(icon: androidx.compose.ui.graphics.vector.ImageVector, text: String, url: String) {
+fun SocialLink(icon: Int, text: String, url: String) {
     val uriHandler = LocalUriHandler.current
     val annotatedString = buildAnnotatedString {
         withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary, textDecoration = TextDecoration.Underline)) {
@@ -340,7 +340,7 @@ fun SocialLink(icon: androidx.compose.ui.graphics.vector.ImageVector, text: Stri
         modifier = Modifier.clickable { uriHandler.openUri(url) }
     ) {
         Icon(
-            imageVector = icon,
+            painter = painterResource(id = icon),
             contentDescription = text,
             tint = MaterialTheme.colorScheme.secondary,
             modifier = Modifier.size(24.dp)
