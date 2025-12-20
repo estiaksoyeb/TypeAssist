@@ -16,6 +16,7 @@ import android.view.accessibility.AccessibilityNodeInfo
 import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.ProgressBar
+import java.util.regex.Pattern
 import android.widget.Toast
 import com.typeassist.app.api.GeminiApiClient
 import okhttp3.*
@@ -86,7 +87,42 @@ class MyAccessibilityService : AccessibilityService() {
                 }
 
                 val triggers = configObj.getJSONArray("triggers")
+                val inlineCommands = configObj.getJSONArray("inlineCommands")
 
+                // --- Process Inline Commands ---
+                for (i in 0 until inlineCommands.length()) {
+                    val inlineCommandObj = inlineCommands.getJSONObject(i)
+                    val inlinePattern = inlineCommandObj.getString("pattern")
+                    val inlinePromptTemplate = inlineCommandObj.getString("prompt")
+
+                    val regexPattern = Pattern.compile(buildRegexFromInlinePattern(inlinePattern))
+                    val matcher = regexPattern.matcher(currentText)
+
+                    if (matcher.find()) {
+                        val fullMatchedString = matcher.group(0) ?: continue
+                        val userPrompt = matcher.group(1) ?: continue // '%' is replaced by this group
+
+                        originalTextCache = currentText // Store the full current text for undo
+                        lastNode = inputNode
+
+                        showLoading()
+                        hideUndoButton()
+
+                        geminiApiClient.callGemini(apiKey, model, inlinePromptTemplate, userPrompt, temp, topP) { result ->
+                            hideLoading()
+                            result.onSuccess {
+                                val newText = currentText.replace(fullMatchedString, it)
+                                pasteText(inputNode, newText)
+                                showUndoButton()
+                            }.onFailure {
+                                showToast(it.message ?: "Unknown error")
+                            }
+                        }
+                        return // Consume the event after processing one inline command
+                    }
+                }
+
+                // --- Process Trailing Triggers (Old Logic) ---
                 for (i in 0 until triggers.length()) {
                     val triggerObj = triggers.getJSONObject(i)
                     val pattern = triggerObj.getString("pattern")
@@ -205,6 +241,13 @@ class MyAccessibilityService : AccessibilityService() {
 
     private fun showToast(message: String) {
         Handler(Looper.getMainLooper()).post { Toast.makeText(applicationContext, message, Toast.LENGTH_SHORT).show() }
+    }
+
+    private fun buildRegexFromInlinePattern(inlinePattern: String): String {
+        // Escape special regex characters, except for the placeholder '%'
+        val escapedPattern = Pattern.quote(inlinePattern).replace("%", "\\E(.+?)\\Q")
+            .replace("\\Q\\E", "") // Clean up empty escapes
+        return escapedPattern
     }
 
     override fun onInterrupt() { hideLoading(); hideUndoButton() }
