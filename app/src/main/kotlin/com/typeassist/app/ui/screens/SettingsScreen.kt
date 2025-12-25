@@ -174,20 +174,21 @@ fun GeminiHelp(primaryColor: Color, context: android.content.Context) {
 fun CloudflareHelp(primaryColor: Color, context: android.content.Context) {
     Text("How to setup Cloudflare AI?", fontWeight = FontWeight.Bold, fontSize = 18.sp); Spacer(Modifier.height(16.dp))
     val steps = listOf(
-        "1. Log in to your Cloudflare Dashboard.",
-        "2. Find your 'Account ID' on the right sidebar of the Workers & Pages section.",
-        "3. Go to 'My Profile' -> 'API Tokens'.",
-        "4. Create a token with 'Workers AI (Read)' permissions.",
-        "5. Paste Account ID and Token above.",
-        "6. Use default model or pick one from ",
-        "7. Click Test and Save."
+        "1. Visit Workers AI at ",
+        "2. Sign in with your Cloudflare account.",
+        "3. Click on 'REST API'.",
+        "4. Click 'Create a Workers AI API token'.",
+        "5. Copy and paste the API Key above.",
+        "6. Copy your 'Account ID' from the same page.",
+        "7. Paste Account ID and Token above.",
+        "8. Click Test and Save."
     )
     val annotatedString = buildAnnotatedString { 
         steps.forEach { step -> 
-            if (step.contains("pick one from")) { 
-                append(step)
-                pushStringAnnotation(tag = "URL", annotation = "https://developers.cloudflare.com/workers-ai/models/")
-                withStyle(style = SpanStyle(color = primaryColor, textDecoration = TextDecoration.Underline, fontWeight = FontWeight.Bold)) { append("Cloudflare Models") }
+            if (step.contains("Visit Workers AI at")) { 
+                append("1. Visit Workers AI at ")
+                pushStringAnnotation(tag = "URL", annotation = "https://dash.cloudflare.com/?to=/:account/ai/workers-ai")
+                withStyle(style = SpanStyle(color = primaryColor, textDecoration = TextDecoration.Underline, fontWeight = FontWeight.Bold)) { append("Cloudflare Dash") }
                 pop()
                 append(".\n")
             } else { 
