@@ -128,6 +128,52 @@ class MyAccessibilityService : AccessibilityService() {
                     }
                 }
 
+                // --- Utility Belt ---
+                // 1. Calculator: (.c: expression)
+                val calcMatcher = Pattern.compile("\\(\\.c:(.+?)\\)").matcher(currentText)
+                if (calcMatcher.find()) {
+                    val fullMatch = calcMatcher.group(0) ?: ""
+                    val expr = calcMatcher.group(1) ?: ""
+                    val result = com.typeassist.app.utils.UtilityBelt.evaluateMath(expr)
+
+                    originalTextCache = currentText
+                    HistoryManager.add(originalTextCache)
+                    lastNode = inputNode
+                    undoCacheTimestamp = System.currentTimeMillis()
+
+                    val newText = currentText.replace(fullMatch, result)
+                    pasteText(inputNode, newText)
+                    showUndoButton()
+                    return
+                }
+
+                // 2. Suffix Utilities: .now, .date, .pass
+                var utilityResult: String? = null
+                var triggerLen = 0
+                
+                if (currentText.endsWith(".now")) {
+                    utilityResult = com.typeassist.app.utils.UtilityBelt.getTime()
+                    triggerLen = 4
+                } else if (currentText.endsWith(".date")) {
+                    utilityResult = com.typeassist.app.utils.UtilityBelt.getDate()
+                    triggerLen = 5
+                } else if (currentText.endsWith(".pass")) {
+                    utilityResult = com.typeassist.app.utils.UtilityBelt.generatePassword()
+                    triggerLen = 5
+                }
+
+                if (utilityResult != null) {
+                    originalTextCache = currentText
+                    HistoryManager.add(originalTextCache)
+                    lastNode = inputNode
+                    undoCacheTimestamp = System.currentTimeMillis()
+
+                    val newText = currentText.substring(0, currentText.length - triggerLen) + utilityResult
+                    pasteText(inputNode, newText)
+                    showUndoButton()
+                    return
+                }
+
                 val undoCommandPattern = configObj.getString("undoCommandPattern").trim()
 
                 // Handle .undo command
