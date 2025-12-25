@@ -191,6 +191,15 @@ fun HomeScreen(config: AppConfig, context: Context, onToggle: (Boolean) -> Unit,
                     StepItem("2", "Go to API Setup and add your Gemini Key.")
                     StepItem("3", "Open any app (WhatsApp, Notes, etc).")
                     StepItem("4", "Type text + trigger (e.g. 'Hello .ta').")
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    OutlinedButton(
+                        onClick = { onNavigate("guide") },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary)
+                    ) {
+                        Text("Learn More Features")
+                    }
                 }
             }
 

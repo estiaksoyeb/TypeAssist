@@ -88,6 +88,7 @@ fun TypeAssistApp(client: OkHttpClient) {
                 "json" -> JsonScreen(config, { saveConfig(it) }, { navigateTo("home") }) // Use custom navigate
                 "history" -> HistoryScreen({ navigateTo("home") }) // Use custom navigate
                 "snippets" -> SnippetsScreen(config, { saveConfig(it) }, { navigateTo("home") })
+                "guide" -> GuideScreen({ navigateTo("home") })
                 "test" -> TestScreen(
                     onStartTest = { prefs.edit().putBoolean("is_testing_active", true).apply() },
                     onStopTest = { prefs.edit().putBoolean("is_testing_active", false).apply() },
