@@ -57,7 +57,10 @@ class MyAccessibilityService : AccessibilityService() {
 
         if (event.eventType == AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED) {
             val inputNode = event.source ?: return
-            val currentText = inputNode.text?.toString() ?: ""
+            var currentText = inputNode.text?.toString() ?: ""
+            if (currentText.isEmpty() && event.text != null && event.text.isNotEmpty()) {
+                currentText = event.text.joinToString("")
+            }
 
             val prefs = getSharedPreferences("GeminiConfig", Context.MODE_PRIVATE)
             val configJson = prefs.getString("config_json", null) ?: return
