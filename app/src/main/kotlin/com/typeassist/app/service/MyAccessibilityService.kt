@@ -19,7 +19,10 @@ import android.widget.ProgressBar
 import java.util.regex.Pattern
 import android.widget.Toast
 import com.typeassist.app.api.GeminiApiClient
+import com.typeassist.app.api.CloudflareApiClient
 import com.typeassist.app.data.HistoryManager
+import com.typeassist.app.data.AppConfig
+import com.google.gson.Gson
 import okhttp3.*
 import org.json.JSONArray
 import org.json.JSONObject
@@ -28,6 +31,7 @@ class MyAccessibilityService : AccessibilityService() {
 
     private val client = OkHttpClient()
     private val geminiApiClient = GeminiApiClient(client)
+    private val cloudflareApiClient = CloudflareApiClient(client)
     private var windowManager: WindowManager? = null
     
     // --- UI Elements ---
@@ -66,29 +70,24 @@ class MyAccessibilityService : AccessibilityService() {
             val configJson = prefs.getString("config_json", null) ?: return
 
             try {
-                val configObj = JSONObject(configJson)
+                val gson = Gson()
+                val config = gson.fromJson(configJson, AppConfig::class.java)
                 
-                if (configObj.has("isAppEnabled") && !configObj.getBoolean("isAppEnabled")) {
+                if (!config.isAppEnabled) {
                     return
                 }
 
-                val apiKey = configObj.getString("apiKey").trim()
-                val model = configObj.getString("model").trim()
-                
                 // --- Snippets Logic ---
-                val snippetPrefix = configObj.optString("snippetTriggerPrefix", "ta#")
-                val saveSnippetPattern = configObj.optString("saveSnippetPattern", "(.save:%:%)")
-                val snippets = configObj.optJSONArray("snippets") ?: JSONArray()
+                val snippetPrefix = config.snippetTriggerPrefix
+                val saveSnippetPattern = config.saveSnippetPattern
+                val snippets = config.snippets
 
                 // 1. Check for Snippet Usage
-                for (i in 0 until snippets.length()) {
-                    val s = snippets.getJSONObject(i)
-                    val trig = s.getString("trigger")
-                    val content = s.getString("content")
-                    val fullTrigger = snippetPrefix + trig
+                for (s in snippets) {
+                    val fullTrigger = snippetPrefix + s.trigger
 
                     if (currentText.endsWith(fullTrigger)) {
-                        val newText = currentText.substring(0, currentText.length - fullTrigger.length) + content
+                        val newText = currentText.substring(0, currentText.length - fullTrigger.length) + s.content
                         pasteText(inputNode, newText)
                         return
                     }
@@ -102,23 +101,12 @@ class MyAccessibilityService : AccessibilityService() {
                     val newContent = saveMatcher.group(2)?.trim() ?: ""
 
                     if (newTrigger.isNotEmpty() && newContent.isNotEmpty()) {
-                        // Remove existing if exists
-                        val newSnippets = JSONArray()
-                        for (i in 0 until snippets.length()) {
-                            val s = snippets.getJSONObject(i)
-                            if (s.getString("trigger") != newTrigger) {
-                                newSnippets.put(s)
-                            }
-                        }
-                        // Add new
-                        val newSnippet = JSONObject()
-                        newSnippet.put("trigger", newTrigger)
-                        newSnippet.put("content", newContent)
-                        newSnippets.put(newSnippet)
+                        // Update Snippets
+                        config.snippets.removeIf { it.trigger == newTrigger }
+                        config.snippets.add(com.typeassist.app.data.Snippet(newTrigger, newContent))
 
                         // Save Config
-                        configObj.put("snippets", newSnippets)
-                        prefs.edit().putString("config_json", configObj.toString()).apply()
+                        prefs.edit().putString("config_json", gson.toJson(config)).apply()
 
                         // Remove command from text
                         val cleanText = currentText.replace(fullMatch, newContent)
@@ -171,7 +159,7 @@ class MyAccessibilityService : AccessibilityService() {
                     return
                 }
 
-                val undoCommandPattern = configObj.getString("undoCommandPattern").trim()
+                val undoCommandPattern = config.undoCommandPattern.trim()
 
                 // Handle .undo command
                 val timeSinceCache = System.currentTimeMillis() - undoCacheTimestamp
@@ -180,22 +168,13 @@ class MyAccessibilityService : AccessibilityService() {
                     return // Consume the event
                 }
                 
-                var temp = 0.2
-                var topP = 0.95
-                if (configObj.has("generationConfig")) {
-                    val genConfig = configObj.getJSONObject("generationConfig")
-                    temp = genConfig.optDouble("temperature", 0.2)
-                    topP = genConfig.optDouble("topP", 0.95)
-                }
-
-                val triggers = configObj.getJSONArray("triggers")
-                val inlineCommands = configObj.getJSONArray("inlineCommands")
+                val triggers = config.triggers
+                val inlineCommands = config.inlineCommands
 
                 // --- Process Inline Commands ---
-                for (i in 0 until inlineCommands.length()) {
-                    val inlineCommandObj = inlineCommands.getJSONObject(i)
-                    val inlinePattern = inlineCommandObj.getString("pattern")
-                    val inlinePromptTemplate = inlineCommandObj.getString("prompt")
+                for (inlineCommand in inlineCommands) {
+                    val inlinePattern = inlineCommand.pattern
+                    val inlinePromptTemplate = inlineCommand.prompt
 
                     val regexPattern = Pattern.compile(buildRegexFromInlinePattern(inlinePattern))
                     val matcher = regexPattern.matcher(currentText)
@@ -211,7 +190,7 @@ class MyAccessibilityService : AccessibilityService() {
                         showLoading()
                         hideUndoButton()
 
-                        geminiApiClient.callGemini(apiKey, model, inlinePromptTemplate, userPrompt, temp, topP) { result ->
+                        performAICall(config, inlinePromptTemplate, userPrompt) { result ->
                             hideLoading()
                             result.onSuccess {
                                 val newText = currentText.replace(fullMatchedString, it)
@@ -226,10 +205,9 @@ class MyAccessibilityService : AccessibilityService() {
                 }
 
                 // --- Process Trailing Triggers (Old Logic) ---
-                for (i in 0 until triggers.length()) {
-                    val triggerObj = triggers.getJSONObject(i)
-                    val pattern = triggerObj.getString("pattern")
-                    val prompt = triggerObj.getString("prompt")
+                for (trigger in triggers) {
+                    val pattern = trigger.pattern
+                    val prompt = trigger.prompt
 
                     if (isTriggerValid(currentText, pattern)) {
                         val textToProcess = currentText.substring(0, currentText.length - pattern.length).trim()
@@ -243,7 +221,7 @@ class MyAccessibilityService : AccessibilityService() {
                             showLoading()
                             hideUndoButton() 
 
-                            geminiApiClient.callGemini(apiKey, model, prompt, textToProcess, temp, topP) { result ->
+                            performAICall(config, prompt, textToProcess) { result ->
                                 hideLoading()
                                 result.onSuccess {
                                     pasteText(inputNode, it)
@@ -259,6 +237,29 @@ class MyAccessibilityService : AccessibilityService() {
             } catch (e: Exception) {
                 // Silent fail
             }
+        }
+    }
+
+    private fun performAICall(config: AppConfig, prompt: String, userText: String, callback: (Result<String>) -> Unit) {
+        if (config.provider == "cloudflare") {
+            cloudflareApiClient.callCloudflare(
+                config.cloudflareConfig.accountId,
+                config.cloudflareConfig.apiToken,
+                config.cloudflareConfig.model,
+                prompt,
+                userText,
+                callback
+            )
+        } else {
+            geminiApiClient.callGemini(
+                config.apiKey,
+                config.model,
+                prompt,
+                userText,
+                config.generationConfig.temperature,
+                config.generationConfig.topP,
+                callback
+            )
         }
     }
 

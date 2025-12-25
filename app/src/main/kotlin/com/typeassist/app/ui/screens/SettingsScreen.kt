@@ -31,25 +31,52 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import com.typeassist.app.data.AppConfig
+import com.typeassist.app.data.CloudflareConfig
+import com.typeassist.app.api.CloudflareApiClient
 import okhttp3.*
 import java.io.IOException
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(config: AppConfig, client: OkHttpClient, onSave: (AppConfig) -> Unit, onBack: () -> Unit) {
-    var key by remember { mutableStateOf(config.apiKey) }
-    var selectedModel by remember { mutableStateOf(config.model) }
+    var selectedProvider by remember { mutableStateOf(config.provider) }
+    
+    // Gemini States
+    var geminiKey by remember { mutableStateOf(config.apiKey) }
+    var geminiModel by remember { mutableStateOf(config.model) }
+    
+    // Cloudflare States
+    var cfAccountId by remember { mutableStateOf(config.cloudflareConfig.accountId) }
+    var cfApiToken by remember { mutableStateOf(config.cloudflareConfig.apiToken) }
+    var cfModel by remember { mutableStateOf(config.cloudflareConfig.model) }
+
     var isKeyVisible by remember { mutableStateOf(false) }
-    var expanded by remember { mutableStateOf(false) }
-    val models = listOf("gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-2.5-pro", "gemma-3n-e2b-it", "gemma-3n-e4b-it")
+    var providerExpanded by remember { mutableStateOf(false) }
+    var modelExpanded by remember { mutableStateOf(false) }
+    
+    val providers = listOf("gemini", "cloudflare")
+    val geminiModels = listOf("gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-2.5-pro", "gemma-3n-e2b-it", "gemma-3n-e4b-it")
     val context = LocalContext.current
 
-    fun verify(k: String) {
+    fun verifyGemini(k: String) {
         val req = Request.Builder().url("https://generativelanguage.googleapis.com/v1beta/models?key=$k").build()
         client.newCall(req).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) { (context as ComponentActivity).runOnUiThread { Toast.makeText(context, "Network Error", Toast.LENGTH_SHORT).show() } }
-            override fun onResponse(call: Call, response: Response) { response.use { if(it.isSuccessful) (context as ComponentActivity).runOnUiThread { Toast.makeText(context, "API Verified! ✅", Toast.LENGTH_SHORT).show() } else (context as ComponentActivity).runOnUiThread { Toast.makeText(context, "Invalid Key ❌", Toast.LENGTH_SHORT).show() } } }
+            override fun onResponse(call: Call, response: Response) { response.use { if(it.isSuccessful) (context as ComponentActivity).runOnUiThread { Toast.makeText(context, "Gemini API Verified! ✅", Toast.LENGTH_SHORT).show() } else (context as ComponentActivity).runOnUiThread { Toast.makeText(context, "Invalid Gemini Key ❌", Toast.LENGTH_SHORT).show() } } }
         })
+    }
+
+    fun verifyCloudflare(acc: String, tok: String, mod: String) {
+        val cloudflareClient = CloudflareApiClient(client)
+        cloudflareClient.callCloudflare(acc, tok, mod, "You are a helpful assistant.", "hi") { result ->
+            (context as ComponentActivity).runOnUiThread {
+                result.onSuccess {
+                    Toast.makeText(context, "Cloudflare API Verified! ✅", Toast.LENGTH_SHORT).show()
+                }.onFailure {
+                    Toast.makeText(context, "Cloudflare Verification Failed: ${it.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
     }
 
     val view = LocalView.current
@@ -62,21 +89,111 @@ fun SettingsScreen(config: AppConfig, client: OkHttpClient, onSave: (AppConfig) 
         }
     }
 
-    Scaffold(topBar = { TopAppBar(title = { Text("Gemini API Key") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Back") } }, colors = TopAppBarDefaults.topAppBarColors(containerColor = primaryColor, titleContentColor = Color.White, navigationIconContentColor = Color.White)) }) {
+    Scaffold(topBar = { TopAppBar(title = { Text("AI Provider Setup") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Back") } }, colors = TopAppBarDefaults.topAppBarColors(containerColor = primaryColor, titleContentColor = Color.White, navigationIconContentColor = Color.White)) }) {
         Column(modifier = Modifier.padding(it).padding(16.dp).verticalScroll(rememberScrollState())) {
-            OutlinedTextField(value = key, onValueChange = { key = it }, label = { Text("API Key") }, modifier = Modifier.fillMaxWidth(), visualTransformation = if (isKeyVisible) VisualTransformation.None else PasswordVisualTransformation(), trailingIcon = { IconButton(onClick = { isKeyVisible = !isKeyVisible }) { Icon(if (isKeyVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff, null) } })
-            Spacer(Modifier.height(16.dp))
-            ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }, modifier = Modifier.fillMaxWidth()) {
-                OutlinedTextField(value = selectedModel, onValueChange = {}, readOnly = true, label = { Text("Select Model") }, trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) }, colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(), modifier = Modifier.menuAnchor().fillMaxWidth())
-                ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) { models.forEach { item -> DropdownMenuItem(text = { Text(text = item) }, onClick = { selectedModel = item; expanded = false }) } }
+            
+            // Provider Selection
+            Text("AI Provider", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.primary)
+            Spacer(Modifier.height(8.dp))
+            ExposedDropdownMenuBox(expanded = providerExpanded, onExpandedChange = { providerExpanded = !providerExpanded }, modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(value = selectedProvider.uppercase(), onValueChange = {}, readOnly = true, label = { Text("Select Provider") }, trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = providerExpanded) }, colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(), modifier = Modifier.menuAnchor().fillMaxWidth())
+                ExposedDropdownMenu(expanded = providerExpanded, onDismissRequest = { providerExpanded = false }) { providers.forEach { item -> DropdownMenuItem(text = { Text(text = item.uppercase()) }, onClick = { selectedProvider = item; providerExpanded = false }) } }
             }
+            
             Spacer(Modifier.height(24.dp))
-            Button(onClick = { val validKey = key.trim(); val shouldEnable = validKey.isNotEmpty(); onSave(config.copy(apiKey = validKey, model = selectedModel, isAppEnabled = if (shouldEnable) true else config.isAppEnabled)); Toast.makeText(context, "Saved", Toast.LENGTH_SHORT).show(); if (validKey.isNotEmpty()) verify(validKey); onBack() }, modifier = Modifier.fillMaxWidth().height(50.dp), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)) { Text("Test and Save API Key") }
+            Divider()
+            Spacer(Modifier.height(24.dp))
+
+            if (selectedProvider == "gemini") {
+                // Gemini Setup
+                OutlinedTextField(value = geminiKey, onValueChange = { geminiKey = it }, label = { Text("Gemini API Key") }, modifier = Modifier.fillMaxWidth(), visualTransformation = if (isKeyVisible) VisualTransformation.None else PasswordVisualTransformation(), trailingIcon = { IconButton(onClick = { isKeyVisible = !isKeyVisible }) { Icon(if (isKeyVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff, null) } })
+                Spacer(Modifier.height(16.dp))
+                ExposedDropdownMenuBox(expanded = modelExpanded, onExpandedChange = { modelExpanded = !modelExpanded }, modifier = Modifier.fillMaxWidth()) {
+                    OutlinedTextField(value = geminiModel, onValueChange = {}, readOnly = true, label = { Text("Select Gemini Model") }, trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = modelExpanded) }, colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(), modifier = Modifier.menuAnchor().fillMaxWidth())
+                    ExposedDropdownMenu(expanded = modelExpanded, onDismissRequest = { modelExpanded = false }) { geminiModels.forEach { item -> DropdownMenuItem(text = { Text(text = item) }, onClick = { geminiModel = item; modelExpanded = false }) } }
+                }
+            } else {
+                // Cloudflare Setup
+                OutlinedTextField(value = cfAccountId, onValueChange = { cfAccountId = it }, label = { Text("Cloudflare Account ID") }, modifier = Modifier.fillMaxWidth())
+                Spacer(Modifier.height(16.dp))
+                OutlinedTextField(value = cfApiToken, onValueChange = { cfApiToken = it }, label = { Text("Cloudflare API Token") }, modifier = Modifier.fillMaxWidth(), visualTransformation = if (isKeyVisible) VisualTransformation.None else PasswordVisualTransformation(), trailingIcon = { IconButton(onClick = { isKeyVisible = !isKeyVisible }) { Icon(if (isKeyVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff, null) } })
+                Spacer(Modifier.height(16.dp))
+                OutlinedTextField(value = cfModel, onValueChange = { cfModel = it }, label = { Text("Cloudflare Model ID") }, modifier = Modifier.fillMaxWidth(), placeholder = { Text("@cf/meta/llama-3-8b-instruct") })
+            }
+
+            Spacer(Modifier.height(24.dp))
+            
+            Button(
+                onClick = { 
+                    val newConfig = config.copy(
+                        provider = selectedProvider,
+                        apiKey = geminiKey.trim(),
+                        model = geminiModel,
+                        cloudflareConfig = CloudflareConfig(
+                            accountId = cfAccountId.trim(),
+                            apiToken = cfApiToken.trim(),
+                            model = cfModel.trim()
+                        )
+                    )
+                    onSave(newConfig)
+                    Toast.makeText(context, "Config Saved", Toast.LENGTH_SHORT).show()
+                    
+                    if (selectedProvider == "gemini" && geminiKey.isNotBlank()) {
+                        verifyGemini(geminiKey.trim())
+                    } else if (selectedProvider == "cloudflare" && cfApiToken.isNotBlank()) {
+                        verifyCloudflare(cfAccountId.trim(), cfApiToken.trim(), cfModel.trim())
+                    }
+                    onBack()
+                }, 
+                modifier = Modifier.fillMaxWidth().height(50.dp), 
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+            ) { 
+                Text("Test and Save Config") 
+            }
+            
             Spacer(Modifier.height(32.dp))
-            Text("How to get Gemini API Key?", fontWeight = FontWeight.Bold, fontSize = 18.sp); Spacer(Modifier.height(16.dp))
-            val steps = listOf("1. Visit Google AI Studio at ", "2. Sign in with your Google account.", "3. Click 'Get API key'.", "4. Click 'Create API key'.", "5. Copy and paste above.", "6. Select Model.", "7. Click Save.")
-            val annotatedString = buildAnnotatedString { steps.forEach { step -> if (step.contains("Google AI Studio")) { append("1. Visit Google AI Studio at "); pushStringAnnotation(tag = "URL", annotation = "https://aistudio.google.com/"); withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary, textDecoration = TextDecoration.Underline, fontWeight = FontWeight.Bold)) { append("aistudio.google.com") }; pop(); append(".\n") } else { append(step + "\n") } } }
-            ClickableText(text = annotatedString, style = LocalTextStyle.current.copy(fontSize = 14.sp, lineHeight = 20.sp, color = Color.Black), onClick = { offset -> annotatedString.getStringAnnotations(tag = "URL", start = offset, end = offset).firstOrNull()?.let { annotation -> context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(annotation.item))) } })
+            
+            if (selectedProvider == "gemini") {
+                GeminiHelp(primaryColor, context)
+            } else {
+                CloudflareHelp(primaryColor, context)
+            }
         }
     }
+}
+
+@Composable
+fun GeminiHelp(primaryColor: Color, context: android.content.Context) {
+    Text("How to get Gemini API Key?", fontWeight = FontWeight.Bold, fontSize = 18.sp); Spacer(Modifier.height(16.dp))
+    val steps = listOf("1. Visit Google AI Studio at ", "2. Sign in with your Google account.", "3. Click 'Get API key'.", "4. Click 'Create API key'.", "5. Copy and paste above.", "6. Select Model.", "7. Click Save.")
+    val annotatedString = buildAnnotatedString { steps.forEach { step -> if (step.contains("Google AI Studio")) { append("1. Visit Google AI Studio at "); pushStringAnnotation(tag = "URL", annotation = "https://aistudio.google.com/"); withStyle(style = SpanStyle(color = primaryColor, textDecoration = TextDecoration.Underline, fontWeight = FontWeight.Bold)) { append("aistudio.google.com") }; pop(); append(".\n") } else { append(step + "\n") } } }
+    ClickableText(text = annotatedString, style = LocalTextStyle.current.copy(fontSize = 14.sp, lineHeight = 20.sp, color = Color.Black), onClick = { offset -> annotatedString.getStringAnnotations(tag = "URL", start = offset, end = offset).firstOrNull()?.let { annotation -> context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(annotation.item))) } })
+}
+
+@Composable
+fun CloudflareHelp(primaryColor: Color, context: android.content.Context) {
+    Text("How to setup Cloudflare AI?", fontWeight = FontWeight.Bold, fontSize = 18.sp); Spacer(Modifier.height(16.dp))
+    val steps = listOf(
+        "1. Log in to your Cloudflare Dashboard.",
+        "2. Find your 'Account ID' on the right sidebar of the Workers & Pages section.",
+        "3. Go to 'My Profile' -> 'API Tokens'.",
+        "4. Create a token with 'Workers AI (Read)' permissions.",
+        "5. Paste Account ID and Token above.",
+        "6. Use default model or pick one from ",
+        "7. Click Test and Save."
+    )
+    val annotatedString = buildAnnotatedString { 
+        steps.forEach { step -> 
+            if (step.contains("pick one from")) { 
+                append(step)
+                pushStringAnnotation(tag = "URL", annotation = "https://developers.cloudflare.com/workers-ai/models/")
+                withStyle(style = SpanStyle(color = primaryColor, textDecoration = TextDecoration.Underline, fontWeight = FontWeight.Bold)) { append("Cloudflare Models") }
+                pop()
+                append(".\n")
+            } else { 
+                append(step + "\n") 
+            } 
+        } 
+    }
+    ClickableText(text = annotatedString, style = LocalTextStyle.current.copy(fontSize = 14.sp, lineHeight = 20.sp, color = Color.Black), onClick = { offset -> annotatedString.getStringAnnotations(tag = "URL", start = offset, end = offset).firstOrNull()?.let { annotation -> context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(annotation.item))) } })
 }
