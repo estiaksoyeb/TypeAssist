@@ -39,6 +39,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.typeassist.app.MainActivity
 import com.typeassist.app.data.AppConfig
+import com.typeassist.app.utils.UpdateInfo
 
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Star
@@ -46,7 +47,7 @@ import androidx.compose.ui.res.painterResource
 import com.typeassist.app.R
 
 @Composable
-fun HomeScreen(config: AppConfig, context: Context, onToggle: (Boolean) -> Unit, onNavigate: (String) -> Unit) {
+fun HomeScreen(config: AppConfig, context: Context, updateInfo: UpdateInfo?, onToggle: (Boolean) -> Unit, onNavigate: (String) -> Unit) {
     val activity = context as MainActivity
     var hasPermission by remember { mutableStateOf(false) }
     var showApiKeyDialog by remember { mutableStateOf(false) }
@@ -120,10 +121,14 @@ fun HomeScreen(config: AppConfig, context: Context, onToggle: (Boolean) -> Unit,
                     ) {
                         Column {
                             Text("Master Switch", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                            Text(if(config.isAppEnabled) "Service Active" else "Service Paused", color = if(config.isAppEnabled) MaterialTheme.colorScheme.secondary else Color.Gray, fontSize = 12.sp)
+                            val isUpdateForced = updateInfo?.forceUpdate == true
+                            val statusText = if (isUpdateForced) "Update Required" else if(config.isAppEnabled) "Service Active" else "Service Paused"
+                            val statusColor = if (isUpdateForced) Color.Red else if(config.isAppEnabled) MaterialTheme.colorScheme.secondary else Color.Gray
+                            Text(statusText, color = statusColor, fontSize = 12.sp)
                         }
                         Switch(
                             checked = config.isAppEnabled, 
+                            enabled = updateInfo?.forceUpdate != true,
                             onCheckedChange = { newState ->
                                 if (newState) {
                                     if (!activity.isAccessibilityEnabled()) {

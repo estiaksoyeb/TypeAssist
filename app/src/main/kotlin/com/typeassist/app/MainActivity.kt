@@ -1,5 +1,6 @@
 package com.typeassist.app
 
+import android.content.Context
 import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.ComponentActivity
@@ -10,6 +11,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
+import com.google.gson.Gson
 import com.typeassist.app.ui.TypeAssistApp
 import com.typeassist.app.ui.components.UpdateDialog
 import com.typeassist.app.utils.UpdateInfo
@@ -30,10 +32,8 @@ class MainActivity : ComponentActivity() {
         val insetsController = WindowCompat.getInsetsController(window, window.decorView)
         insetsController.isAppearanceLightNavigationBars = true
 
-        // Use the modularized UpdateManager
-        lifecycleScope.launch {
-            updateInfoState = UpdateManager.checkForUpdates(this@MainActivity)
-        }
+        loadCachedUpdateInfo()
+        checkForUpdates()
 
         setContent {
             MaterialTheme(
@@ -45,11 +45,47 @@ class MainActivity : ComponentActivity() {
                     surface = Color.White
                 )
             ) {
-                TypeAssistApp(client)
+                TypeAssistApp(client, updateInfo = updateInfoState)
                 
-                // Show the modularized UpdateDialog
                 updateInfoState?.let { update ->
                     UpdateDialog(info = update, onDismiss = { updateInfoState = null })
+                }
+            }
+        }
+    }
+
+    private fun getCurrentVersionCode(): Int {
+        return try { packageManager.getPackageInfo(packageName, 0).versionCode } catch (e: Exception) { 0 }
+    }
+
+    private fun loadCachedUpdateInfo() {
+        val prefs = getSharedPreferences("UpdateInfo", Context.MODE_PRIVATE)
+        val json = prefs.getString("update_json", null)
+        if (json != null) {
+            val info = Gson().fromJson(json, UpdateInfo::class.java)
+            if (info.versionCode > getCurrentVersionCode()) {
+                updateInfoState = info
+            }
+        }
+    }
+    
+    private fun checkForUpdates() {
+        lifecycleScope.launch {
+            val newUpdateInfo = UpdateManager.checkForUpdates(this@MainActivity)
+            val prefs = getSharedPreferences("UpdateInfo", Context.MODE_PRIVATE)
+            
+            if (newUpdateInfo != null) {
+                // New update found online, save it and show dialog
+                prefs.edit().putString("update_json", Gson().toJson(newUpdateInfo)).apply()
+                updateInfoState = newUpdateInfo
+            } else {
+                // No update found online, clear cached info if user is up-to-date
+                val currentVersion = getCurrentVersionCode()
+                updateInfoState?.let {
+                    if (it.versionCode <= currentVersion) {
+                        prefs.edit().remove("update_json").apply()
+                        updateInfoState = null
+                    }
                 }
             }
         }

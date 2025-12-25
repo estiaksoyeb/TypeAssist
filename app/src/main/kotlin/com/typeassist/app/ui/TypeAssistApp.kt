@@ -22,11 +22,12 @@ import com.typeassist.app.MainActivity
 import com.typeassist.app.data.AppConfig
 import com.typeassist.app.data.createDefaultConfig
 import com.typeassist.app.ui.screens.*
+import com.typeassist.app.utils.UpdateInfo
 import okhttp3.OkHttpClient
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-fun TypeAssistApp(client: OkHttpClient) {
+fun TypeAssistApp(client: OkHttpClient, updateInfo: UpdateInfo?) {
     var currentScreen by rememberSaveable { mutableStateOf("home") }
     var previousScreen by rememberSaveable { mutableStateOf("home") } // Track previous screen for animation
     val context = LocalContext.current
@@ -43,6 +44,13 @@ fun TypeAssistApp(client: OkHttpClient) {
     fun saveConfig(newConfig: AppConfig) {
         config = newConfig
         prefs.edit().putString("config_json", gson.toJson(newConfig)).apply()
+    }
+
+    // Effect to handle forced updates
+    LaunchedEffect(updateInfo) {
+        if (updateInfo?.forceUpdate == true && config.isAppEnabled) {
+            saveConfig(config.copy(isAppEnabled = false))
+        }
     }
 
     // Custom navigate function to track previous screen
@@ -73,6 +81,7 @@ fun TypeAssistApp(client: OkHttpClient) {
                 "home" -> HomeScreen(
                     config = config,
                     context = context,
+                    updateInfo = updateInfo, // Pass updateInfo down
                     onToggle = { newState -> 
                         saveConfig(config.copy(isAppEnabled = newState)) 
                     },
