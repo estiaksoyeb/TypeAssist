@@ -80,6 +80,18 @@ object UtilityBelt {
                     } else if (ch >= '0'.code && ch <= '9'.code || ch == '.'.code) { // numbers
                         while (ch >= '0'.code && ch <= '9'.code || ch == '.'.code) nextChar()
                         x = expression.substring(startPos, pos).toDouble()
+                    } else if (ch >= 'a'.code && ch <= 'z'.code) { // functions
+                        while (ch >= 'a'.code && ch <= 'z'.code) nextChar()
+                        val func = expression.substring(startPos, pos)
+                        x = parseFactor()
+                        x = when (func) {
+                            "sqrt" -> Math.sqrt(x)
+                            "sin" -> Math.sin(Math.toRadians(x))
+                            "cos" -> Math.cos(Math.toRadians(x))
+                            "tan" -> Math.tan(Math.toRadians(x))
+                            "log" -> Math.log10(x)
+                            else -> throw RuntimeException("Unknown function: $func")
+                        }
                     } else {
                         throw RuntimeException("Unexpected: " + ch.toChar())
                     }
@@ -94,7 +106,8 @@ object UtilityBelt {
             if (result % 1.0 == 0.0) {
                 result.toLong().toString()
             } else {
-                result.toString()
+                // Format to a reasonable number of decimal places
+                String.format("%.4f", result).trimEnd('0').trimEnd('.')
             }
         } catch (e: Exception) {
             "Error"

@@ -130,10 +130,7 @@ class MyAccessibilityService : AccessibilityService() {
 
                 // --- Utility Belt ---
                 // 1. Calculator: (.c: expression)
-                val calcMatcher = Pattern.compile("\\(\\.c:(.+?)\\)").matcher(currentText)
-                if (calcMatcher.find()) {
-                    val fullMatch = calcMatcher.group(0) ?: ""
-                    val expr = calcMatcher.group(1) ?: ""
+                findBalancedCommand(currentText, "(.c:")?.let { (fullMatch, expr) ->
                     val result = com.typeassist.app.utils.UtilityBelt.evaluateMath(expr)
 
                     originalTextCache = currentText
@@ -371,6 +368,36 @@ class MyAccessibilityService : AccessibilityService() {
         sb.append(Pattern.quote(parts[2]))
         
         return sb.toString()
+    }
+
+    private fun findBalancedCommand(text: String, startPattern: String): Pair<String, String>? {
+        val startIndex = text.lastIndexOf(startPattern)
+        if (startIndex == -1) return null
+
+        val contentStartIndex = startIndex + startPattern.length
+        var balance = 0
+        var endIndex = -1
+
+        for (i in contentStartIndex until text.length) {
+            when (text[i]) {
+                '(' -> balance++
+                ')' -> {
+                    if (balance == 0) {
+                        endIndex = i
+                        break
+                    }
+                    balance--
+                }
+            }
+        }
+
+        if (endIndex != -1) {
+            val fullMatch = text.substring(startIndex, endIndex + 1)
+            val expression = text.substring(contentStartIndex, endIndex)
+            return Pair(fullMatch, expression)
+        }
+
+        return null
     }
 
     override fun onInterrupt() { hideLoading(); hideUndoButton() }
