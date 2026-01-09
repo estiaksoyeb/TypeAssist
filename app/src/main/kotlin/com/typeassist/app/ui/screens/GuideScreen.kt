@@ -83,7 +83,7 @@ fun GuideScreen(onBack: () -> Unit) {
 
             item { GuideSection("3. Snippets (Text Expander)", "Save frequently used text for quick access.", 
                 listOf(
-                    GuideItem("ta#name", "Expand Snippet", "Type the prefix 'ta#' followed by the snippet name.\nExample: 'ta#email' -> 'user@example.com'"),
+                    GuideItem("..name", "Expand Snippet", "Type the prefix '..' followed by the snippet name.\nExample: '..email' -> 'user@example.com'"),
                     GuideItem("(.save:name:content)", "Quick Save", "Save a new snippet instantly.\nExample: '(.save:addr:123 Main St)'")
                 ))
             }

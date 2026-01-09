@@ -61,15 +61,15 @@ fun createDefaultConfig(): AppConfig {
         ),
         inlineCommands = mutableListOf(
             InlineCommand("(.ta:%)", "Give only the most relevant and complete answer to the query. Do not explain, do not add introductions, disclaimers, or extra text. Output only the answer."),
-            InlineCommand("[.g:%]", "Fix grammar, spelling, and punctuation. Return only the corrected text."),
-            InlineCommand("{{.polite:%}}", "Rewrite the text in a polite and professional tone. Return only the rewritten text.")
+            InlineCommand("(.g:%)", "Fix grammar, spelling, and punctuation. Return only the corrected text."),
+            InlineCommand("(.polite:%)", "Rewrite the text in a polite and professional tone. Return only the rewritten text.")
         ),
         snippets = mutableListOf( // Default snippets
             Snippet("email", "user@example.com"),
             Snippet("sign", "Best regards,\nUser")
         ),
         undoCommandPattern = ".undo",
-        snippetTriggerPrefix = "ta#",
+        snippetTriggerPrefix = "..",
         saveSnippetPattern = "(.save:%:%)"
     )
 }
