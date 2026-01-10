@@ -62,9 +62,13 @@ class MainActivity : ComponentActivity() {
         val prefs = getSharedPreferences("UpdateInfo", Context.MODE_PRIVATE)
         val json = prefs.getString("update_json", null)
         if (json != null) {
-            val info = Gson().fromJson(json, UpdateInfo::class.java)
-            if (info.versionCode > getCurrentVersionCode()) {
-                updateInfoState = info
+            try {
+                val info = Gson().fromJson(json, UpdateInfo::class.java)
+                if (info.versionCode > getCurrentVersionCode()) {
+                    updateInfoState = info
+                }
+            } catch (e: Exception) {
+                // Ignore parsing errors
             }
         }
     }

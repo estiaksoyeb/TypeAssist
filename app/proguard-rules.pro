@@ -20,5 +20,12 @@
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
 
+# Gson specific rules
+-keepattributes Signature
+-keepattributes *Annotation*
+-keep class com.google.gson.reflect.TypeToken { *; }
+-keep class * extends com.google.gson.reflect.TypeToken
+
 # Keep data classes safe for Gson serialization/deserialization
 -keep class com.typeassist.app.data.** { *; }
+-keep class com.typeassist.app.utils.UpdateInfo { *; }

@@ -22,13 +22,12 @@ object UpdateManager {
     suspend fun checkForUpdates(context: Context): UpdateInfo? {
         return withContext(Dispatchers.IO) {
             try {
-                val request = Request.Builder().url(UPDATE_URL).build()
+                val request = Request.Builder().url("$UPDATE_URL?t=${System.currentTimeMillis()}").build()
                 val response = client.newCall(request).execute()
                 
                 if (response.isSuccessful) {
                     val json = response.body?.string()
                     val info = Gson().fromJson(json, UpdateInfo::class.java)
-                    
                     val currentVersionCode = context.packageManager.getPackageInfo(context.packageName, 0).versionCode
                     
                     if (info.versionCode > currentVersionCode) {

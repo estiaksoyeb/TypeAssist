@@ -2,7 +2,7 @@ name: Pre-Release (Nightly)
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "master" ]
 
 jobs:
   build:
