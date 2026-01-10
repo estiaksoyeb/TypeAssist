@@ -47,6 +47,12 @@ import androidx.compose.ui.res.painterResource
 import com.typeassist.app.R
 import com.typeassist.app.ui.components.TypingAnimationPreview
 
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Favorite
+
 @Composable
 fun HomeScreen(config: AppConfig, context: Context, updateInfo: UpdateInfo?, onToggle: (Boolean) -> Unit, onNavigate: (String) -> Unit) {
     val activity = context as MainActivity
@@ -256,6 +262,10 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: UpdateInfo?, onT
             
             Spacer(modifier = Modifier.height(40.dp))
 
+            DonationSection()
+
+            Spacer(modifier = Modifier.height(24.dp))
+
             DeveloperCreditSection()
 
             Spacer(modifier = Modifier.height(40.dp))
@@ -355,8 +365,8 @@ fun DeveloperCreditSection() {
                 Spacer(modifier = Modifier.height(16.dp))
                 SocialLink(
                     icon = R.drawable.ic_fab_github,
-                    text = "GitHub",
-                    url = "https://github.com/estiaksoyeb"
+                    text = "Source Code (GitHub)",
+                    url = "https://github.com/estiaksoyeb/TypeAssist"
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 SocialLink(
@@ -381,7 +391,7 @@ fun DeveloperCreditSection() {
 fun SocialLink(icon: Int, text: String, url: String) {
     val uriHandler = LocalUriHandler.current
     val annotatedString = buildAnnotatedString {
-        withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary, textDecoration = TextDecoration.Underline)) {
+        withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)) {
             append(text)
         }
     }
@@ -401,5 +411,72 @@ fun SocialLink(icon: Int, text: String, url: String) {
             text = annotatedString,
             fontSize = 16.sp
         )
+    }
+}
+
+@Composable
+fun DonationSection() {
+    val clipboardManager = LocalClipboardManager.current
+    val context = LocalContext.current
+    
+    Card(
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(1.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Favorite, null, tint = Color(0xFFE11D48)) // Pink/Red color for heart
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    "Support Development",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                "This app is free and open source. If it saves you time, please consider supporting via Binance/Crypto.",
+                color = Color.Gray,
+                fontSize = 14.sp
+            )
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            DonationItem(
+                label = "Binance Pay ID (No Fee)",
+                value = "724197813",
+                clipboardManager = clipboardManager,
+                context = context
+            )
+            HorizontalDivider(color = Color.LightGray.copy(alpha = 0.3f), modifier = Modifier.padding(vertical = 8.dp))
+            DonationItem(
+                label = "USDT (TRC20)",
+                value = "TPP5S7HdV4Hrrtp5Cjz7TNtttUAfZXJz5a",
+                clipboardManager = clipboardManager,
+                context = context
+            )
+        }
+    }
+}
+
+@Composable
+fun DonationItem(label: String, value: String, clipboardManager: androidx.compose.ui.platform.ClipboardManager, context: Context) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(label, fontSize = 12.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+            Text(value, fontSize = 14.sp, color = Color.Black, fontFamily = FontFamily.Monospace)
+        }
+        
+        IconButton(onClick = {
+            clipboardManager.setText(AnnotatedString(value))
+            android.widget.Toast.makeText(context, "Copied $label!", android.widget.Toast.LENGTH_SHORT).show()
+        }) {
+            Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = Color.Gray)
+        }
     }
 }
