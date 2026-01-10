@@ -1,94 +1,118 @@
-# TypeAssist
+# TypeAssist 🚀
 
-TypeAssist is a powerful Android Accessibility Service that acts as an intelligent keyboard assistant. It integrates AI (Google Gemini, Cloudflare Workers AI) and offline utility tools directly into any text input field on your device. Whether you need grammar correction, translation, quick calculations, or text snippets, TypeAssist is just a trigger away.
+<p align="center">
+  <img src="app/src/main/ic_launcher-playstore.png" width="128" height="128" />
+</p>
 
-## Features
+<p align="center">
+  <b>Intelligent AI-Powered Keyboard Assistant for Android</b>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Platform-Android-brightgreen.svg" />
+  <img src="https://img.shields.io/badge/License-GPLv3-blue.svg" />
+  <img src="https://img.shields.io/badge/Kotlin-1.9+-purple.svg" />
+</p>
+
+TypeAssist is a powerful Android Accessibility Service that acts as an intelligent layer over your existing keyboard. It integrates cutting-edge AI (Google Gemini, Cloudflare Workers AI) and a suite of offline utility tools directly into any text input field on your device. 
+
+No more switching apps to fix grammar, translate text, or calculate math. TypeAssist is always just a trigger away.
+
+---
+
+## 📸 Screenshots
+
+<p align="center">
+  <img src="screenshots/1.png" width="200" />
+  <img src="screenshots/2.png" width="200" />
+  <img src="screenshots/3.png" width="200" />
+</p>
+<p align="center">
+  <img src="screenshots/4.png" width="200" />
+  <img src="screenshots/5.png" width="200" />
+  <img src="screenshots/6.png" width="200" />
+</p>
+
+---
+
+## ✨ Features
 
 ### 🤖 AI Capabilities
 *   **Ask AI:** Query Google Gemini or Cloudflare Workers AI directly from any app.
-*   **Grammar Fix:** Instantly correct spelling and grammar errors.
-*   **Translation:** Translate text to English (default) or other languages.
-*   **Tone Adjustment:** Rewrite messages to be more polite or professional.
+*   **Grammar Fix:** Instantly correct spelling, punctuation, and grammar errors.
+*   **Translation:** Translate text from any language to English (or your preferred language).
+*   **Tone Adjustment:** Rewrite messages to be more professional, polite, or friendly.
 *   **Inline Commands:** Embed AI queries within sentences using `(.ta: your prompt)`.
 
 ### 🛠 Utility Belt (Offline Tools)
-*   **Smart Calculator:** Solve complex math expressions in-place.
-    *   Supports `+`, `-`, `*`, `/`, `^`, `()`, `sqrt`, `sin`, `cos`, `tan`, `log`.
+*   **Smart Calculator:** Solve math expressions in-place.
     *   Example: `(.c: 25 * 4 + 10)` -> `110`
 *   **Snippets (Text Expander):** Expand shortcuts into full text blocks.
-    *   Example: `ta#email` -> `user@example.com`
-    *   Quick Save: `(.save:addr:123 Main St)`
-*   **Date & Time:** Insert current timestamps.
-    *   `.now` -> `2023-12-25 14:30`
-    *   `.date` -> `Thursday, Dec 25`
+    *   Example: `..email` -> `user@example.com`
+*   **Date & Time:** Insert current timestamps with `.now` or `.date`.
 *   **Password Generator:** Generate strong random passwords on the fly with `.pass`.
 
-### 🛡 Safety & History
-*   **Global Undo:** Revert any TypeAssist action using the `.undo` command or the dedicated UNDO button (active for 2 minutes).
-*   **History Manager:** View and recover original text from the last 2 minutes via the History screen.
-*   **Offline Mode:** Use snippets and utility tools without an internet connection or API key.
+### 🛡 Safety & Privacy
+*   **Global Undo:** Revert any action instantly using `.undo`.
+*   **History Manager:** View and recover original text from the last 2 minutes.
+*   **Privacy First:** Processes text **only** when a trigger is detected. No data is stored permanently.
 
-### ⚙️ Customization
-*   **Multiple Providers:** Choose between Google Gemini (default) and Cloudflare Workers AI.
-*   **Custom Triggers:** Create your own regex-based triggers for AI actions.
-*   **Command Management:** Enable/disable specific commands via the UI.
+---
 
-## Usage Guide
+## 📖 Usage Guide
 
 ### Standard Triggers
-Type the text followed by the trigger to process it.
+Type your text followed by a trigger to process it.
 
 | Trigger | Action | Example |
 | :--- | :--- | :--- |
-| `.ta` | Ask AI | `Capital of France? .ta` |
-| `.g` | Fix Grammar | `Im going home .g` |
-| `.tr` | Translate | `Hola mundo .tr` |
-| `.polite` | Polite Tone | `Send me the file .polite` |
-| `.undo` | Undo Action | Reverts the last change |
+| `.ta` | Ask AI | `Population of Tokyo? .ta` |
+| `.g` | Fix Grammar | `i go home yestarday .g` |
+| `.tr` | Translate | `你好世界 .tr` |
+| `.polite` | Polite Tone | `Give me the money .polite` |
+| `.undo` | Undo | Reverts the last replacement |
 
-### Inline Commands
-Process specific parts of your text without affecting the rest.
+---
 
-*   **AI Query:** `I am visiting (.ta: capital of Japan) next week.`
-*   **Calculator:** `The total is (.c: 50 * 1.2) dollars.`
+## 📥 Installation & Setup
 
-### Snippets
-*   **Expand:** Type `ta#` followed by your snippet name (e.g., `ta#mybio`).
-*   **Create:** Use `(.save:name:content)` to create a snippet named "name" with "content".
+1.  **Download:** Get the latest APK from the [Releases](https://github.com/estiaksoyeb/TypeAssist/releases) page.
+2.  **Permissions:** Enable the **TypeAssist Accessibility Service** in your Android Settings.
+3.  **API Key:** Open the app, go to **Settings**, and add your **Google Gemini** or **Cloudflare** API key.
+4.  **Start Typing:** Open any app (WhatsApp, Notes, Chrome) and try a trigger!
 
-## Installation
+---
 
-1.  **Download & Install** the APK.
-2.  **Grant Permissions:**
-    *   Open the app and follow the prompt to enable the **Accessibility Service** for TypeAssist.
-    *   This is required to read and replace text in other apps.
-3.  **Configure API Key:**
-    *   Go to **Settings**.
-    *   Select your AI Provider (Gemini or Cloudflare).
-    *   Enter your API Key.
-    *   (Optional) Enable "Offline Mode" to use only Utility Belt features.
+## 🤝 Support Development
 
-## Development
+If TypeAssist helps you in your daily workflow, consider supporting the development! Since traditional payment methods like PayPal are unavailable in my region, I accept donations via Binance and Cryptocurrency.
 
-### Tech Stack
+**Preferred Method (Zero Fees):**
+*   **Binance Pay ID:** `724197813`
+
+**Other Cryptocurrencies:**
+*   **USDT (TRC20):** `TPP5S7HdV4Hrrtp5Cjz7TNtttUAfZXJz5a`
+*   **TRX (Tron):** `TPP5S7HdV4Hrrtp5Cjz7TNtttUAfZXJz5a`
+
+*Every bit helps keep this project open-source and covers the maintenance costs.*
+
+---
+
+## 🛠 Tech Stack
+*   **UI:** Jetpack Compose (Material 3)
 *   **Language:** Kotlin
-*   **UI:** Jetpack Compose (Material3)
-*   **Architecture:** MVVM
+*   **Network:** OkHttp / Gson
 *   **Service:** Android AccessibilityService
-*   **Networking:** OkHttp, Retrofit/Gson
-*   **Build System:** Gradle
 
-### Project Structure
-*   `app/src/main/kotlin/com/typeassist/app/service/MyAccessibilityService.kt`: Core logic for text monitoring and replacement.
-*   `app/src/main/kotlin/com/typeassist/app/utils/UtilityBelt.kt`: Logic for offline tools (Math, Date, Password).
-*   `app/src/main/kotlin/com/typeassist/app/ui`: Jetpack Compose UI screens.
+---
 
-## Privacy Note
-TypeAssist uses an Accessibility Service to function. It processes text *only* when you type a specific trigger.
-*   **No data is stored permanently** unless you save a Snippet.
-*   **History is ephemeral** (cleared after 2 minutes or app restart).
-*   **Internet access** is used solely for AI API calls (Gemini/Cloudflare) and checking for updates.
+## 📜 License
+Distributed under the **GPLv3 License**. See `LICENSE` for more information.
 
-## Credits
-*   **Icons:** Font Awesome 5 Free (Brand icons) & Material Icons.
-*   **AI:** Google Gemini & Cloudflare Workers AI.
+---
+
+## 🔒 Privacy Note
+TypeAssist uses an Accessibility Service to function. 
+- It does **not** log your keystrokes.
+- It does **not** send data to any server unless you explicitly use an AI trigger (`.ta`, `.g`, etc.).
+- It is fully **Open Source**, so you can audit the code yourself for peace of mind.
