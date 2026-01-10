@@ -94,64 +94,72 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: UpdateInfo?, onT
     Column(modifier = Modifier.fillMaxSize()) {
         
         // === 1. FIXED HEADER & MASTER SWITCH ===
-        Box(
-            contentAlignment = Alignment.TopCenter,
+        Column(
             modifier = Modifier.fillMaxWidth().zIndex(1f)
         ) {
-            Box(modifier = Modifier.fillMaxWidth().height(130.dp).background(MaterialTheme.colorScheme.primary))
-
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+            // Blue Background Section (Wraps Text)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.primary)
             ) {
-                Column(modifier = Modifier.padding(top = 16.dp, bottom = 20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp, bottom = 45.dp), // Extra bottom padding for card overlap
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
                     Text("TypeAssist", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold)
                     Text("AI Power for your keyboard", color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp)
                 }
+            }
 
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(6.dp),
-                    modifier = Modifier.fillMaxWidth()
+            // Master Switch Card (Overlaps upwards)
+            Card(
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(6.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .offset(y = (-35).dp) // Move up to overlap
+            ) {
+                Row(
+                    modifier = Modifier.padding(20.dp).fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(
-                        modifier = Modifier.padding(20.dp).fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text("Master Switch", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                            val isUpdateForced = updateInfo?.forceUpdate == true
-                            val statusText = if (isUpdateForced) "Update Required" else if(config.isAppEnabled) "Service Active" else "Service Paused"
-                            val statusColor = if (isUpdateForced) Color.Red else if(config.isAppEnabled) MaterialTheme.colorScheme.secondary else Color.Gray
-                            Text(statusText, color = statusColor, fontSize = 12.sp)
-                        }
-                        Switch(
-                            checked = config.isAppEnabled, 
-                            enabled = updateInfo?.forceUpdate != true,
-                            onCheckedChange = { newState ->
-                                if (newState) {
-                                    if (!activity.isAccessibilityEnabled()) {
-                                        android.widget.Toast.makeText(context, "⚠️ Please Enable Accessibility Service first", android.widget.Toast.LENGTH_SHORT).show()
-                                        context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
-                                        return@Switch
-                                    }
-                                    if (config.apiKey.isBlank()) {
-                                        showApiKeyDialog = true
-                                        return@Switch
-                                    }
-                                }
-                                onToggle(newState)
-                            }
-                        )
+                    Column {
+                        Text("Master Switch", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                        val isUpdateForced = updateInfo?.forceUpdate == true
+                        val statusText = if (isUpdateForced) "Update Required" else if(config.isAppEnabled) "Service Active" else "Service Paused"
+                        val statusColor = if (isUpdateForced) Color.Red else if(config.isAppEnabled) MaterialTheme.colorScheme.secondary else Color.Gray
+                        Text(statusText, color = statusColor, fontSize = 12.sp)
                     }
+                    Switch(
+                        checked = config.isAppEnabled, 
+                        enabled = updateInfo?.forceUpdate != true,
+                        onCheckedChange = { newState ->
+                            if (newState) {
+                                if (!activity.isAccessibilityEnabled()) {
+                                    android.widget.Toast.makeText(context, "⚠️ Please Enable Accessibility Service first", android.widget.Toast.LENGTH_SHORT).show()
+                                    context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                                    return@Switch
+                                }
+                                if (config.apiKey.isBlank()) {
+                                    showApiKeyDialog = true
+                                    return@Switch
+                                }
+                            }
+                            onToggle(newState)
+                        }
+                    )
                 }
             }
         }
 
         // === 2. SCROLLABLE CONTENT ===
         Column(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp).verticalScroll(rememberScrollState())) {
-            Spacer(modifier = Modifier.height(16.dp))
+            // Spacer removed to compensate for Header offset gap
             
             Button(
                 onClick = { context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }, 
