@@ -28,11 +28,9 @@ object UpdateManager {
                 if (response.isSuccessful) {
                     val json = response.body?.string()
                     val info = Gson().fromJson(json, UpdateInfo::class.java)
-                    val currentVersionCode = context.packageManager.getPackageInfo(context.packageName, 0).versionCode
                     
-                    if (info.versionCode > currentVersionCode) {
-                        return@withContext info
-                    }
+                    // Return info regardless of version check so MainActivity can handle cache clearing logic
+                    return@withContext info
                 }
             } catch (e: Exception) {
                 e.printStackTrace()

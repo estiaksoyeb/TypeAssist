@@ -75,23 +75,23 @@ class MainActivity : ComponentActivity() {
     
     private fun checkForUpdates() {
         lifecycleScope.launch {
-            val newUpdateInfo = UpdateManager.checkForUpdates(this@MainActivity)
+            val remoteInfo = UpdateManager.checkForUpdates(this@MainActivity)
             val prefs = getSharedPreferences("UpdateInfo", Context.MODE_PRIVATE)
+            val currentVersion = getCurrentVersionCode()
             
-            if (newUpdateInfo != null) {
-                // New update found online, save it and show dialog
-                prefs.edit().putString("update_json", Gson().toJson(newUpdateInfo)).apply()
-                updateInfoState = newUpdateInfo
-            } else {
-                // No update found online, clear cached info if user is up-to-date
-                val currentVersion = getCurrentVersionCode()
-                updateInfoState?.let {
-                    if (it.versionCode <= currentVersion) {
-                        prefs.edit().remove("update_json").apply()
-                        updateInfoState = null
-                    }
+            if (remoteInfo != null) {
+                if (remoteInfo.versionCode > currentVersion) {
+                    // Valid new update found
+                    prefs.edit().putString("update_json", Gson().toJson(remoteInfo)).apply()
+                    updateInfoState = remoteInfo
+                } else {
+                    // Remote version is same or older (e.g. user updated, or server downgrade)
+                    // Force clear cache and hide dialog
+                    prefs.edit().remove("update_json").apply()
+                    updateInfoState = null
                 }
-            }
+            } 
+            // If remoteInfo is null (network error), we do nothing and let the cached info (loaded in onCreate) persist if it exists.
         }
     }
     
