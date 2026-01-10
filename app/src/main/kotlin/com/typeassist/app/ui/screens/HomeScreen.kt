@@ -45,12 +45,14 @@ import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.ui.res.painterResource
 import com.typeassist.app.R
+import com.typeassist.app.ui.components.TypingAnimationPreview
 
 @Composable
 fun HomeScreen(config: AppConfig, context: Context, updateInfo: UpdateInfo?, onToggle: (Boolean) -> Unit, onNavigate: (String) -> Unit) {
     val activity = context as MainActivity
     var hasPermission by remember { mutableStateOf(false) }
     var showApiKeyDialog by remember { mutableStateOf(false) }
+    var showTroubleshootDialog by remember { mutableStateOf(false) }
     val lifecycleOwner = LocalLifecycleOwner.current
     
     val view = LocalView.current
@@ -69,6 +71,23 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: UpdateInfo?, onT
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    if (showTroubleshootDialog) {
+        AlertDialog(
+            onDismissRequest = { showTroubleshootDialog = false },
+            title = { Text("App not working?") },
+            text = { Text("If the app is not working, the Accessibility Service might be in a 'ghost' state.\n\nTry turning the Accessibility Service OFF and then ON again to reset it.") },
+            confirmButton = {
+                Button(onClick = {
+                    showTroubleshootDialog = false
+                    context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                }) { Text("Open Settings") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showTroubleshootDialog = false }) { Text("Cancel") }
+            }
+        )
     }
 
     if (showApiKeyDialog) {
@@ -161,14 +180,18 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: UpdateInfo?, onT
         Column(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp).verticalScroll(rememberScrollState())) {
             // Spacer removed to compensate for Header offset gap
             
-            Button(
-                onClick = { context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }, 
-                modifier = Modifier.fillMaxWidth().height(50.dp), 
-                colors = ButtonDefaults.buttonColors(containerColor = if (hasPermission) Color(0xFF10B981) else Color(0xFF111827)), 
-                shape = RoundedCornerShape(12.dp)
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
             ) {
-                Text(if (hasPermission) "Permission Granted ✅" else "Enable Accessibility Permission ⚠️")
+                Text(
+                    text = "App not working? Troubleshoot",
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.clickable { showTroubleshootDialog = true }
+                )
             }
+
             
             Spacer(modifier = Modifier.height(24.dp))
             
@@ -190,6 +213,12 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: UpdateInfo?, onT
                 MenuCard(Modifier.weight(1f), "Snippets", Icons.Default.Star, Color(0xFFF59E0B)) { onNavigate("snippets") }
             }
 
+            // Live Preview
+            Spacer(modifier = Modifier.height(24.dp))
+            Text("How it Works", fontWeight = FontWeight.Bold, color = Color.Gray)
+            Spacer(modifier = Modifier.height(8.dp))
+            TypingAnimationPreview()
+
             // Instructions
             Spacer(modifier = Modifier.height(24.dp))
             Card(colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(1.dp), modifier = Modifier.fillMaxWidth()) {
@@ -203,7 +232,7 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: UpdateInfo?, onT
                     StepItem("1", "Enable Master Switch & Permission above.")
                     StepItem("2", "Go to API Setup and add your Gemini Key.")
                     StepItem("3", "Open any app (WhatsApp, Notes, etc).")
-                    StepItem("4", "Type text + trigger (e.g. 'Hello .ta').")
+                    StepItem("4", "Type text + trigger (e.g. 'i go home yestarday .g').")
                     
                     Spacer(modifier = Modifier.height(16.dp))
                     OutlinedButton(

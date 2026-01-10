@@ -28,12 +28,15 @@ import okhttp3.OkHttpClient
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun TypeAssistApp(client: OkHttpClient, updateInfo: UpdateInfo?) {
-    var currentScreen by rememberSaveable { mutableStateOf("home") }
-    var previousScreen by rememberSaveable { mutableStateOf("home") } // Track previous screen for animation
     val context = LocalContext.current
     val gson = GsonBuilder().setPrettyPrinting().create()
     val prefs = context.getSharedPreferences("GeminiConfig", Context.MODE_PRIVATE)
-    
+
+    // Determine initial screen
+    val hasSeenOnboarding = prefs.getBoolean("has_seen_onboarding", false)
+    var currentScreen by rememberSaveable { mutableStateOf(if (hasSeenOnboarding) "home" else "welcome") }
+    var previousScreen by rememberSaveable { mutableStateOf("home") } // Track previous screen for animation
+
     var config by remember(currentScreen) { 
         mutableStateOf(try {
             val json = prefs.getString("config_json", null)
@@ -59,7 +62,7 @@ fun TypeAssistApp(client: OkHttpClient, updateInfo: UpdateInfo?) {
         currentScreen = screen
     }
 
-    BackHandler(enabled = currentScreen != "home") {
+    BackHandler(enabled = currentScreen != "home" && currentScreen != "welcome") {
         navigateTo("home") // Use the custom navigate function for back press
     }
 
@@ -78,6 +81,12 @@ fun TypeAssistApp(client: OkHttpClient, updateInfo: UpdateInfo?) {
             }
         ) { screen ->
             when (screen) {
+                "welcome" -> WelcomeScreen(
+                    onFinished = {
+                        prefs.edit().putBoolean("has_seen_onboarding", true).apply()
+                        navigateTo("home")
+                    }
+                )
                 "home" -> HomeScreen(
                     config = config,
                     context = context,
