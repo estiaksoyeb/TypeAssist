@@ -42,11 +42,15 @@ jobs:
       env:
         BUILD_TOOLS_VERSION: "34.0.0"
 
-    # 3. Upload the SIGNED APK to the Release page
+    # 3. Rename APK to something nicer
+    - name: Rename Signed APK
+      run: mv "${{ steps.sign_app.outputs.signedReleaseFile }}" "TypeAssist-${{ github.ref_name }}.apk"
+
+    # 4. Upload the SIGNED APK to the Release page
     - name: Create Release
       uses: softprops/action-gh-release@v2 # Updated to v2
       with:
-        files: ${{ steps.sign_app.outputs.signedReleaseFile }}
+        files: TypeAssist-${{ github.ref_name }}.apk
         draft: false
         prerelease: false
         generate_release_notes: true
