@@ -46,11 +46,10 @@ jobs:
     - name: Rename Signed APK
       run: mv "${{ steps.sign_app.outputs.signedReleaseFile }}" "TypeAssist-${{ github.ref_name }}.apk"
 
-    # 4. Upload the SIGNED APK to the Release page
-    - name: Create Release
-      uses: softprops/action-gh-release@v2 # Updated to v2
+    # 4. Upload APK as Artifact (So you can download it and release manually)
+    - name: Upload Signed APK Artifact
+      uses: actions/upload-artifact@v4
       with:
-        files: TypeAssist-${{ github.ref_name }}.apk
-        draft: false
-        prerelease: false
-        generate_release_notes: true
+        name: TypeAssist-Signed-APK
+        path: TypeAssist-${{ github.ref_name }}.apk
+        if-no-files-found: error
