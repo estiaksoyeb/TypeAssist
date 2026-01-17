@@ -10,7 +10,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
@@ -25,7 +25,6 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -39,6 +38,71 @@ import java.io.IOException
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(config: AppConfig, client: OkHttpClient, onSave: (AppConfig) -> Unit, onBack: () -> Unit) {
+    var selectedTab by remember { mutableStateOf(0) }
+    
+    val view = LocalView.current
+    val primaryColor = MaterialTheme.colorScheme.primary
+
+    Scaffold(topBar = { TopAppBar(title = { Text("Settings") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } }, colors = TopAppBarDefaults.topAppBarColors(containerColor = primaryColor, titleContentColor = Color.White, navigationIconContentColor = Color.White)) }) { innerPadding ->
+        Column(modifier = Modifier.padding(innerPadding)) {
+            TabRow(
+                selectedTabIndex = selectedTab,
+                containerColor = primaryColor,
+                contentColor = Color.White
+            ) {
+                Tab(selected = selectedTab == 0, onClick = { selectedTab = 0 }, text = { Text("General") })
+                Tab(selected = selectedTab == 1, onClick = { selectedTab = 1 }, text = { Text("AI Provider") })
+            }
+            
+            Column(modifier = Modifier.padding(16.dp).verticalScroll(rememberScrollState())) {
+                if (selectedTab == 0) {
+                    GeneralSettingsTab(config, onSave)
+                } else {
+                    AiProviderSettingsTab(config, client, onSave)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun GeneralSettingsTab(config: AppConfig, onSave: (AppConfig) -> Unit) {
+    var enableUndoOverlay by remember { mutableStateOf(config.enableUndoOverlay) }
+    var enableLoadingOverlay by remember { mutableStateOf(config.enableLoadingOverlay) }
+    
+    Text("Overlay Settings", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = MaterialTheme.colorScheme.primary)
+    Spacer(Modifier.height(16.dp))
+    
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text("Show Undo Button", fontWeight = FontWeight.Bold)
+            Text("Show an 'UNDO' button overlay after text replacement.", fontSize = 12.sp, color = Color.Gray)
+        }
+        Switch(checked = enableUndoOverlay, onCheckedChange = { 
+            enableUndoOverlay = it
+            onSave(config.copy(enableUndoOverlay = it))
+        })
+    }
+    
+    Spacer(Modifier.height(16.dp))
+    HorizontalDivider()
+    Spacer(Modifier.height(16.dp))
+    
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text("Show Loading Indicator", fontWeight = FontWeight.Bold)
+            Text("Show a spinner overlay while AI is processing.", fontSize = 12.sp, color = Color.Gray)
+        }
+        Switch(checked = enableLoadingOverlay, onCheckedChange = { 
+            enableLoadingOverlay = it
+            onSave(config.copy(enableLoadingOverlay = it))
+        })
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AiProviderSettingsTab(config: AppConfig, client: OkHttpClient, onSave: (AppConfig) -> Unit) {
     var selectedProvider by remember { mutableStateOf(config.provider) }
     
     // Gemini States
@@ -78,80 +142,73 @@ fun SettingsScreen(config: AppConfig, client: OkHttpClient, onSave: (AppConfig) 
             }
         }
     }
-
-    val view = LocalView.current
+    
     val primaryColor = MaterialTheme.colorScheme.primary
 
-    Scaffold(topBar = { TopAppBar(title = { Text("AI Provider Setup") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Back") } }, colors = TopAppBarDefaults.topAppBarColors(containerColor = primaryColor, titleContentColor = Color.White, navigationIconContentColor = Color.White)) }) {
-        Column(modifier = Modifier.padding(it).padding(16.dp).verticalScroll(rememberScrollState())) {
-            
-            // Provider Selection
-            Text("AI Provider", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.primary)
-            Spacer(Modifier.height(8.dp))
-            ExposedDropdownMenuBox(expanded = providerExpanded, onExpandedChange = { providerExpanded = !providerExpanded }, modifier = Modifier.fillMaxWidth()) {
-                OutlinedTextField(value = selectedProvider.uppercase(), onValueChange = {}, readOnly = true, label = { Text("Select Provider") }, trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = providerExpanded) }, colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(), modifier = Modifier.menuAnchor().fillMaxWidth())
-                ExposedDropdownMenu(expanded = providerExpanded, onDismissRequest = { providerExpanded = false }) { providers.forEach { item -> DropdownMenuItem(text = { Text(text = item.uppercase()) }, onClick = { selectedProvider = item; providerExpanded = false }) } }
-            }
-            
-            Spacer(Modifier.height(24.dp))
-            Divider()
-            Spacer(Modifier.height(24.dp))
+    // Provider Selection
+    Text("AI Provider", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.primary)
+    Spacer(Modifier.height(8.dp))
+    ExposedDropdownMenuBox(expanded = providerExpanded, onExpandedChange = { providerExpanded = !providerExpanded }, modifier = Modifier.fillMaxWidth()) {
+        OutlinedTextField(value = selectedProvider.uppercase(), onValueChange = {}, readOnly = true, label = { Text("Select Provider") }, trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = providerExpanded) }, colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(), modifier = Modifier.menuAnchor().fillMaxWidth())
+        ExposedDropdownMenu(expanded = providerExpanded, onDismissRequest = { providerExpanded = false }) { providers.forEach { item -> DropdownMenuItem(text = { Text(text = item.uppercase()) }, onClick = { selectedProvider = item; providerExpanded = false }) } }
+    }
+    
+    Spacer(Modifier.height(24.dp))
+    HorizontalDivider()
+    Spacer(Modifier.height(24.dp))
 
-            if (selectedProvider == "gemini") {
-                // Gemini Setup
-                OutlinedTextField(value = geminiKey, onValueChange = { geminiKey = it }, label = { Text("Gemini API Key") }, modifier = Modifier.fillMaxWidth(), visualTransformation = if (isKeyVisible) VisualTransformation.None else PasswordVisualTransformation(), trailingIcon = { IconButton(onClick = { isKeyVisible = !isKeyVisible }) { Icon(if (isKeyVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff, null) } })
-                Spacer(Modifier.height(16.dp))
-                ExposedDropdownMenuBox(expanded = modelExpanded, onExpandedChange = { modelExpanded = !modelExpanded }, modifier = Modifier.fillMaxWidth()) {
-                    OutlinedTextField(value = geminiModel, onValueChange = {}, readOnly = true, label = { Text("Select Gemini Model") }, trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = modelExpanded) }, colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(), modifier = Modifier.menuAnchor().fillMaxWidth())
-                    ExposedDropdownMenu(expanded = modelExpanded, onDismissRequest = { modelExpanded = false }) { geminiModels.forEach { item -> DropdownMenuItem(text = { Text(text = item) }, onClick = { geminiModel = item; modelExpanded = false }) } }
-                }
-            } else {
-                // Cloudflare Setup
-                OutlinedTextField(value = cfAccountId, onValueChange = { cfAccountId = it }, label = { Text("Cloudflare Account ID") }, modifier = Modifier.fillMaxWidth())
-                Spacer(Modifier.height(16.dp))
-                OutlinedTextField(value = cfApiToken, onValueChange = { cfApiToken = it }, label = { Text("Cloudflare API Token") }, modifier = Modifier.fillMaxWidth(), visualTransformation = if (isKeyVisible) VisualTransformation.None else PasswordVisualTransformation(), trailingIcon = { IconButton(onClick = { isKeyVisible = !isKeyVisible }) { Icon(if (isKeyVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff, null) } })
-                Spacer(Modifier.height(16.dp))
-                OutlinedTextField(value = cfModel, onValueChange = { cfModel = it }, label = { Text("Cloudflare Model ID") }, modifier = Modifier.fillMaxWidth(), placeholder = { Text("@cf/meta/llama-3-8b-instruct") })
-            }
-
-            Spacer(Modifier.height(24.dp))
-            
-            Button(
-                onClick = { 
-                    val newConfig = config.copy(
-                        provider = selectedProvider,
-                        apiKey = geminiKey.trim(),
-                        model = geminiModel,
-                        cloudflareConfig = CloudflareConfig(
-                            accountId = cfAccountId.trim(),
-                            apiToken = cfApiToken.trim(),
-                            model = cfModel.trim()
-                        )
-                    )
-                    onSave(newConfig)
-                    Toast.makeText(context, "Config Saved", Toast.LENGTH_SHORT).show()
-                    
-                    if (selectedProvider == "gemini" && geminiKey.isNotBlank()) {
-                        verifyGemini(geminiKey.trim())
-                    } else if (selectedProvider == "cloudflare" && cfApiToken.isNotBlank()) {
-                        verifyCloudflare(cfAccountId.trim(), cfApiToken.trim(), cfModel.trim())
-                    }
-                    onBack()
-                }, 
-                modifier = Modifier.fillMaxWidth().height(50.dp), 
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-            ) { 
-                Text("Test and Save Config") 
-            }
-            
-            Spacer(Modifier.height(32.dp))
-            
-            if (selectedProvider == "gemini") {
-                GeminiHelp(primaryColor, context)
-            } else {
-                CloudflareHelp(primaryColor, context)
-            }
+    if (selectedProvider == "gemini") {
+        // Gemini Setup
+        OutlinedTextField(value = geminiKey, onValueChange = { geminiKey = it }, label = { Text("Gemini API Key") }, modifier = Modifier.fillMaxWidth(), visualTransformation = if (isKeyVisible) VisualTransformation.None else PasswordVisualTransformation(), trailingIcon = { IconButton(onClick = { isKeyVisible = !isKeyVisible }) { Icon(if (isKeyVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff, null) } })
+        Spacer(Modifier.height(16.dp))
+        ExposedDropdownMenuBox(expanded = modelExpanded, onExpandedChange = { modelExpanded = !modelExpanded }, modifier = Modifier.fillMaxWidth()) {
+            OutlinedTextField(value = geminiModel, onValueChange = {}, readOnly = true, label = { Text("Select Gemini Model") }, trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = modelExpanded) }, colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(), modifier = Modifier.menuAnchor().fillMaxWidth())
+            ExposedDropdownMenu(expanded = modelExpanded, onDismissRequest = { modelExpanded = false }) { geminiModels.forEach { item -> DropdownMenuItem(text = { Text(text = item) }, onClick = { geminiModel = item; modelExpanded = false }) } }
         }
+    } else {
+        // Cloudflare Setup
+        OutlinedTextField(value = cfAccountId, onValueChange = { cfAccountId = it }, label = { Text("Cloudflare Account ID") }, modifier = Modifier.fillMaxWidth())
+        Spacer(Modifier.height(16.dp))
+        OutlinedTextField(value = cfApiToken, onValueChange = { cfApiToken = it }, label = { Text("Cloudflare API Token") }, modifier = Modifier.fillMaxWidth(), visualTransformation = if (isKeyVisible) VisualTransformation.None else PasswordVisualTransformation(), trailingIcon = { IconButton(onClick = { isKeyVisible = !isKeyVisible }) { Icon(if (isKeyVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff, null) } })
+        Spacer(Modifier.height(16.dp))
+        OutlinedTextField(value = cfModel, onValueChange = { cfModel = it }, label = { Text("Cloudflare Model ID") }, modifier = Modifier.fillMaxWidth(), placeholder = { Text("@cf/meta/llama-3-8b-instruct") })
+    }
+
+    Spacer(Modifier.height(24.dp))
+    
+    Button(
+        onClick = { 
+            val newConfig = config.copy(
+                provider = selectedProvider,
+                apiKey = geminiKey.trim(),
+                model = geminiModel,
+                cloudflareConfig = CloudflareConfig(
+                    accountId = cfAccountId.trim(),
+                    apiToken = cfApiToken.trim(),
+                    model = cfModel.trim()
+                )
+            )
+            onSave(newConfig)
+            Toast.makeText(context, "Config Saved", Toast.LENGTH_SHORT).show()
+            
+            if (selectedProvider == "gemini" && geminiKey.isNotBlank()) {
+                verifyGemini(geminiKey.trim())
+            } else if (selectedProvider == "cloudflare" && cfApiToken.isNotBlank()) {
+                verifyCloudflare(cfAccountId.trim(), cfApiToken.trim(), cfModel.trim())
+            }
+        }, 
+        modifier = Modifier.fillMaxWidth().height(50.dp), 
+        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+    ) { 
+        Text("Test and Save Config") 
+    } 
+    
+    Spacer(Modifier.height(32.dp))
+    
+    if (selectedProvider == "gemini") {
+        GeminiHelp(primaryColor, context)
+    } else {
+        CloudflareHelp(primaryColor, context)
     }
 }
 

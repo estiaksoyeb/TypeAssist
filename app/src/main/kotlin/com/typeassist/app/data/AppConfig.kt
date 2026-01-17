@@ -14,7 +14,9 @@ data class AppConfig(
     var snippets: MutableList<Snippet> = mutableListOf(), // New field for snippets
     var undoCommandPattern: String = ".undo",
     var snippetTriggerPrefix: String = "ta#", // Default prefix for using snippets
-    var saveSnippetPattern: String = "(.save:%:%)" // Default pattern for saving snippets
+    var saveSnippetPattern: String = "(.save:%:%)", // Default pattern for saving snippets
+    var enableUndoOverlay: Boolean = true,
+    var enableLoadingOverlay: Boolean = true
 ) : Serializable
 
 data class CloudflareConfig(
@@ -70,6 +72,8 @@ fun createDefaultConfig(): AppConfig {
         ),
         undoCommandPattern = ".undo",
         snippetTriggerPrefix = "..",
-        saveSnippetPattern = "(.save:%:%)"
+        saveSnippetPattern = "(.save:%:%)",
+        enableUndoOverlay = true,
+        enableLoadingOverlay = true
     )
 }

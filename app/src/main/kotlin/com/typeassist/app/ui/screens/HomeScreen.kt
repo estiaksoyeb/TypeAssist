@@ -197,7 +197,7 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: UpdateInfo?, onT
             Spacer(modifier = Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 MenuCard(Modifier.weight(1f), "Commands", Icons.Default.Edit, MaterialTheme.colorScheme.primary) { onNavigate("commands") }
-                MenuCard(Modifier.weight(1f), "API Setup", Icons.Default.Settings, MaterialTheme.colorScheme.primary) { onNavigate("settings") }
+                MenuCard(Modifier.weight(1f), "Settings", Icons.Default.Settings, MaterialTheme.colorScheme.primary) { onNavigate("settings") }
             }
             Spacer(modifier = Modifier.height(12.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {

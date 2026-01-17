@@ -128,7 +128,7 @@ class MyAccessibilityService : AccessibilityService() {
 
                     val newText = currentText.replace(fullMatch, result)
                     pasteText(inputNode, newText)
-                    showUndoButton()
+                    showUndoButton(config)
                     return
                 }
 
@@ -155,7 +155,7 @@ class MyAccessibilityService : AccessibilityService() {
 
                     val newText = currentText.substring(0, currentText.length - triggerLen) + utilityResult
                     pasteText(inputNode, newText)
-                    showUndoButton()
+                    showUndoButton(config)
                     return
                 }
 
@@ -187,7 +187,7 @@ class MyAccessibilityService : AccessibilityService() {
                         HistoryManager.add(originalTextCache) // Save to history
                         lastNode = inputNode
 
-                        showLoading()
+                        showLoading(config)
                         hideUndoButton()
 
                         performAICall(config, inlinePromptTemplate, userPrompt) { result ->
@@ -195,7 +195,7 @@ class MyAccessibilityService : AccessibilityService() {
                             result.onSuccess {
                                 val newText = currentText.replace(fullMatchedString, it)
                                 pasteText(inputNode, newText)
-                                showUndoButton()
+                                showUndoButton(config)
                             }.onFailure {
                                 showToast(it.message ?: "Unknown error")
                             }
@@ -218,14 +218,14 @@ class MyAccessibilityService : AccessibilityService() {
                             undoCacheTimestamp = System.currentTimeMillis()
                             HistoryManager.add(originalTextCache) // Save to history
 
-                            showLoading()
+                            showLoading(config)
                             hideUndoButton() 
 
                             performAICall(config, prompt, textToProcess) { result ->
                                 hideLoading()
                                 result.onSuccess {
                                     pasteText(inputNode, it)
-                                    showUndoButton()
+                                    showUndoButton(config)
                                 }.onFailure {
                                     showToast(it.message ?: "Unknown error")
                                 }
@@ -278,7 +278,8 @@ class MyAccessibilityService : AccessibilityService() {
         return true
     }
 
-    private fun showLoading() {
+    private fun showLoading(config: AppConfig) {
+        if (!config.enableLoadingOverlay) return
         Handler(Looper.getMainLooper()).post {
             if (loadingView != null) return@post
             loadingView = FrameLayout(this).apply {
@@ -301,7 +302,8 @@ class MyAccessibilityService : AccessibilityService() {
         }
     }
 
-    private fun showUndoButton() {
+    private fun showUndoButton(config: AppConfig) {
+        if (!config.enableUndoOverlay) return
         Handler(Looper.getMainLooper()).post {
             if (undoView != null) return@post
             undoView = FrameLayout(this)
