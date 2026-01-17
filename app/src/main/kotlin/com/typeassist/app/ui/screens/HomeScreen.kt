@@ -96,7 +96,7 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: UpdateInfo?, onT
             confirmButton = {
                 Button(onClick = { 
                     showApiKeyDialog = false
-                    onNavigate("settings") 
+                    onNavigate("settings:1") 
                 }) { Text("Setup API") }
             },
             dismissButton = {

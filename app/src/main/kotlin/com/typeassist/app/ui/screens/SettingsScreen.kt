@@ -37,8 +37,8 @@ import java.io.IOException
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(config: AppConfig, client: OkHttpClient, onSave: (AppConfig) -> Unit, onBack: () -> Unit) {
-    var selectedTab by remember { mutableStateOf(0) }
+fun SettingsScreen(config: AppConfig, client: OkHttpClient, onSave: (AppConfig) -> Unit, onBack: () -> Unit, initialTab: Int = 0) {
+    var selectedTab by remember { mutableStateOf(initialTab) }
     
     val view = LocalView.current
     val primaryColor = MaterialTheme.colorScheme.primary
@@ -178,7 +178,7 @@ fun AiProviderSettingsTab(config: AppConfig, client: OkHttpClient, onSave: (AppC
     
     Button(
         onClick = { 
-            val newConfig = config.copy(
+            var newConfig = config.copy(
                 provider = selectedProvider,
                 apiKey = geminiKey.trim(),
                 model = geminiModel,
@@ -188,6 +188,13 @@ fun AiProviderSettingsTab(config: AppConfig, client: OkHttpClient, onSave: (AppC
                     model = cfModel.trim()
                 )
             )
+            
+            // Auto-enable logic
+            val hasValidKey = if (selectedProvider == "gemini") geminiKey.isNotBlank() else cfApiToken.isNotBlank()
+            if (!config.isAppEnabled && hasValidKey) {
+                 newConfig = newConfig.copy(isAppEnabled = true)
+            }
+            
             onSave(newConfig)
             Toast.makeText(context, "Config Saved", Toast.LENGTH_SHORT).show()
             

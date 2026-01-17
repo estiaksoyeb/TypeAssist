@@ -80,7 +80,8 @@ fun TypeAssistApp(client: OkHttpClient, updateInfo: UpdateInfo?) {
                 }
             }
         ) { screen ->
-            when (screen) {
+            val route = screen.substringBefore(":")
+            when (route) {
                 "welcome" -> WelcomeScreen(
                     onFinished = {
                         prefs.edit().putBoolean("has_seen_onboarding", true).apply()
@@ -97,12 +98,16 @@ fun TypeAssistApp(client: OkHttpClient, updateInfo: UpdateInfo?) {
                     onNavigate = { navigateTo(it) } // Use custom navigate
                 )
                 "commands" -> CommandsScreen(config, { saveConfig(it) }, { navigateTo("home") }) // Use custom navigate
-                "settings" -> SettingsScreen(
-                    config = config,
-                    client = client,
-                    onSave = { saveConfig(it) },
-                    onBack = { navigateTo("home") } // Use custom navigate
-                )
+                "settings" -> {
+                    val tab = try { screen.split(":")[1].toInt() } catch (e: Exception) { 0 }
+                    SettingsScreen(
+                        config = config,
+                        client = client,
+                        onSave = { saveConfig(it) },
+                        onBack = { navigateTo("home") }, // Use custom navigate
+                        initialTab = tab
+                    )
+                }
                 "json" -> JsonScreen(config, { saveConfig(it) }, { navigateTo("home") }) // Use custom navigate
                 "history" -> HistoryScreen({ navigateTo("home") }) // Use custom navigate
                 "snippets" -> SnippetsScreen(config, { saveConfig(it) }, { navigateTo("home") })
