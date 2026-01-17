@@ -20,6 +20,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Lightbulb
+import androidx.compose.runtime.saveable.rememberSaveable
 import com.typeassist.app.data.AppConfig
 import com.typeassist.app.data.InlineCommand
 import com.typeassist.app.data.Trigger
@@ -29,6 +32,7 @@ import com.typeassist.app.data.Trigger
 fun CommandsScreen(config: AppConfig, onSave: (AppConfig) -> Unit, onBack: () -> Unit) {
     var selectedTab by remember { mutableStateOf(0) }
     var showEditDialog by remember { mutableStateOf(false) }
+    var showTip by rememberSaveable { mutableStateOf(true) }
     var tPattern by remember { mutableStateOf("") }
     var tPrompt by remember { mutableStateOf("") }
     
@@ -79,6 +83,39 @@ fun CommandsScreen(config: AppConfig, onSave: (AppConfig) -> Unit, onBack: () ->
             }
 
             LazyColumn(modifier = Modifier.padding(16.dp)) {
+                if (showTip) {
+                    item {
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+                            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Default.Lightbulb, null, tint = MaterialTheme.colorScheme.primary)
+                                    Spacer(Modifier.width(8.dp))
+                                    Text("Pro Tip: Edit Mid-Sentence", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                                    Spacer(Modifier.weight(1f))
+                                    IconButton(onClick = { showTip = false }, modifier = Modifier.size(24.dp)) {
+                                        Icon(Icons.Default.Close, "Dismiss", tint = Color.Gray)
+                                    }
+                                }
+                                Spacer(Modifier.height(8.dp))
+                                Text(
+                                    "You can create custom commands to transform just a part of your text without losing context.",
+                                    fontSize = 13.sp,
+                                    lineHeight = 18.sp
+                                )
+                                Spacer(Modifier.height(8.dp))
+                                Text(
+                                    "Example: Create a command '.syn' with prompt 'Find a synonym for the last word' to search for words on the fly!",
+                                    fontSize = 12.sp,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f),
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+                    }
+                }
                 if (selectedTab == 0) {
                     items(triggers) { t ->
                         CommandItem(
