@@ -75,8 +75,8 @@ fun TypingAnimationPreview() {
         modifier = Modifier
             .fillMaxWidth()
             .height(140.dp)
-            .border(1.dp, Color.LightGray, RoundedCornerShape(16.dp))
-            .background(Color(0xFFF3F4F6), RoundedCornerShape(16.dp))
+            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(16.dp))
             .padding(16.dp),
         contentAlignment = Alignment.CenterStart
     ) {
@@ -105,7 +105,7 @@ fun TypingAnimationPreview() {
                     }
                 },
                 fontSize = 18.sp,
-                color = Color.Black
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
         

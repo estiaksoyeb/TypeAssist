@@ -12,6 +12,8 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.gson.Gson
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import com.typeassist.app.ui.AppTheme
 import com.typeassist.app.ui.TypeAssistApp
 import com.typeassist.app.ui.components.UpdateDialog
 import com.typeassist.app.utils.UpdateInfo
@@ -25,26 +27,14 @@ class MainActivity : ComponentActivity() {
     private var updateInfoState by mutableStateOf<UpdateInfo?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
-
-        val navBarColor = Color(0xFFF3F4F6)
-        window.navigationBarColor = navBarColor.toArgb()
-        val insetsController = WindowCompat.getInsetsController(window, window.decorView)
-        insetsController.isAppearanceLightNavigationBars = true
 
         loadCachedUpdateInfo()
         checkForUpdates()
 
         setContent {
-            MaterialTheme(
-                colorScheme = lightColorScheme(
-                    primary = Color(0xFF4F46E5),
-                    onPrimary = Color.White,
-                    secondary = Color(0xFF10B981),
-                    background = navBarColor,
-                    surface = Color.White
-                )
-            ) {
+            AppTheme {
                 TypeAssistApp(client, updateInfo = updateInfoState)
                 
                 updateInfoState?.let { update ->

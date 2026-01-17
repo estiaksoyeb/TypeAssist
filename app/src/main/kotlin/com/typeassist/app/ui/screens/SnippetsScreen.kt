@@ -37,13 +37,6 @@ fun SnippetsScreen(config: AppConfig, onSave: (AppConfig) -> Unit, onBack: () ->
 
     val view = LocalView.current
     val primaryColor = MaterialTheme.colorScheme.primary
-    if (!view.isInEditMode) {
-        SideEffect {
-            val window = (view.context as Activity).window
-            window.statusBarColor = primaryColor.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
-        }
-    }
 
     Scaffold(
         topBar = { 
@@ -94,7 +87,7 @@ fun SnippetsScreen(config: AppConfig, onSave: (AppConfig) -> Unit, onBack: () ->
                                 originalTrigger = s.trigger
                                 showEditDialog = true 
                             }, 
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        colors = CardDefaults.cardColors(),
                         elevation = CardDefaults.cardElevation(2.dp)
                     ) {
                         Row(

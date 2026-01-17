@@ -32,13 +32,6 @@ import androidx.core.view.WindowCompat
 fun GuideScreen(onBack: () -> Unit) {
     val view = LocalView.current
     val primaryColor = MaterialTheme.colorScheme.primary
-    if (!view.isInEditMode) {
-        SideEffect {
-            val window = (view.context as Activity).window
-            window.statusBarColor = primaryColor.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
-        }
-    }
 
     Scaffold(
         topBar = {
@@ -115,7 +108,6 @@ fun GuideSection(title: String, subtitle: String, items: List<GuideItem>) {
     
     Card(
         modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp).clickable { expanded = !expanded },
-        colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {

@@ -39,14 +39,6 @@ fun HistoryScreen(onBack: () -> Unit) {
     // Refresh history periodically or just on load? 
     // For simplicity, we refresh on load. The user can go back and forth to refresh.
 
-    if (!view.isInEditMode) {
-        SideEffect {
-            val window = (view.context as Activity).window
-            window.statusBarColor = primaryColor.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
-        }
-    }
-
     Scaffold(
         topBar = { 
             TopAppBar(
@@ -65,7 +57,6 @@ fun HistoryScreen(onBack: () -> Unit) {
                 items(historyItems) { item ->
                     Card(
                         modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
                         elevation = CardDefaults.cardElevation(2.dp)
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {

@@ -29,13 +29,7 @@ fun TestScreen(onStartTest: () -> Unit, onStopTest: () -> Unit, onBack: () -> Un
     
     val view = LocalView.current
     val primaryColor = MaterialTheme.colorScheme.primary
-    if (!view.isInEditMode) {
-        SideEffect {
-            val window = (view.context as Activity).window
-            window.statusBarColor = primaryColor.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
-        }
-    }
+
     DisposableEffect(Unit) { onStartTest(); onDispose { onStopTest() } }
 
     val presets = listOf(
@@ -52,7 +46,7 @@ fun TestScreen(onStartTest: () -> Unit, onStopTest: () -> Unit, onBack: () -> Un
             Text("Quick Test Triggers:", fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(8.dp))
             presets.forEach { item ->
-                Card(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).clickable { t = item }, colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(2.dp)) {
+                Card(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).clickable { t = item }, elevation = CardDefaults.cardElevation(2.dp)) {
                     Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Default.TouchApp, null, tint = MaterialTheme.colorScheme.primary); Spacer(Modifier.width(12.dp)); Text(item, fontSize = 14.sp) }
                 }
             }

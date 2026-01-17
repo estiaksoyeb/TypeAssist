@@ -44,13 +44,6 @@ fun CommandsScreen(config: AppConfig, onSave: (AppConfig) -> Unit, onBack: () ->
 
     val view = LocalView.current
     val primaryColor = MaterialTheme.colorScheme.primary
-    if (!view.isInEditMode) {
-        SideEffect {
-            val window = (view.context as Activity).window
-            window.statusBarColor = primaryColor.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
-        }
-    }
 
     Scaffold(
         topBar = { 
@@ -204,7 +197,6 @@ fun CommandItem(pattern: String, prompt: String, onEdit: () -> Unit, onDelete: (
             .fillMaxWidth()
             .padding(bottom = 8.dp)
             .clickable { onEdit() }, 
-        colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(2.dp)
     ) {
         Row(

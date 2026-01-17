@@ -61,15 +61,7 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: UpdateInfo?, onT
     var showTroubleshootDialog by remember { mutableStateOf(false) }
     val lifecycleOwner = LocalLifecycleOwner.current
     
-    val view = LocalView.current
-    val primaryColor = MaterialTheme.colorScheme.primary
-    if (!view.isInEditMode) {
-        SideEffect {
-            val window = (view.context as Activity).window
-            window.statusBarColor = primaryColor.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
-        }
-    }
+    // Manual window color setting removed (Handled by AppTheme)
     
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -134,14 +126,13 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: UpdateInfo?, onT
                         .padding(top = 16.dp, bottom = 45.dp), // Extra bottom padding for card overlap
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("TypeAssist", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold)
-                    Text("AI Power for your keyboard", color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp)
+                    Text("TypeAssist", color = MaterialTheme.colorScheme.onPrimary, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+                    Text("AI Power for your keyboard", color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f), fontSize = 14.sp)
                 }
             }
 
             // Master Switch Card (Overlaps upwards)
             Card(
-                colors = CardDefaults.cardColors(containerColor = Color.White),
                 elevation = CardDefaults.cardElevation(6.dp),
                 modifier = Modifier
                     .fillMaxWidth()
@@ -157,7 +148,7 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: UpdateInfo?, onT
                         Text("Master Switch", fontWeight = FontWeight.Bold, fontSize = 18.sp)
                         val isUpdateForced = updateInfo?.forceUpdate == true
                         val statusText = if (isUpdateForced) "Update Required" else if(config.isAppEnabled) "Service Active" else "Service Paused"
-                        val statusColor = if (isUpdateForced) Color.Red else if(config.isAppEnabled) MaterialTheme.colorScheme.secondary else Color.Gray
+                        val statusColor = if (isUpdateForced) MaterialTheme.colorScheme.error else if(config.isAppEnabled) MaterialTheme.colorScheme.secondary else Color.Gray
                         Text(statusText, color = statusColor, fontSize = 12.sp)
                     }
                     Switch(
@@ -202,7 +193,7 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: UpdateInfo?, onT
             Spacer(modifier = Modifier.height(24.dp))
             
             // Menus
-            Text("Menu", fontWeight = FontWeight.Bold, color = Color.Gray)
+            Text("Menu", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 MenuCard(Modifier.weight(1f), "Commands", Icons.Default.Edit, MaterialTheme.colorScheme.primary) { onNavigate("commands") }
@@ -221,13 +212,13 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: UpdateInfo?, onT
 
             // Live Preview
             Spacer(modifier = Modifier.height(24.dp))
-            Text("How it Works", fontWeight = FontWeight.Bold, color = Color.Gray)
+            Text("How it Works", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(8.dp))
             TypingAnimationPreview()
 
             // Instructions
             Spacer(modifier = Modifier.height(24.dp))
-            Card(colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(1.dp), modifier = Modifier.fillMaxWidth()) {
+            Card(elevation = CardDefaults.cardElevation(1.dp), modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.Info, null, tint = MaterialTheme.colorScheme.primary)
@@ -253,7 +244,7 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: UpdateInfo?, onT
 
             // Useful Commands
             Spacer(modifier = Modifier.height(24.dp))
-            Text("Command Reference", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.Gray, modifier = Modifier.padding(bottom = 8.dp))
+            Text("Command Reference", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(bottom = 8.dp))
             
             CommandItem(".ta", "Ask AI", "Sends your text to AI and replaces it with the answer.")
             CommandItem(".g", "Grammar Fix", "Fixes spelling, punctuation, and grammar errors.")
@@ -277,14 +268,13 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: UpdateInfo?, onT
 fun StepItem(num: String, text: String) {
     Row(modifier = Modifier.padding(vertical = 4.dp)) {
         Text(text = "$num.", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, modifier = Modifier.width(24.dp))
-        Text(text = text, fontSize = 14.sp, color = Color.DarkGray)
+        Text(text = text, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
     }
 }
 
 @Composable
 fun CommandItem(cmd: String, title: String, desc: String) {
     Card(
-        colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(1.dp),
         modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp)
     ) {
@@ -312,8 +302,8 @@ fun CommandItem(cmd: String, title: String, desc: String) {
             Spacer(modifier = Modifier.width(16.dp))
             
             Column(modifier = Modifier.weight(1f)) {
-                Text(title, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.Black)
-                Text(desc, fontSize = 13.sp, color = Color.Gray, lineHeight = 18.sp)
+                Text(title, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
+                Text(desc, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, lineHeight = 18.sp)
             }
         }
     }
@@ -321,7 +311,7 @@ fun CommandItem(cmd: String, title: String, desc: String) {
 
 @Composable
 fun MenuCard(modifier: Modifier, title: String, icon: androidx.compose.ui.graphics.vector.ImageVector, color: Color, onClick: () -> Unit) {
-    Card(modifier = modifier.height(90.dp).clickable { onClick() }, colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(2.dp)) {
+    Card(modifier = modifier.height(90.dp).clickable { onClick() }, elevation = CardDefaults.cardElevation(2.dp)) {
         Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(icon, null, tint = color); Spacer(modifier = Modifier.height(8.dp)); Text(title, fontWeight = FontWeight.Bold, color = color)
         }
@@ -332,7 +322,6 @@ fun MenuCard(modifier: Modifier, title: String, icon: androidx.compose.ui.graphi
 fun DeveloperCreditSection() {
     val uriHandler = LocalUriHandler.current
     Card(
-        colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(1.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -350,7 +339,7 @@ fun DeveloperCreditSection() {
 
             Text(
                 "This app was created by Istiak Ahmmed Soyeb. You can find him on the following platforms:",
-                color = Color.Gray,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 14.sp,
                 lineHeight = 20.sp
             )
@@ -380,7 +369,7 @@ fun DeveloperCreditSection() {
             
             Text(
                 "Feel free to reach out for any questions or feedback!",
-                color = Color.Gray,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 12.sp
             )
         }
@@ -420,7 +409,6 @@ fun DonationSection() {
     val context = LocalContext.current
     
     Card(
-        colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(1.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -437,7 +425,7 @@ fun DonationSection() {
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 "This app is free and open source. If it saves you time, please consider supporting via Binance/Crypto.",
-                color = Color.Gray,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 14.sp
             )
             
@@ -449,7 +437,7 @@ fun DonationSection() {
                 clipboardManager = clipboardManager,
                 context = context
             )
-            HorizontalDivider(color = Color.LightGray.copy(alpha = 0.3f), modifier = Modifier.padding(vertical = 8.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f), modifier = Modifier.padding(vertical = 8.dp))
             DonationItem(
                 label = "USDT (TRC20)",
                 value = "TPP5S7HdV4Hrrtp5Cjz7TNtttUAfZXJz5a",
@@ -469,7 +457,7 @@ fun DonationItem(label: String, value: String, clipboardManager: androidx.compos
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(label, fontSize = 12.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-            Text(value, fontSize = 14.sp, color = Color.Black, fontFamily = FontFamily.Monospace)
+            Text(value, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface, fontFamily = FontFamily.Monospace)
         }
         
         IconButton(onClick = {
