@@ -74,14 +74,21 @@ fun GuideScreen(onBack: () -> Unit) {
                 ))
             }
 
-            item { GuideSection("3. Snippets (Text Expander)", "Save frequently used text for quick access.", 
+            item { GuideSection("3. Global Transformation", "Rewrite everything in the text box with one command.", 
+                listOf(
+                    GuideItem("...instruction...", "Global Rewrite", "Transform the whole text field.\nExample: 'Hi, I am late ...make this polite...'\nResult: 'Hello, I apologize for being late.'"),
+                    GuideItem("Post-Correction", "Refine Output", "Quickly fix AI results.\nExample: '...remove markdown...' or '...translate to Spanish...'")
+                ))
+            }
+
+            item { GuideSection("4. Snippets (Text Expander)", "Save frequently used text for quick access.", 
                 listOf(
                     GuideItem("..name", "Expand Snippet", "Type the prefix '..' followed by the snippet name.\nExample: '..email' -> 'user@example.com'"),
                     GuideItem("(.save:name:content)", "Quick Save", "Save a new snippet instantly.\nExample: '(.save:addr:123 Main St)'")
                 ))
             }
 
-            item { GuideSection("4. Utility Belt (Offline Tools)", "Smart tools that run locally without AI.", 
+            item { GuideSection("5. Utility Belt (Offline Tools)", "Smart tools that run locally without AI.", 
                 listOf(
                     GuideItem("(.c: math )", "Calculator", "Solves math expressions.\nExample: '(.c: 25 * 4 + 10)' -> '110'\nSupports: +, -, *, /, ^, (), sqrt, sin, cos, log"),
                     GuideItem(".now", "Time Stamp", "Inserts current time (YYYY-MM-DD HH:MM)."),
@@ -90,7 +97,7 @@ fun GuideScreen(onBack: () -> Unit) {
                 ))
             }
 
-            item { GuideSection("5. Safety & History", "Never lose your work.", 
+            item { GuideSection("6. Safety & History", "Never lose your work.", 
                 listOf(
                     GuideItem("Undo", "Global Undo", "Press the UNDO button or type '.undo' to revert changes. Works for 2 minutes."),
                     GuideItem("History", "Clipboard History", "View and copy the last 2 minutes of original text from the History screen.")

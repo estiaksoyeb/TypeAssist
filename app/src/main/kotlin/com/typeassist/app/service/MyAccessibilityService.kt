@@ -76,6 +76,45 @@ class MyAccessibilityService : AccessibilityService() {
                     return
                 }
 
+                // --- 0. Global Inline Transformation (...instruction...) ---
+                val globalTransformRegex = Pattern.compile("(?s)(.*)\\.\\.\\.(.+?)\\.\\.\\.$")
+                val globalMatcher = globalTransformRegex.matcher(currentText)
+                if (globalMatcher.find()) {
+                    val contextText = globalMatcher.group(1) ?: ""
+                    val instruction = globalMatcher.group(2) ?: ""
+
+                    if (contextText.isNotBlank() && instruction.isNotBlank()) {
+                        originalTextCache = currentText
+                        HistoryManager.add(originalTextCache)
+                        lastNode = inputNode
+                        undoCacheTimestamp = System.currentTimeMillis()
+
+                        showLoading(config)
+                        hideUndoButton()
+
+                        val systemPrompt = "Rewrite the following text according to this instruction: $instruction. Return ONLY the rewritten text, no explanations, no chat."
+                        
+                        performAICall(config, systemPrompt, contextText) { result ->
+                            hideLoading()
+                            result.onSuccess { aiText ->
+                                val wordCount = aiText.split("\\s+".toRegex()).size
+                                if (wordCount > 15 && config.enablePreviewDialog) {
+                                    showPreviewDialog(aiText) {
+                                        pasteText(inputNode, aiText)
+                                        showUndoButton(config)
+                                    }
+                                } else {
+                                    pasteText(inputNode, aiText)
+                                    showUndoButton(config)
+                                }
+                            }.onFailure {
+                                showToast(it.message ?: "Unknown error")
+                            }
+                        }
+                        return
+                    }
+                }
+
                 // --- Snippets Logic ---
                 val snippetPrefix = config.snippetTriggerPrefix
                 val saveSnippetPattern = config.saveSnippetPattern
