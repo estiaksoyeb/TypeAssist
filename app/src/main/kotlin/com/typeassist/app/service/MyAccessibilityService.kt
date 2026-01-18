@@ -11,7 +11,6 @@ import android.os.Looper
 import android.view.Gravity
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
-import android.text.InputType
 import android.view.accessibility.AccessibilityNodeInfo
 import android.widget.Button
 import android.widget.FrameLayout
@@ -24,8 +23,6 @@ import com.typeassist.app.data.HistoryManager
 import com.typeassist.app.data.AppConfig
 import com.google.gson.Gson
 import okhttp3.*
-import org.json.JSONArray
-import org.json.JSONObject
 
 class MyAccessibilityService : AccessibilityService() {
 
@@ -37,7 +34,7 @@ class MyAccessibilityService : AccessibilityService() {
     // --- UI Elements ---
     private var loadingView: FrameLayout? = null
     private var undoView: FrameLayout? = null
-    private var previewView: FrameLayout? = null
+    private var previewView: FrameLayout? = null // Holds the preview dialog wrapper
     
     // --- Undo Cache ---
     private var lastNode: AccessibilityNodeInfo? = null
@@ -45,6 +42,7 @@ class MyAccessibilityService : AccessibilityService() {
     private var undoCacheTimestamp: Long = 0L
     private val undoHandler = Handler(Looper.getMainLooper())
     private val hideUndoRunnable = Runnable { hideUndoButton() }
+    private val hidePreviewRunnable = Runnable { hidePreviewDialog() }
 
     override fun onServiceConnected() {
         super.onServiceConnected()
@@ -195,7 +193,7 @@ class MyAccessibilityService : AccessibilityService() {
                             hideLoading()
                             result.onSuccess { aiText ->
                                 val wordCount = aiText.split("\\s+".toRegex()).size
-                                if (wordCount > 15) {
+                                if (wordCount > 15 && config.enablePreviewDialog) {
                                     showPreviewDialog(aiText) {
                                         val newText = currentText.replace(fullMatchedString, aiText)
                                         pasteText(inputNode, newText)
@@ -235,7 +233,7 @@ class MyAccessibilityService : AccessibilityService() {
                                 hideLoading()
                                 result.onSuccess { aiText ->
                                     val wordCount = aiText.split("\\s+".toRegex()).size
-                                    if (wordCount > 15) {
+                                    if (wordCount > 15 && config.enablePreviewDialog) {
                                         showPreviewDialog(aiText) {
                                             pasteText(inputNode, aiText)
                                             showUndoButton(config)
@@ -346,39 +344,36 @@ class MyAccessibilityService : AccessibilityService() {
         }
     }
 
-    private val hidePreviewRunnable = Runnable { hidePreviewDialog() }
-
     private fun showPreviewDialog(text: String, onInsert: () -> Unit) {
         Handler(Looper.getMainLooper()).post {
             if (previewView != null) hidePreviewDialog()
             
-            // Full Screen Container to catch outside clicks
-            previewView = FrameLayout(this).apply {
-                setBackgroundColor(0x99000000.toInt()) // Dim background
-                setOnClickListener { hidePreviewDialog() } // Dismiss on outside click
-            }
+            // Check Dark Mode
+            val nightModeFlags = resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK
+            val isDarkMode = nightModeFlags == android.content.res.Configuration.UI_MODE_NIGHT_YES
+            
+            val cardBgColor = if (isDarkMode) 0xFF1F2937.toInt() else 0xFFFFFFFF.toInt()
+            val primaryTextColor = if (isDarkMode) Color.WHITE else Color.BLACK
+            val secondaryTextColor = if (isDarkMode) 0xFFD1D5DB.toInt() else 0xFF333333.toInt()
+            val discardTextColor = if (isDarkMode) 0xFF9CA3AF.toInt() else Color.GRAY
+            val insertTextColor = if (isDarkMode) 0xFF818CF8.toInt() else 0xFF4F46E5.toInt()
 
-            // The Card (Centered)
+            // The Card (As Root View)
             val card = android.widget.LinearLayout(this).apply {
                 orientation = android.widget.LinearLayout.VERTICAL
                 setPadding(40, 40, 40, 40)
                 background = GradientDrawable().apply { 
-                    setColor(0xFFFFFFFF.toInt())
+                    setColor(cardBgColor)
                     cornerRadius = 32f 
                 }
-                layoutParams = FrameLayout.LayoutParams(
-                    (resources.displayMetrics.widthPixels * 0.85).toInt(), 
-                    android.widget.FrameLayout.LayoutParams.WRAP_CONTENT
-                ).apply {
-                    gravity = Gravity.CENTER
-                }
-                isClickable = true // Consume clicks so they don't dismiss
+                // Handle outside touches (optional if we use FLAG_WATCH_OUTSIDE_TOUCH correctly)
+                isClickable = true
             }
 
             val title = android.widget.TextView(this).apply {
                 this.text = "Preview Long Response"
                 textSize = 18f
-                setTextColor(Color.BLACK)
+                setTextColor(primaryTextColor)
                 setTypeface(null, android.graphics.Typeface.BOLD)
                 setPadding(0, 0, 0, 20)
             }
@@ -387,19 +382,16 @@ class MyAccessibilityService : AccessibilityService() {
             val scrollView = android.widget.ScrollView(this).apply {
                 layoutParams = android.widget.LinearLayout.LayoutParams(
                     android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 
-                    0 // Use weight
-                ).apply { 
-                    weight = 1f 
-                }
+                    0 
+                ).apply { weight = 1f }
             }
-            
-            // Constrain ScrollView height to 50% screen height manually
-            scrollView.layoutParams.height = (resources.displayMetrics.heightPixels * 0.5).toInt()
+            // Constrain height
+            scrollView.layoutParams.height = (resources.displayMetrics.heightPixels * 0.4).toInt()
             
             val contentText = android.widget.TextView(this).apply {
                 this.text = text
                 textSize = 14f
-                setTextColor(0xFF333333.toInt())
+                setTextColor(secondaryTextColor)
             }
             scrollView.addView(contentText)
             card.addView(scrollView)
@@ -413,14 +405,14 @@ class MyAccessibilityService : AccessibilityService() {
             val discardBtn = Button(this).apply {
                 this.text = "Discard"
                 background = null
-                setTextColor(Color.GRAY)
+                setTextColor(discardTextColor)
                 setOnClickListener { hidePreviewDialog() }
             }
 
             val insertBtn = Button(this).apply {
                 this.text = "Insert"
                 background = null
-                setTextColor(0xFF4F46E5.toInt()) // Primary Indigo
+                setTextColor(insertTextColor)
                 setTypeface(null, android.graphics.Typeface.BOLD)
                 setOnClickListener { 
                     onInsert()
@@ -432,19 +424,44 @@ class MyAccessibilityService : AccessibilityService() {
             btnRow.addView(insertBtn)
             card.addView(btnRow)
 
+            // Wrap in a FrameLayout that does NOT fill screen, but wraps card.
+            // However, to use FLAG_DIM_BEHIND effectively, the window can be small.
+            // But to use FLAG_WATCH_OUTSIDE_TOUCH, we need to be small.
+            
+            previewView = FrameLayout(this)
             previewView?.addView(card)
 
             val rootParams = WindowManager.LayoutParams(
-                WindowManager.LayoutParams.MATCH_PARENT,
-                WindowManager.LayoutParams.MATCH_PARENT,
-                WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL, // Safety flags
+                (resources.displayMetrics.widthPixels * 0.85).toInt(),
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                // Critical Flags:
+                // NOT_FOCUSABLE: Don't steal keys (Home/Back/Recents pass through).
+                // WATCH_OUTSIDE_TOUCH: Get events when user touches outside window.
+                // NOT_TOUCH_MODAL: Allow outside touches to go to underlying apps.
+                // DIM_BEHIND: System handles the dimming.
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH or
+                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
+                WindowManager.LayoutParams.FLAG_DIM_BEHIND,
                 PixelFormat.TRANSLUCENT
-            )
+            ).apply {
+                gravity = Gravity.CENTER
+                dimAmount = 0.5f
+            }
+            
+            // Set touch listener on the wrapper to catch the outside touch event provided by the flag
+            previewView?.setOnTouchListener { v, event ->
+                if (event.action == android.view.MotionEvent.ACTION_OUTSIDE) {
+                    hidePreviewDialog()
+                    true
+                } else {
+                    false
+                }
+            }
 
             try { 
                 windowManager?.addView(previewView, rootParams) 
-                // Safety Timer: Auto-dismiss after 30 seconds
                 undoHandler.postDelayed(hidePreviewRunnable, 30000)
             } catch (e: Exception) {}
         }

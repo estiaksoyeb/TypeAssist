@@ -98,6 +98,57 @@ fun GeneralSettingsTab(config: AppConfig, onSave: (AppConfig) -> Unit) {
             onSave(config.copy(enableLoadingOverlay = it))
         })
     }
+
+    Spacer(Modifier.height(16.dp))
+    HorizontalDivider()
+    Spacer(Modifier.height(16.dp))
+
+    val context = LocalContext.current
+    var hasOverlayPermission by remember { mutableStateOf(android.provider.Settings.canDrawOverlays(context)) }
+    var enablePreviewDialog by remember { mutableStateOf(config.enablePreviewDialog && hasOverlayPermission) }
+
+    // Check permission on resume
+    val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                val hasPerm = android.provider.Settings.canDrawOverlays(context)
+                hasOverlayPermission = hasPerm
+                if (!hasPerm && config.enablePreviewDialog) {
+                    // Permission revoked externally
+                    enablePreviewDialog = false
+                    onSave(config.copy(enablePreviewDialog = false))
+                }
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text("Enable Preview Dialog", fontWeight = FontWeight.Bold)
+            Text("Show a scrollable preview for long AI responses (>15 words). Requires 'Display over other apps' permission.", fontSize = 12.sp, color = Color.Gray)
+        }
+        Switch(
+            checked = enablePreviewDialog, 
+            onCheckedChange = { newState ->
+                if (newState) {
+                    if (android.provider.Settings.canDrawOverlays(context)) {
+                        enablePreviewDialog = true
+                        onSave(config.copy(enablePreviewDialog = true))
+                    } else {
+                        Toast.makeText(context, "Please grant Overlay Permission", Toast.LENGTH_LONG).show()
+                        val intent = Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:${context.packageName}"))
+                        context.startActivity(intent)
+                    }
+                } else {
+                    enablePreviewDialog = false
+                    onSave(config.copy(enablePreviewDialog = false))
+                }
+            }
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

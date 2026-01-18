@@ -16,7 +16,8 @@ data class AppConfig(
     var snippetTriggerPrefix: String = "ta#", // Default prefix for using snippets
     var saveSnippetPattern: String = "(.save:%:%)", // Default pattern for saving snippets
     var enableUndoOverlay: Boolean = true,
-    var enableLoadingOverlay: Boolean = true
+    var enableLoadingOverlay: Boolean = true,
+    var enablePreviewDialog: Boolean = false // Default off, requires permission
 ) : Serializable
 
 data class CloudflareConfig(
@@ -74,6 +75,7 @@ fun createDefaultConfig(): AppConfig {
         snippetTriggerPrefix = "..",
         saveSnippetPattern = "(.save:%:%)",
         enableUndoOverlay = true,
-        enableLoadingOverlay = true
+        enableLoadingOverlay = true,
+        enablePreviewDialog = false
     )
 }
