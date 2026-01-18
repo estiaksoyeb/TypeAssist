@@ -37,6 +37,7 @@ class MyAccessibilityService : AccessibilityService() {
     // --- UI Elements ---
     private var loadingView: FrameLayout? = null
     private var undoView: FrameLayout? = null
+    private var previewView: FrameLayout? = null
     
     // --- Undo Cache ---
     private var lastNode: AccessibilityNodeInfo? = null
@@ -192,10 +193,19 @@ class MyAccessibilityService : AccessibilityService() {
 
                         performAICall(config, inlinePromptTemplate, userPrompt) { result ->
                             hideLoading()
-                            result.onSuccess {
-                                val newText = currentText.replace(fullMatchedString, it)
-                                pasteText(inputNode, newText)
-                                showUndoButton(config)
+                            result.onSuccess { aiText ->
+                                val wordCount = aiText.split("\\s+".toRegex()).size
+                                if (wordCount > 15) {
+                                    showPreviewDialog(aiText) {
+                                        val newText = currentText.replace(fullMatchedString, aiText)
+                                        pasteText(inputNode, newText)
+                                        showUndoButton(config)
+                                    }
+                                } else {
+                                    val newText = currentText.replace(fullMatchedString, aiText)
+                                    pasteText(inputNode, newText)
+                                    showUndoButton(config)
+                                }
                             }.onFailure {
                                 showToast(it.message ?: "Unknown error")
                             }
@@ -223,9 +233,17 @@ class MyAccessibilityService : AccessibilityService() {
 
                             performAICall(config, prompt, textToProcess) { result ->
                                 hideLoading()
-                                result.onSuccess {
-                                    pasteText(inputNode, it)
-                                    showUndoButton(config)
+                                result.onSuccess { aiText ->
+                                    val wordCount = aiText.split("\\s+".toRegex()).size
+                                    if (wordCount > 15) {
+                                        showPreviewDialog(aiText) {
+                                            pasteText(inputNode, aiText)
+                                            showUndoButton(config)
+                                        }
+                                    } else {
+                                        pasteText(inputNode, aiText)
+                                        showUndoButton(config)
+                                    }
                                 }.onFailure {
                                     showToast(it.message ?: "Unknown error")
                                 }
@@ -328,6 +346,117 @@ class MyAccessibilityService : AccessibilityService() {
         }
     }
 
+    private val hidePreviewRunnable = Runnable { hidePreviewDialog() }
+
+    private fun showPreviewDialog(text: String, onInsert: () -> Unit) {
+        Handler(Looper.getMainLooper()).post {
+            if (previewView != null) hidePreviewDialog()
+            
+            // Full Screen Container to catch outside clicks
+            previewView = FrameLayout(this).apply {
+                setBackgroundColor(0x99000000.toInt()) // Dim background
+                setOnClickListener { hidePreviewDialog() } // Dismiss on outside click
+            }
+
+            // The Card (Centered)
+            val card = android.widget.LinearLayout(this).apply {
+                orientation = android.widget.LinearLayout.VERTICAL
+                setPadding(40, 40, 40, 40)
+                background = GradientDrawable().apply { 
+                    setColor(0xFFFFFFFF.toInt())
+                    cornerRadius = 32f 
+                }
+                layoutParams = FrameLayout.LayoutParams(
+                    (resources.displayMetrics.widthPixels * 0.85).toInt(), 
+                    android.widget.FrameLayout.LayoutParams.WRAP_CONTENT
+                ).apply {
+                    gravity = Gravity.CENTER
+                }
+                isClickable = true // Consume clicks so they don't dismiss
+            }
+
+            val title = android.widget.TextView(this).apply {
+                this.text = "Preview Long Response"
+                textSize = 18f
+                setTextColor(Color.BLACK)
+                setTypeface(null, android.graphics.Typeface.BOLD)
+                setPadding(0, 0, 0, 20)
+            }
+            card.addView(title)
+
+            val scrollView = android.widget.ScrollView(this).apply {
+                layoutParams = android.widget.LinearLayout.LayoutParams(
+                    android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 
+                    0 // Use weight
+                ).apply { 
+                    weight = 1f 
+                }
+            }
+            
+            // Constrain ScrollView height to 50% screen height manually
+            scrollView.layoutParams.height = (resources.displayMetrics.heightPixels * 0.5).toInt()
+            
+            val contentText = android.widget.TextView(this).apply {
+                this.text = text
+                textSize = 14f
+                setTextColor(0xFF333333.toInt())
+            }
+            scrollView.addView(contentText)
+            card.addView(scrollView)
+
+            val btnRow = android.widget.LinearLayout(this).apply {
+                orientation = android.widget.LinearLayout.HORIZONTAL
+                gravity = Gravity.END
+                setPadding(0, 30, 0, 0)
+            }
+
+            val discardBtn = Button(this).apply {
+                this.text = "Discard"
+                background = null
+                setTextColor(Color.GRAY)
+                setOnClickListener { hidePreviewDialog() }
+            }
+
+            val insertBtn = Button(this).apply {
+                this.text = "Insert"
+                background = null
+                setTextColor(0xFF4F46E5.toInt()) // Primary Indigo
+                setTypeface(null, android.graphics.Typeface.BOLD)
+                setOnClickListener { 
+                    onInsert()
+                    hidePreviewDialog()
+                }
+            }
+
+            btnRow.addView(discardBtn)
+            btnRow.addView(insertBtn)
+            card.addView(btnRow)
+
+            previewView?.addView(card)
+
+            val rootParams = WindowManager.LayoutParams(
+                WindowManager.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL, // Safety flags
+                PixelFormat.TRANSLUCENT
+            )
+
+            try { 
+                windowManager?.addView(previewView, rootParams) 
+                // Safety Timer: Auto-dismiss after 30 seconds
+                undoHandler.postDelayed(hidePreviewRunnable, 30000)
+            } catch (e: Exception) {}
+        }
+    }
+
+    private fun hidePreviewDialog() {
+        undoHandler.removeCallbacks(hidePreviewRunnable)
+        Handler(Looper.getMainLooper()).post {
+            if (previewView != null) { try { windowManager?.removeView(previewView); previewView = null } catch (e: Exception) {} }
+        }
+    }
+
     private fun performUndo() {
         val timeSinceCache = System.currentTimeMillis() - undoCacheTimestamp
         if (lastNode != null && originalTextCache.isNotEmpty() && timeSinceCache < 120000) { // 2 minutes
@@ -403,5 +532,5 @@ class MyAccessibilityService : AccessibilityService() {
         return null
     }
 
-    override fun onInterrupt() { hideLoading(); hideUndoButton() }
+    override fun onInterrupt() { hideLoading(); hideUndoButton(); hidePreviewDialog() }
 }
