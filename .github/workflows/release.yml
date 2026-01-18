@@ -46,7 +46,16 @@ jobs:
     - name: Rename Signed APK
       run: mv "${{ steps.sign_app.outputs.signedReleaseFile }}" "TypeAssist-${{ github.ref_name }}.apk"
 
-    # 4. Upload APK as Artifact (So you can download it and release manually)
+    # 4. Create GitHub Release and upload APK
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: TypeAssist-${{ github.ref_name }}.apk
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    # 5. Upload APK as Artifact
     - name: Upload Signed APK Artifact
       uses: actions/upload-artifact@v4
       with:
