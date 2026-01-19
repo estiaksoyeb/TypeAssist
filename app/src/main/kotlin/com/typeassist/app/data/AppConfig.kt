@@ -8,6 +8,7 @@ data class AppConfig(
     var apiKey: String = "",
     var model: String = "gemini-2.5-flash-lite",
     var cloudflareConfig: CloudflareConfig = CloudflareConfig(),
+    var customApiConfig: CustomApiConfig = CustomApiConfig(),
     var generationConfig: GenConfig = GenConfig(),
     var triggers: MutableList<Trigger> = mutableListOf(),
     var inlineCommands: MutableList<InlineCommand> = mutableListOf(),
@@ -24,6 +25,12 @@ data class CloudflareConfig(
     var accountId: String = "",
     var apiToken: String = "",
     var model: String = "@cf/meta/llama-3-8b-instruct"
+) : Serializable
+
+data class CustomApiConfig(
+    var baseUrl: String = "https://api.openai.com/v1",
+    var apiKey: String = "",
+    var model: String = "gpt-3.5-turbo"
 ) : Serializable
 
 data class GenConfig(
@@ -53,6 +60,7 @@ fun createDefaultConfig(): AppConfig {
         apiKey = "", 
         model = "gemini-2.5-flash-lite",
         cloudflareConfig = CloudflareConfig(),
+        customApiConfig = CustomApiConfig(),
         generationConfig = GenConfig(temperature = 0.2, topP = 0.95),
         triggers = mutableListOf(
             Trigger(".ta", "Give only the most relevant and complete answer to the query. Do not explain, do not add introductions, disclaimers, or extra text. Output only the answer."),

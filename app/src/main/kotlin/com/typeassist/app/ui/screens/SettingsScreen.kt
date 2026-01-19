@@ -31,7 +31,9 @@ import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import com.typeassist.app.data.AppConfig
 import com.typeassist.app.data.CloudflareConfig
+import com.typeassist.app.data.CustomApiConfig
 import com.typeassist.app.api.CloudflareApiClient
+import com.typeassist.app.api.CustomApiClient
 import okhttp3.*
 import java.io.IOException
 
@@ -159,11 +161,16 @@ fun AiProviderSettingsTab(config: AppConfig, client: OkHttpClient, onSave: (AppC
     var cfApiToken by remember { mutableStateOf(config.cloudflareConfig.apiToken) }
     var cfModel by remember { mutableStateOf(config.cloudflareConfig.model) }
 
+    // Custom API States
+    var customBaseUrl by remember { mutableStateOf(config.customApiConfig.baseUrl) }
+    var customApiKey by remember { mutableStateOf(config.customApiConfig.apiKey) }
+    var customModel by remember { mutableStateOf(config.customApiConfig.model) }
+
     var isKeyVisible by remember { mutableStateOf(false) }
     var providerExpanded by remember { mutableStateOf(false) }
     var modelExpanded by remember { mutableStateOf(false) }
     
-    val providers = listOf("gemini", "cloudflare")
+    val providers = listOf("gemini", "cloudflare", "custom")
     val geminiModels = listOf("gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-2.5-pro", "gemma-3n-e2b-it", "gemma-3n-e4b-it")
     val context = LocalContext.current
 
@@ -183,6 +190,19 @@ fun AiProviderSettingsTab(config: AppConfig, client: OkHttpClient, onSave: (AppC
                     Toast.makeText(context, "Cloudflare API Verified! ✅", Toast.LENGTH_SHORT).show()
                 }.onFailure {
                     Toast.makeText(context, "Cloudflare Verification Failed: ${it.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
+
+    fun verifyCustomApi(baseUrl: String, apiKey: String, model: String) {
+        val customClient = CustomApiClient(client)
+        customClient.callCustomApi(baseUrl, apiKey, model, "You are a helpful assistant.", "hi") { result ->
+            (context as ComponentActivity).runOnUiThread {
+                result.onSuccess {
+                    Toast.makeText(context, "Custom API Verified! ✅", Toast.LENGTH_SHORT).show()
+                }.onFailure {
+                    Toast.makeText(context, "Custom API Verification Failed: ${it.message}", Toast.LENGTH_LONG).show()
                 }
             }
         }
@@ -210,13 +230,20 @@ fun AiProviderSettingsTab(config: AppConfig, client: OkHttpClient, onSave: (AppC
             OutlinedTextField(value = geminiModel, onValueChange = {}, readOnly = true, label = { Text("Select Gemini Model") }, trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = modelExpanded) }, colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(), modifier = Modifier.menuAnchor().fillMaxWidth())
             ExposedDropdownMenu(expanded = modelExpanded, onDismissRequest = { modelExpanded = false }) { geminiModels.forEach { item -> DropdownMenuItem(text = { Text(text = item) }, onClick = { geminiModel = item; modelExpanded = false }) } }
         }
-    } else {
+    } else if (selectedProvider == "cloudflare") {
         // Cloudflare Setup
         OutlinedTextField(value = cfAccountId, onValueChange = { cfAccountId = it }, label = { Text("Cloudflare Account ID") }, modifier = Modifier.fillMaxWidth())
         Spacer(Modifier.height(16.dp))
         OutlinedTextField(value = cfApiToken, onValueChange = { cfApiToken = it }, label = { Text("Cloudflare API Token") }, modifier = Modifier.fillMaxWidth(), visualTransformation = if (isKeyVisible) VisualTransformation.None else PasswordVisualTransformation(), trailingIcon = { IconButton(onClick = { isKeyVisible = !isKeyVisible }) { Icon(if (isKeyVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff, null) } })
         Spacer(Modifier.height(16.dp))
         OutlinedTextField(value = cfModel, onValueChange = { cfModel = it }, label = { Text("Cloudflare Model ID") }, modifier = Modifier.fillMaxWidth(), placeholder = { Text("@cf/meta/llama-3-8b-instruct") })
+    } else {
+        // Custom API Setup
+        OutlinedTextField(value = customBaseUrl, onValueChange = { customBaseUrl = it }, label = { Text("Base URL") }, modifier = Modifier.fillMaxWidth(), placeholder = { Text("https://api.openai.com/v1") })
+        Spacer(Modifier.height(16.dp))
+        OutlinedTextField(value = customApiKey, onValueChange = { customApiKey = it }, label = { Text("API Key (Optional)") }, modifier = Modifier.fillMaxWidth(), visualTransformation = if (isKeyVisible) VisualTransformation.None else PasswordVisualTransformation(), trailingIcon = { IconButton(onClick = { isKeyVisible = !isKeyVisible }) { Icon(if (isKeyVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff, null) } })
+        Spacer(Modifier.height(16.dp))
+        OutlinedTextField(value = customModel, onValueChange = { customModel = it }, label = { Text("Model Name") }, modifier = Modifier.fillMaxWidth(), placeholder = { Text("gpt-3.5-turbo") })
     }
 
     Spacer(Modifier.height(24.dp))
@@ -231,11 +258,22 @@ fun AiProviderSettingsTab(config: AppConfig, client: OkHttpClient, onSave: (AppC
                     accountId = cfAccountId.trim(),
                     apiToken = cfApiToken.trim(),
                     model = cfModel.trim()
+                ),
+                customApiConfig = CustomApiConfig(
+                    baseUrl = customBaseUrl.trim(),
+                    apiKey = customApiKey.trim(),
+                    model = customModel.trim()
                 )
             )
             
             // Auto-enable logic
-            val hasValidKey = if (selectedProvider == "gemini") geminiKey.isNotBlank() else cfApiToken.isNotBlank()
+            val hasValidKey = when (selectedProvider) {
+                "gemini" -> geminiKey.isNotBlank()
+                "cloudflare" -> cfApiToken.isNotBlank()
+                "custom" -> customBaseUrl.isNotBlank() && customModel.isNotBlank() // Key might be optional for local
+                else -> false
+            }
+            
             if (!config.isAppEnabled && hasValidKey) {
                  newConfig = newConfig.copy(isAppEnabled = true)
             }
@@ -243,10 +281,10 @@ fun AiProviderSettingsTab(config: AppConfig, client: OkHttpClient, onSave: (AppC
             onSave(newConfig)
             Toast.makeText(context, "Config Saved", Toast.LENGTH_SHORT).show()
             
-            if (selectedProvider == "gemini" && geminiKey.isNotBlank()) {
-                verifyGemini(geminiKey.trim())
-            } else if (selectedProvider == "cloudflare" && cfApiToken.isNotBlank()) {
-                verifyCloudflare(cfAccountId.trim(), cfApiToken.trim(), cfModel.trim())
+            when (selectedProvider) {
+                "gemini" -> if (geminiKey.isNotBlank()) verifyGemini(geminiKey.trim())
+                "cloudflare" -> if (cfApiToken.isNotBlank()) verifyCloudflare(cfAccountId.trim(), cfApiToken.trim(), cfModel.trim())
+                "custom" -> if (customBaseUrl.isNotBlank()) verifyCustomApi(customBaseUrl.trim(), customApiKey.trim(), customModel.trim())
             }
         }, 
         modifier = Modifier.fillMaxWidth().height(50.dp), 
@@ -257,10 +295,10 @@ fun AiProviderSettingsTab(config: AppConfig, client: OkHttpClient, onSave: (AppC
     
     Spacer(Modifier.height(32.dp))
     
-    if (selectedProvider == "gemini") {
-        GeminiHelp(primaryColor, context)
-    } else {
-        CloudflareHelp(primaryColor, context)
+    when (selectedProvider) {
+        "gemini" -> GeminiHelp(primaryColor, context)
+        "cloudflare" -> CloudflareHelp(primaryColor, context)
+        "custom" -> CustomApiHelp(primaryColor, context)
     }
 }
 
@@ -299,4 +337,15 @@ fun CloudflareHelp(primaryColor: Color, context: android.content.Context) {
         } 
     }
     ClickableText(text = annotatedString, style = LocalTextStyle.current.copy(fontSize = 14.sp, lineHeight = 20.sp, color = MaterialTheme.colorScheme.onSurface), onClick = { offset -> annotatedString.getStringAnnotations(tag = "URL", start = offset, end = offset).firstOrNull()?.let { annotation -> context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(annotation.item))) } })
+}
+
+@Composable
+fun CustomApiHelp(primaryColor: Color, context: android.content.Context) {
+    Text("Custom API Setup", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+    Spacer(Modifier.height(16.dp))
+    Text("Compatible with any OpenAI-style Chat Completion API.", fontSize = 14.sp)
+    Spacer(Modifier.height(8.dp))
+    Text("1. Base URL: The API endpoint (e.g. https://api.groq.com/openai/v1 or http://localhost:11434/v1)", fontSize = 14.sp)
+    Text("2. API Key: Your provider's API key (leave blank for local LLMs).", fontSize = 14.sp)
+    Text("3. Model Name: The specific model ID (e.g. llama3-70b-8192, gpt-4o).", fontSize = 14.sp)
 }

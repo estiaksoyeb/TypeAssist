@@ -19,6 +19,7 @@ import java.util.regex.Pattern
 import android.widget.Toast
 import com.typeassist.app.api.GeminiApiClient
 import com.typeassist.app.api.CloudflareApiClient
+import com.typeassist.app.api.CustomApiClient
 import com.typeassist.app.data.HistoryManager
 import com.typeassist.app.data.AppConfig
 import com.google.gson.Gson
@@ -29,6 +30,7 @@ class MyAccessibilityService : AccessibilityService() {
     private val client = OkHttpClient()
     private val geminiApiClient = GeminiApiClient(client)
     private val cloudflareApiClient = CloudflareApiClient(client)
+    private val customApiClient = CustomApiClient(client)
     private var windowManager: WindowManager? = null
     
     // --- UI Elements ---
@@ -301,6 +303,15 @@ class MyAccessibilityService : AccessibilityService() {
                 config.cloudflareConfig.accountId,
                 config.cloudflareConfig.apiToken,
                 config.cloudflareConfig.model,
+                prompt,
+                userText,
+                callback
+            )
+        } else if (config.provider == "custom") {
+            customApiClient.callCustomApi(
+                config.customApiConfig.baseUrl,
+                config.customApiConfig.apiKey,
+                config.customApiConfig.model,
                 prompt,
                 userText,
                 callback
