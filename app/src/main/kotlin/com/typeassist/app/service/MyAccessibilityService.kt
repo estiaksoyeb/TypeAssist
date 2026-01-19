@@ -98,7 +98,7 @@ class MyAccessibilityService : AccessibilityService() {
                             hideLoading()
                             result.onSuccess { aiText ->
                                 val wordCount = aiText.split("\\s+".toRegex()).size
-                                if (wordCount > 15 && config.enablePreviewDialog) {
+                                if (wordCount > 15 && false /* config.enablePreviewDialog */) {
                                     showPreviewDialog(aiText) {
                                         pasteText(inputNode, aiText)
                                         showUndoButton(config)
@@ -232,7 +232,7 @@ class MyAccessibilityService : AccessibilityService() {
                             hideLoading()
                             result.onSuccess { aiText ->
                                 val wordCount = aiText.split("\\s+".toRegex()).size
-                                if (wordCount > 15 && config.enablePreviewDialog) {
+                                if (wordCount > 15 && false /* config.enablePreviewDialog */) {
                                     showPreviewDialog(aiText) {
                                         val newText = currentText.replace(fullMatchedString, aiText)
                                         pasteText(inputNode, newText)
@@ -272,7 +272,7 @@ class MyAccessibilityService : AccessibilityService() {
                                 hideLoading()
                                 result.onSuccess { aiText ->
                                     val wordCount = aiText.split("\\s+".toRegex()).size
-                                    if (wordCount > 15 && config.enablePreviewDialog) {
+                                    if (wordCount > 15 && false /* config.enablePreviewDialog */) {
                                         showPreviewDialog(aiText) {
                                             pasteText(inputNode, aiText)
                                             showUndoButton(config)
