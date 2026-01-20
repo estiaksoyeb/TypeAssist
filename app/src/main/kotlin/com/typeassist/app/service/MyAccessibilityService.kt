@@ -100,7 +100,7 @@ class MyAccessibilityService : AccessibilityService() {
                             hideLoading()
                             result.onSuccess { aiText ->
                                 val wordCount = aiText.split("\\s+".toRegex()).size
-                                if (wordCount > 15 && false /* config.enablePreviewDialog */) {
+                                if (wordCount > 15 && config.enablePreviewDialog) {
                                     showPreviewDialog(aiText) {
                                         pasteText(inputNode, aiText)
                                         showUndoButton(config)
@@ -234,7 +234,7 @@ class MyAccessibilityService : AccessibilityService() {
                             hideLoading()
                             result.onSuccess { aiText ->
                                 val wordCount = aiText.split("\\s+".toRegex()).size
-                                if (wordCount > 15 && false /* config.enablePreviewDialog */) {
+                                if (wordCount > 15 && config.enablePreviewDialog) {
                                     showPreviewDialog(aiText) {
                                         val newText = currentText.replace(fullMatchedString, aiText)
                                         pasteText(inputNode, newText)
@@ -274,7 +274,7 @@ class MyAccessibilityService : AccessibilityService() {
                                 hideLoading()
                                 result.onSuccess { aiText ->
                                     val wordCount = aiText.split("\\s+".toRegex()).size
-                                    if (wordCount > 15 && false /* config.enablePreviewDialog */) {
+                                    if (wordCount > 15 && config.enablePreviewDialog) {
                                         showPreviewDialog(aiText) {
                                             pasteText(inputNode, aiText)
                                             showUndoButton(config)
@@ -356,7 +356,7 @@ class MyAccessibilityService : AccessibilityService() {
             val progressBar = ProgressBar(this)
             progressBar.indeterminateTintList = android.content.res.ColorStateList.valueOf(Color.WHITE)
             loadingView?.addView(progressBar)
-            val params = WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, PixelFormat.TRANSLUCENT)
+            val params = WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, PixelFormat.TRANSLUCENT)
             params.gravity = Gravity.CENTER
             try { windowManager?.addView(loadingView, params) } catch (e: Exception) {}
         }
@@ -381,7 +381,7 @@ class MyAccessibilityService : AccessibilityService() {
                 setOnClickListener { performUndo() }
             }
             undoView?.addView(btn)
-            val params = WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, PixelFormat.TRANSLUCENT)
+            val params = WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, PixelFormat.TRANSLUCENT)
             params.gravity = Gravity.CENTER
             try { windowManager?.addView(undoView, params); undoHandler.postDelayed(hideUndoRunnable, 5000) } catch (e: Exception) {}
         }
@@ -407,6 +407,7 @@ class MyAccessibilityService : AccessibilityService() {
             val secondaryTextColor = if (isDarkMode) 0xFFD1D5DB.toInt() else 0xFF333333.toInt()
             val discardTextColor = if (isDarkMode) 0xFF9CA3AF.toInt() else Color.GRAY
             val insertTextColor = if (isDarkMode) 0xFF818CF8.toInt() else 0xFF4F46E5.toInt()
+            val borderColor = if (isDarkMode) 0xFF374151.toInt() else 0xFFE5E7EB.toInt()
 
             // The Card (As Root View)
             val card = android.widget.LinearLayout(this).apply {
@@ -415,13 +416,14 @@ class MyAccessibilityService : AccessibilityService() {
                 background = GradientDrawable().apply { 
                     setColor(cardBgColor)
                     cornerRadius = 32f 
+                    setStroke(3, insertTextColor) // Interactive border using accent color
                 }
-                // Handle outside touches (optional if we use FLAG_WATCH_OUTSIDE_TOUCH correctly)
                 isClickable = true
+                elevation = 20f
             }
 
             val title = android.widget.TextView(this).apply {
-                this.text = "Preview Long Response"
+                this.text = "Preview Response"
                 textSize = 18f
                 setTextColor(primaryTextColor)
                 setTypeface(null, android.graphics.Typeface.BOLD)
@@ -435,8 +437,8 @@ class MyAccessibilityService : AccessibilityService() {
                     0 
                 ).apply { weight = 1f }
             }
-            // Constrain height
-            scrollView.layoutParams.height = (resources.displayMetrics.heightPixels * 0.4).toInt()
+            // Constrain height slightly smaller
+            scrollView.layoutParams.height = (resources.displayMetrics.heightPixels * 0.35).toInt()
             
             val contentText = android.widget.TextView(this).apply {
                 this.text = text
@@ -452,64 +454,46 @@ class MyAccessibilityService : AccessibilityService() {
                 setPadding(0, 30, 0, 0)
             }
 
-            val discardBtn = Button(this).apply {
-                this.text = "Discard"
-                background = null
-                setTextColor(discardTextColor)
-                setOnClickListener { hidePreviewDialog() }
+            // Enhanced Button Styling
+            fun createButton(label: String, color: Int, onClick: () -> Unit): Button {
+                return Button(this).apply {
+                    this.text = label
+                    setTextColor(color)
+                    setTypeface(null, android.graphics.Typeface.BOLD)
+                    background = android.util.TypedValue().let { tv ->
+                        context.theme.resolveAttribute(android.R.attr.selectableItemBackground, tv, true)
+                        resources.getDrawable(tv.resourceId, context.theme)
+                    }
+                    setPadding(30, 20, 30, 20)
+                    setOnClickListener { onClick() }
+                }
             }
 
-            val insertBtn = Button(this).apply {
-                this.text = "Insert"
-                background = null
-                setTextColor(insertTextColor)
-                setTypeface(null, android.graphics.Typeface.BOLD)
-                setOnClickListener { 
-                    onInsert()
-                    hidePreviewDialog()
-                }
+            val discardBtn = createButton("Discard", discardTextColor) { hidePreviewDialog() }
+            val insertBtn = createButton("Insert", insertTextColor) { 
+                onInsert()
+                hidePreviewDialog() 
             }
 
             btnRow.addView(discardBtn)
             btnRow.addView(insertBtn)
             card.addView(btnRow)
 
-            // Wrap in a FrameLayout that does NOT fill screen, but wraps card.
-            // However, to use FLAG_DIM_BEHIND effectively, the window can be small.
-            // But to use FLAG_WATCH_OUTSIDE_TOUCH, we need to be small.
-            
+            // Wrap in a FrameLayout
             previewView = FrameLayout(this)
             previewView?.addView(card)
 
             val rootParams = WindowManager.LayoutParams(
-                (resources.displayMetrics.widthPixels * 0.85).toInt(),
+                (resources.displayMetrics.widthPixels * 0.75).toInt(), // Reduced width to 75%
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-                // Critical Flags:
-                // NOT_FOCUSABLE: Don't steal keys (Home/Back/Recents pass through).
-                // WATCH_OUTSIDE_TOUCH: Get events when user touches outside window.
-                // NOT_TOUCH_MODAL: Allow outside touches to go to underlying apps.
-                // DIM_BEHIND: System handles the dimming.
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH or
-                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
-                WindowManager.LayoutParams.FLAG_DIM_BEHIND,
+                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
                 PixelFormat.TRANSLUCENT
             ).apply {
                 gravity = Gravity.CENTER
-                dimAmount = 0.5f
             }
             
-            // Set touch listener on the wrapper to catch the outside touch event provided by the flag
-            previewView?.setOnTouchListener { v, event ->
-                if (event.action == android.view.MotionEvent.ACTION_OUTSIDE) {
-                    hidePreviewDialog()
-                    true
-                } else {
-                    false
-                }
-            }
-
             try { 
                 windowManager?.addView(previewView, rootParams) 
                 undoHandler.postDelayed(hidePreviewRunnable, 30000)

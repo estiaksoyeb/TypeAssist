@@ -127,22 +127,28 @@ fun GeneralSettingsTab(config: AppConfig, onSave: (AppConfig) -> Unit) {
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    LaunchedEffect(Unit) {
-        if (config.enablePreviewDialog) {
-            onSave(config.copy(enablePreviewDialog = false))
-        }
-    }
-
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f)) {
             Text("Enable Preview Dialog", fontWeight = FontWeight.Bold)
             Text("Show a scrollable preview for long AI responses (>15 words). Requires 'Display over other apps' permission.", fontSize = 12.sp, color = Color.Gray)
-            Text("Unstable. Under development", fontSize = 12.sp, color = Color.Red, fontWeight = FontWeight.Bold)
         }
         Switch(
-            checked = false, 
-            enabled = false,
-            onCheckedChange = {}
+            checked = enablePreviewDialog, 
+            onCheckedChange = { newState ->
+                if (newState) {
+                    if (android.provider.Settings.canDrawOverlays(context)) {
+                        enablePreviewDialog = true
+                        onSave(config.copy(enablePreviewDialog = true))
+                    } else {
+                        Toast.makeText(context, "Please grant Overlay Permission", Toast.LENGTH_LONG).show()
+                        val intent = Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:${context.packageName}"))
+                        context.startActivity(intent)
+                    }
+                } else {
+                    enablePreviewDialog = false
+                    onSave(config.copy(enablePreviewDialog = false))
+                }
+            }
         )
     }
 }
