@@ -106,10 +106,16 @@ class MyAccessibilityService : AccessibilityService() {
 
                 for (s in snippets) {
                     val fullTrigger = snippetPrefix + s.trigger
-                    if (currentText.endsWith(fullTrigger)) {
-                        val newText = currentText.substring(0, currentText.length - fullTrigger.length) + s.content
-                        pasteText(inputNode, newText)
-                        return
+                    val idx = currentText.lastIndexOf(fullTrigger)
+                    if (idx != -1) {
+                        val isAtEnd = idx + fullTrigger.length == currentText.length
+                        if (config.allowTriggerAnywhere || isAtEnd) {
+                            val prefix = currentText.substring(0, idx)
+                            val suffix = currentText.substring(idx + fullTrigger.length)
+                            val newText = prefix + s.content + suffix
+                            pasteText(inputNode, newText)
+                            return
+                        }
                     }
                 }
 
@@ -137,27 +143,45 @@ class MyAccessibilityService : AccessibilityService() {
                     HistoryManager.add(originalTextCache)
                     lastNode = inputNode
                     undoCacheTimestamp = System.currentTimeMillis()
-                    val newText = currentText.replace(fullMatch, result)
-                    pasteText(inputNode, newText)
+                    
+                    // Safe replacement using lastIndexOf to ensure we replace the found instance
+                    val idx = currentText.lastIndexOf(fullMatch)
+                    if (idx != -1) {
+                        val prefix = currentText.substring(0, idx)
+                        val suffix = currentText.substring(idx + fullMatch.length)
+                        val newText = prefix + result + suffix
+                        pasteText(inputNode, newText)
+                    }
                     overlayManager.showUndoButton(config)
                     return
                 }
 
-                var utilityResult: String? = null
-                var triggerLen = 0
-                if (currentText.endsWith(".now")) { utilityResult = com.typeassist.app.utils.UtilityBelt.getTime(); triggerLen = 4 }
-                else if (currentText.endsWith(".date")) { utilityResult = com.typeassist.app.utils.UtilityBelt.getDate(); triggerLen = 5 }
-                else if (currentText.endsWith(".pass")) { utilityResult = com.typeassist.app.utils.UtilityBelt.generatePassword(); triggerLen = 5 }
+                val utilityTriggers = mapOf(
+                    ".now" to { com.typeassist.app.utils.UtilityBelt.getTime() },
+                    ".date" to { com.typeassist.app.utils.UtilityBelt.getDate() },
+                    ".pass" to { com.typeassist.app.utils.UtilityBelt.generatePassword() }
+                )
 
-                if (utilityResult != null) {
-                    originalTextCache = currentText
-                    HistoryManager.add(originalTextCache)
-                    lastNode = inputNode
-                    undoCacheTimestamp = System.currentTimeMillis()
-                    val newText = currentText.substring(0, currentText.length - triggerLen) + utilityResult
-                    pasteText(inputNode, newText)
-                    overlayManager.showUndoButton(config)
-                    return
+                for ((uTrigger, uAction) in utilityTriggers) {
+                    val idx = currentText.lastIndexOf(uTrigger)
+                    if (idx != -1) {
+                         val isAtEnd = idx + uTrigger.length == currentText.length
+                         if (config.allowTriggerAnywhere || isAtEnd) {
+                             val result = uAction()
+                             originalTextCache = currentText
+                             HistoryManager.add(originalTextCache)
+                             lastNode = inputNode
+                             undoCacheTimestamp = System.currentTimeMillis()
+                             
+                             val prefix = currentText.substring(0, idx)
+                             val suffix = currentText.substring(idx + uTrigger.length)
+                             val newText = prefix + result + suffix
+                             
+                             pasteText(inputNode, newText)
+                             overlayManager.showUndoButton(config)
+                             return
+                         }
+                    }
                 }
 
                 val undoCommandPattern = config.undoCommandPattern.trim()
@@ -219,8 +243,12 @@ class MyAccessibilityService : AccessibilityService() {
                     val pattern = trigger.pattern
                     val prompt = trigger.prompt
 
-                    if (isTriggerValid(currentText, pattern)) {
-                        val textToProcess = currentText.substring(0, currentText.length - pattern.length).trim()
+                    val triggerIndex = findTriggerIndex(currentText, pattern, config.allowTriggerAnywhere)
+                    if (triggerIndex != -1) {
+                        val textToProcess = currentText.substring(0, triggerIndex).trim()
+                        val suffix = if (currentText.length > triggerIndex + pattern.length) {
+                             currentText.substring(triggerIndex + pattern.length)
+                        } else { "" }
                         
                         if (textToProcess.length > 1) {
                             val runnable = Runnable {
@@ -236,7 +264,8 @@ class MyAccessibilityService : AccessibilityService() {
                                 performAICall(config, prompt, textToProcess) { result ->
                                     overlayManager.hideLoading()
                                     result.onSuccess { aiText ->
-                                        processAiResult(config, inputNode, null, aiText, replaceWhole = true)
+                                        val finalText = aiText + suffix
+                                        processAiResult(config, inputNode, null, finalText, replaceWhole = true)
                                     }.onFailure {
                                         overlayManager.showToast(it.message ?: "Unknown error")
                                     }
@@ -282,11 +311,25 @@ class MyAccessibilityService : AccessibilityService() {
         }
     }
 
-    private fun isTriggerValid(text: String, trigger: String): Boolean {
-        if (!text.endsWith(trigger)) return false
-        val triggerStartIndex = text.length - trigger.length
-        if (triggerStartIndex > 0 && !text[triggerStartIndex - 1].isWhitespace()) return false
-        return true
+    private fun findTriggerIndex(text: String, trigger: String, allowAnywhere: Boolean): Int {
+        if (!allowAnywhere) {
+            if (!text.endsWith(trigger)) return -1
+            val triggerStartIndex = text.length - trigger.length
+            if (triggerStartIndex > 0 && !text[triggerStartIndex - 1].isWhitespace()) return -1
+            return triggerStartIndex
+        }
+
+        var idx = text.lastIndexOf(trigger)
+        while (idx != -1) {
+            val startOk = (idx == 0) || text[idx - 1].isWhitespace()
+            val endIdx = idx + trigger.length
+            val endOk = (endIdx == text.length) || text[endIdx].isWhitespace()
+            
+            if (startOk && endOk) return idx
+            
+            idx = text.lastIndexOf(trigger, idx - 1)
+        }
+        return -1
     }
 
     private fun performUndo() {

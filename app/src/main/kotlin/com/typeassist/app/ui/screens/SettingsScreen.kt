@@ -107,6 +107,22 @@ fun GeneralSettingsTab(config: AppConfig, onSave: (AppConfig) -> Unit) {
     HorizontalDivider()
     Spacer(Modifier.height(16.dp))
 
+    var allowTriggerAnywhere by remember { mutableStateOf(config.allowTriggerAnywhere) }
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text("Allow Trigger Anywhere", fontWeight = FontWeight.Bold)
+            Text("Process commands even if followed by other text (e.g. 'text .g more').", fontSize = 12.sp, color = Color.Gray)
+        }
+        Switch(checked = allowTriggerAnywhere, onCheckedChange = { 
+            allowTriggerAnywhere = it
+            onSave(config.copy(allowTriggerAnywhere = it))
+        })
+    }
+
+    Spacer(Modifier.height(16.dp))
+    HorizontalDivider()
+    Spacer(Modifier.height(16.dp))
+
     val context = LocalContext.current
     var hasOverlayPermission by remember { mutableStateOf(android.provider.Settings.canDrawOverlays(context)) }
     var enablePreviewDialog by remember { mutableStateOf(config.enablePreviewDialog && hasOverlayPermission) }

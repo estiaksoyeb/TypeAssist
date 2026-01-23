@@ -20,7 +20,8 @@ data class AppConfig(
     var saveSnippetPattern: String = "(.save:%:%)", // Default pattern for saving snippets
     var enableUndoOverlay: Boolean = true,
     var enableLoadingOverlay: Boolean = true,
-    var enablePreviewDialog: Boolean = false // Default off, requires permission
+    var enablePreviewDialog: Boolean = false, // Default off, requires permission
+    var allowTriggerAnywhere: Boolean = false
 ) : Serializable
 
 data class CloudflareConfig(
@@ -88,6 +89,7 @@ fun createDefaultConfig(): AppConfig {
         saveSnippetPattern = "(.save:%:%)",
         enableUndoOverlay = true,
         enableLoadingOverlay = true,
-        enablePreviewDialog = false
+        enablePreviewDialog = false,
+        allowTriggerAnywhere = false
     )
 }
