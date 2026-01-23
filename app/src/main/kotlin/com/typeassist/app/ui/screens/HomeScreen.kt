@@ -18,6 +18,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.zIndex
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 
 import android.app.Activity
 import android.content.Context
@@ -65,6 +67,17 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: UpdateInfo?, onT
     // Read preference for Did You Know
     val prefs = context.getSharedPreferences("GeminiConfig", Context.MODE_PRIVATE)
     val hasSeenDidYouKnow = prefs.getBoolean("did_you_know_seen", false)
+    
+    // Reset Status Bar Color
+    val view = LocalView.current
+    val primaryColor = MaterialTheme.colorScheme.primary.toArgb()
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = (view.context as Activity).window
+            window.statusBarColor = primaryColor
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false // Assume dark primary, white icons
+        }
+    }
     
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
