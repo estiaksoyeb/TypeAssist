@@ -372,7 +372,7 @@ class MyAccessibilityService : AccessibilityService() {
             val progressBar = ProgressBar(this)
             progressBar.indeterminateTintList = android.content.res.ColorStateList.valueOf(Color.WHITE)
             loadingView?.addView(progressBar)
-            val params = WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, PixelFormat.TRANSLUCENT)
+            val params = WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, PixelFormat.TRANSLUCENT)
             params.gravity = Gravity.CENTER
             try { windowManager?.addView(loadingView, params) } catch (e: Exception) {}
         }
@@ -397,7 +397,7 @@ class MyAccessibilityService : AccessibilityService() {
                 setOnClickListener { performUndo() }
             }
             undoView?.addView(btn)
-            val params = WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, PixelFormat.TRANSLUCENT)
+            val params = WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, PixelFormat.TRANSLUCENT)
             params.gravity = Gravity.CENTER
             try { windowManager?.addView(undoView, params); undoHandler.postDelayed(hideUndoRunnable, 5000) } catch (e: Exception) {}
         }
