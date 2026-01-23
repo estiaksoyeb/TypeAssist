@@ -1,5 +1,24 @@
 package com.typeassist.app.ui.screens
 
+import com.typeassist.app.MainActivity
+import com.typeassist.app.data.AppConfig
+import com.typeassist.app.utils.UpdateInfo
+import com.typeassist.app.R
+import com.typeassist.app.ui.components.TypingAnimationPreview
+
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.zIndex
+
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
@@ -11,47 +30,29 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Code
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
-import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.text.withStyle
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
-import androidx.core.view.WindowCompat
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import com.typeassist.app.MainActivity
-import com.typeassist.app.data.AppConfig
-import com.typeassist.app.utils.UpdateInfo
-
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.ui.res.painterResource
-import com.typeassist.app.R
-import com.typeassist.app.ui.components.TypingAnimationPreview
-
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.border
+import androidx.compose.ui.draw.scale
+import androidx.compose.material.icons.filled.Lightbulb
 
 @Composable
 fun HomeScreen(config: AppConfig, context: Context, updateInfo: UpdateInfo?, onToggle: (Boolean) -> Unit, onNavigate: (String) -> Unit) {
@@ -61,7 +62,9 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: UpdateInfo?, onT
     var showTroubleshootDialog by remember { mutableStateOf(false) }
     val lifecycleOwner = LocalLifecycleOwner.current
     
-    // Manual window color setting removed (Handled by AppTheme)
+    // Read preference for Did You Know
+    val prefs = context.getSharedPreferences("GeminiConfig", Context.MODE_PRIVATE)
+    val hasSeenDidYouKnow = prefs.getBoolean("did_you_know_seen", false)
     
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -70,7 +73,8 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: UpdateInfo?, onT
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
-
+    
+    // ... (Dialogs remain the same) ...
     if (showTroubleshootDialog) {
         AlertDialog(
             onDismissRequest = { showTroubleshootDialog = false },
@@ -114,7 +118,7 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: UpdateInfo?, onT
         Column(
             modifier = Modifier.fillMaxWidth().zIndex(1f)
         ) {
-            // Blue Background Section (Wraps Text)
+            // Blue Background Section
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -123,7 +127,7 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: UpdateInfo?, onT
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 16.dp, bottom = 45.dp), // Extra bottom padding for card overlap
+                        .padding(top = 16.dp, bottom = 45.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text("TypeAssist", color = MaterialTheme.colorScheme.onPrimary, fontSize = 28.sp, fontWeight = FontWeight.Bold)
@@ -131,13 +135,13 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: UpdateInfo?, onT
                 }
             }
 
-            // Master Switch Card (Overlaps upwards)
+            // Master Switch Card
             Card(
                 elevation = CardDefaults.cardElevation(6.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
-                    .offset(y = (-35).dp) // Move up to overlap
+                    .offset(y = (-35).dp)
             ) {
                 Row(
                     modifier = Modifier.padding(20.dp).fillMaxWidth(),
@@ -175,7 +179,6 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: UpdateInfo?, onT
 
         // === 2. SCROLLABLE CONTENT ===
         Column(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp).verticalScroll(rememberScrollState())) {
-            // Spacer removed to compensate for Header offset gap
             
             Box(
                 modifier = Modifier.fillMaxWidth(),
@@ -189,6 +192,13 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: UpdateInfo?, onT
                 )
             }
 
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // === DID YOU KNOW BUTTON ===
+            DidYouKnowButton(
+                onClick = { onNavigate("did_you_know") },
+                hasSeen = hasSeenDidYouKnow
+            )
             
             Spacer(modifier = Modifier.height(24.dp))
             
@@ -201,13 +211,13 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: UpdateInfo?, onT
             }
             Spacer(modifier = Modifier.height(12.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                MenuCard(Modifier.weight(1f), "Backup", Icons.Default.Code, Color.Gray) { onNavigate("json") }
+                MenuCard(Modifier.weight(1f), "Backup", Icons.Default.Code, Color(0xFF607D8B)) { onNavigate("json") }
                 MenuCard(Modifier.weight(1f), "Test Lab", Icons.Default.Science, MaterialTheme.colorScheme.secondary) { onNavigate("test") }
             }
             Spacer(modifier = Modifier.height(12.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                MenuCard(Modifier.weight(1f), "History", Icons.Default.List, Color(0xFF8E24AA)) { onNavigate("history") }
-                MenuCard(Modifier.weight(1f), "Snippets", Icons.Default.Star, Color(0xFFF59E0B)) { onNavigate("snippets") }
+                MenuCard(Modifier.weight(1f), "History", Icons.AutoMirrored.Filled.List, Color(0xFF8E24AA)) { onNavigate("history") }
+                MenuCard(Modifier.weight(1f), "Snippets", Icons.Default.Favorite, Color(0xFFF59E0B)) { onNavigate("snippets") } // Favorite used for snippets here based on previous code or just a star
             }
 
             // Live Preview
@@ -310,10 +320,16 @@ fun CommandItem(cmd: String, title: String, desc: String) {
 }
 
 @Composable
-fun MenuCard(modifier: Modifier, title: String, icon: androidx.compose.ui.graphics.vector.ImageVector, color: Color, onClick: () -> Unit) {
-    Card(modifier = modifier.height(90.dp).clickable { onClick() }, elevation = CardDefaults.cardElevation(2.dp)) {
+fun MenuCard(modifier: Modifier, title: String, icon: ImageVector, color: Color, onClick: () -> Unit) {
+    Card(
+        modifier = modifier.height(90.dp).clickable { onClick() }, 
+        elevation = CardDefaults.cardElevation(2.dp),
+        colors = CardDefaults.cardColors(containerColor = color)
+    ) {
         Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(icon, null, tint = color); Spacer(modifier = Modifier.height(8.dp)); Text(title, fontWeight = FontWeight.Bold, color = color)
+            Icon(icon, null, tint = Color.White)
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(title, fontWeight = FontWeight.Bold, color = Color.White)
         }
     }
 }
@@ -465,6 +481,77 @@ fun DonationItem(label: String, value: String, clipboardManager: androidx.compos
             android.widget.Toast.makeText(context, "Copied $label!", android.widget.Toast.LENGTH_SHORT).show()
         }) {
             Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = Color.Gray)
+        }
+    }
+}
+
+@Composable
+fun DidYouKnowButton(onClick: () -> Unit, hasSeen: Boolean) {
+    val infiniteTransition = rememberInfiniteTransition(label = "shine")
+    val alpha by if (!hasSeen) {
+        infiniteTransition.animateFloat(
+            initialValue = 0.7f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(800, easing = LinearEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "alpha"
+        )
+    } else {
+        remember { mutableStateOf(1f) }
+    }
+
+    val scale by if (!hasSeen) {
+        infiniteTransition.animateFloat(
+            initialValue = 0.98f,
+            targetValue = 1.02f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(800, easing = LinearEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "scale"
+        )
+    } else {
+        remember { mutableStateOf(1f) }
+    }
+
+    val containerColor = if (!hasSeen) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
+    val contentColor = if (!hasSeen) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+    val borderColor = if (!hasSeen) MaterialTheme.colorScheme.primary else Color.Transparent
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(80.dp)
+            .scale(scale)
+            .clickable { onClick() }
+            .then(if (!hasSeen) Modifier.border(2.dp, borderColor.copy(alpha = alpha), RoundedCornerShape(12.dp)) else Modifier),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = containerColor)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxSize().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Icon(Icons.Default.Lightbulb, null, tint = contentColor.copy(alpha = alpha), modifier = Modifier.size(32.dp))
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    "Did you know?",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    color = contentColor
+                )
+                if (!hasSeen) {
+                    Text(
+                        "Tap to discover hidden power features!",
+                        fontSize = 12.sp,
+                        color = contentColor.copy(alpha = 0.8f)
+                    )
+                }
+            }
         }
     }
 }

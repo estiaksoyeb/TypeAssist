@@ -122,6 +122,10 @@ fun TypeAssistApp(client: OkHttpClient, updateInfo: UpdateInfo?) {
                 "history" -> HistoryScreen({ navigateTo("home") }) // Use custom navigate
                 "snippets" -> SnippetsScreen(config, { saveConfig(it) }, { navigateTo("home") })
                 "guide" -> GuideScreen({ navigateTo("home") })
+                "did_you_know" -> DidYouKnowScreen(onFinished = {
+                    prefs.edit().putBoolean("did_you_know_seen", true).apply()
+                    navigateTo("home")
+                })
                 "test" -> TestScreen(
                     onStartTest = { prefs.edit().putBoolean("is_testing_active", true).apply() },
                     onStopTest = { prefs.edit().putBoolean("is_testing_active", false).apply() },
