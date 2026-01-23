@@ -10,6 +10,7 @@ data class AppConfig(
     var cloudflareConfig: CloudflareConfig = CloudflareConfig(),
     var customApiConfig: CustomApiConfig = CustomApiConfig(),
     var savedCustomConfigs: MutableList<CustomApiConfig> = mutableListOf(),
+    var triggerDebounceMs: Long = 400L,
     var generationConfig: GenConfig = GenConfig(),
     var triggers: MutableList<Trigger> = mutableListOf(),
     var inlineCommands: MutableList<InlineCommand> = mutableListOf(),
@@ -63,6 +64,7 @@ fun createDefaultConfig(): AppConfig {
         cloudflareConfig = CloudflareConfig(),
         customApiConfig = CustomApiConfig(),
         savedCustomConfigs = mutableListOf(),
+        triggerDebounceMs = 400L,
         generationConfig = GenConfig(temperature = 0.2, topP = 0.95),
         triggers = mutableListOf(
             Trigger(".ta", "Give only the most relevant and complete answer to the query. Do not explain, do not add introductions, disclaimers, or extra text. Output only the answer."),

@@ -46,6 +46,10 @@ class MyAccessibilityService : AccessibilityService() {
     private val hideUndoRunnable = Runnable { hideUndoButton() }
     private val hidePreviewRunnable = Runnable { hidePreviewDialog() }
 
+    // --- Debounce ---
+    private val debounceHandler = Handler(Looper.getMainLooper())
+    private var pendingTriggerRunnable: Runnable? = null
+
     override fun onServiceConnected() {
         super.onServiceConnected()
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
@@ -61,6 +65,9 @@ class MyAccessibilityService : AccessibilityService() {
         }
 
         if (event.eventType == AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED) {
+            // Cancel any pending trigger execution because the text has changed
+            debounceHandler.removeCallbacksAndMessages(null)
+
             val inputNode = event.source ?: return
             var currentText = inputNode.text?.toString() ?: ""
             if (currentText.isEmpty() && event.text != null && event.text.isNotEmpty()) {
@@ -253,7 +260,7 @@ class MyAccessibilityService : AccessibilityService() {
                     }
                 }
 
-                // --- Process Trailing Triggers (Old Logic) ---
+                // --- Process Trailing Triggers (Debounced) ---
                 for (trigger in triggers) {
                     val pattern = trigger.pattern
                     val prompt = trigger.prompt
@@ -262,33 +269,42 @@ class MyAccessibilityService : AccessibilityService() {
                         val textToProcess = currentText.substring(0, currentText.length - pattern.length).trim()
                         
                         if (textToProcess.length > 1) {
-                            originalTextCache = textToProcess
-                            lastNode = inputNode
-                            undoCacheTimestamp = System.currentTimeMillis()
-                            HistoryManager.add(originalTextCache) // Save to history
+                            // Schedule the trigger execution
+                            val runnable = Runnable {
+                                // Re-verify node accessibility (optional but good practice)
+                                if (!inputNode.refresh()) return@Runnable
 
-                            showLoading(config)
-                            hideUndoButton() 
+                                originalTextCache = textToProcess
+                                lastNode = inputNode
+                                undoCacheTimestamp = System.currentTimeMillis()
+                                HistoryManager.add(originalTextCache)
 
-                            performAICall(config, prompt, textToProcess) { result ->
-                                hideLoading()
-                                result.onSuccess { aiText ->
-                                    val wordCount = aiText.split("\\s+".toRegex()).size
-                                    if (wordCount > 15 && config.enablePreviewDialog) {
-                                        showPreviewDialog(aiText) {
+                                showLoading(config)
+                                hideUndoButton() 
+
+                                performAICall(config, prompt, textToProcess) { result ->
+                                    hideLoading()
+                                    result.onSuccess { aiText ->
+                                        val wordCount = aiText.split("\\s+".toRegex()).size
+                                        if (wordCount > 15 && config.enablePreviewDialog) {
+                                            showPreviewDialog(aiText) {
+                                                pasteText(inputNode, aiText)
+                                                showUndoButton(config)
+                                            }
+                                        } else {
                                             pasteText(inputNode, aiText)
                                             showUndoButton(config)
                                         }
-                                    } else {
-                                        pasteText(inputNode, aiText)
-                                        showUndoButton(config)
+                                    }.onFailure {
+                                        showToast(it.message ?: "Unknown error")
                                     }
-                                }.onFailure {
-                                    showToast(it.message ?: "Unknown error")
                                 }
                             }
+                            
+                            pendingTriggerRunnable = runnable
+                            debounceHandler.postDelayed(runnable, config.triggerDebounceMs)
                         }
-                        return 
+                        return // Consume the event, wait for debounce
                     }
                 }
             } catch (e: Exception) {
