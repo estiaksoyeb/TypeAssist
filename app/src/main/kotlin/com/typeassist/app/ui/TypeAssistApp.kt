@@ -40,7 +40,17 @@ fun TypeAssistApp(client: OkHttpClient, updateInfo: UpdateInfo?) {
     var config by remember(currentScreen) { 
         mutableStateOf(try {
             val json = prefs.getString("config_json", null)
-            if (json != null) gson.fromJson(json, AppConfig::class.java) else createDefaultConfig()
+            if (json != null) {
+                val loadedConfig = gson.fromJson(json, AppConfig::class.java)
+                // Handle missing fields from older versions
+                if (loadedConfig.savedCustomConfigs == null) {
+                    loadedConfig.savedCustomConfigs = mutableListOf()
+                }
+                if (loadedConfig.snippets == null) {
+                    loadedConfig.snippets = mutableListOf()
+                }
+                loadedConfig
+            } else createDefaultConfig()
         } catch (e: Exception) { createDefaultConfig() })
     }
 

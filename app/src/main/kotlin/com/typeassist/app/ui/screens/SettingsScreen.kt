@@ -5,12 +5,14 @@ import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
@@ -245,6 +247,44 @@ fun AiProviderSettingsTab(config: AppConfig, client: OkHttpClient, onSave: (AppC
         OutlinedTextField(value = cfModel, onValueChange = { cfModel = it }, label = { Text("Cloudflare Model ID") }, modifier = Modifier.fillMaxWidth(), placeholder = { Text("@cf/meta/llama-3-8b-instruct") })
     } else {
         // Custom API Setup
+        if (config.savedCustomConfigs.isNotEmpty()) {
+            Text("Saved Configurations", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = primaryColor)
+            Spacer(Modifier.height(8.dp))
+            config.savedCustomConfigs.forEach { savedConfig ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
+                        .clickable {
+                             customBaseUrl = savedConfig.baseUrl
+                             customApiKey = savedConfig.apiKey
+                             customModel = savedConfig.model
+                        },
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = savedConfig.model.ifBlank { "Unknown Model" },
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                        )
+                        Text(text = savedConfig.baseUrl, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                    }
+                    IconButton(onClick = {
+                        val newSavedList = config.savedCustomConfigs.toMutableList()
+                        newSavedList.remove(savedConfig)
+                        onSave(config.copy(savedCustomConfigs = newSavedList))
+                    }) {
+                        Icon(Icons.Filled.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
+                    }
+                }
+                HorizontalDivider()
+            }
+            Spacer(Modifier.height(16.dp))
+        }
+
         OutlinedTextField(value = customBaseUrl, onValueChange = { customBaseUrl = it }, label = { Text("Base URL") }, modifier = Modifier.fillMaxWidth(), placeholder = { Text("https://api.openai.com/v1") })
         Spacer(Modifier.height(16.dp))
         OutlinedTextField(value = customApiKey, onValueChange = { customApiKey = it }, label = { Text("API Key (Optional)") }, modifier = Modifier.fillMaxWidth(), visualTransformation = if (isKeyVisible) VisualTransformation.None else PasswordVisualTransformation(), trailingIcon = { IconButton(onClick = { isKeyVisible = !isKeyVisible }) { Icon(if (isKeyVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff, null) } })
@@ -256,6 +296,19 @@ fun AiProviderSettingsTab(config: AppConfig, client: OkHttpClient, onSave: (AppC
     
     Button(
         onClick = { 
+            val newCustomConfig = CustomApiConfig(
+                baseUrl = customBaseUrl.trim(),
+                apiKey = customApiKey.trim(),
+                model = customModel.trim()
+            )
+            
+            val updatedSavedConfigs = config.savedCustomConfigs.toMutableList()
+            if (selectedProvider == "custom" && customBaseUrl.isNotBlank() && customModel.isNotBlank()) {
+                 if (updatedSavedConfigs.none { it == newCustomConfig }) {
+                     updatedSavedConfigs.add(newCustomConfig)
+                 }
+            }
+
             var newConfig = config.copy(
                 provider = selectedProvider,
                 apiKey = geminiKey.trim(),
@@ -265,11 +318,8 @@ fun AiProviderSettingsTab(config: AppConfig, client: OkHttpClient, onSave: (AppC
                     apiToken = cfApiToken.trim(),
                     model = cfModel.trim()
                 ),
-                customApiConfig = CustomApiConfig(
-                    baseUrl = customBaseUrl.trim(),
-                    apiKey = customApiKey.trim(),
-                    model = customModel.trim()
-                )
+                customApiConfig = newCustomConfig,
+                savedCustomConfigs = updatedSavedConfigs
             )
             
             // Auto-enable logic
