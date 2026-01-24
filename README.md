@@ -54,7 +54,7 @@ No more switching apps to fix grammar, translate text, or calculate math. TypeAs
 
 ### 🛡 Safety & Privacy
 *   **Global Undo:** Revert any action instantly using `.undo`.
-*   **History Manager:** View and recover original text from the last 2 minutes.
+*   **History Manager:** View and recover original text from the last 5 minutes.
 *   **Privacy First:** Processes text **only** when a trigger is detected. No data is stored permanently.
 
 ---

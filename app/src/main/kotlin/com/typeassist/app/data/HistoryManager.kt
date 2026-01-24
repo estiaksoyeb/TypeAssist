@@ -8,8 +8,8 @@ data class HistoryItem(
 )
 
 object HistoryManager {
-    private val history = CopyOnWriteArrayList<HistoryItem>()
-    private const val EXPIRATION_TIME_MS = 2 * 60 * 1000 // 2 minutes
+    private val history = mutableListOf<HistoryItem>()
+    private const val EXPIRATION_TIME_MS = 5 * 60 * 1000 // 5 minutes
 
     fun add(text: String) {
         history.add(0, HistoryItem(text))

@@ -42,7 +42,7 @@ fun HistoryScreen(onBack: () -> Unit) {
     Scaffold(
         topBar = { 
             TopAppBar(
-                title = { Text("History (Last 2 Min)") }, 
+                title = { Text("History (Last 5 Min)") }, 
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Back") } },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface, titleContentColor = MaterialTheme.colorScheme.primary, navigationIconContentColor = MaterialTheme.colorScheme.primary)
             ) 

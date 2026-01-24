@@ -99,8 +99,8 @@ fun GuideScreen(onBack: () -> Unit) {
 
             item { GuideSection("6. Safety & History", "Never lose your work.", 
                 listOf(
-                    GuideItem("Undo", "Global Undo", "Press the UNDO button or type '.undo' to revert changes. Works for 2 minutes."),
-                    GuideItem("History", "Clipboard History", "View and copy the last 2 minutes of original text from the History screen.")
+                    GuideItem("Undo", "Global Undo", "Press the UNDO button or type '.undo' to revert changes. Works for 5 minutes."),
+                    GuideItem("History", "Clipboard History", "View and copy the last 5 minutes of original text from the History screen.")
                 ))
             }
             

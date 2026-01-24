@@ -186,7 +186,7 @@ class MyAccessibilityService : AccessibilityService() {
 
                 val undoCommandPattern = config.undoCommandPattern.trim()
                 val timeSinceCache = System.currentTimeMillis() - undoCacheTimestamp
-                if (currentText.endsWith(undoCommandPattern) && originalTextCache.isNotEmpty() && timeSinceCache < 120000) {
+                if (currentText.endsWith(undoCommandPattern) && originalTextCache.isNotEmpty() && timeSinceCache < 300000) {
                     pasteText(inputNode, originalTextCache)
                     return
                 }
@@ -334,7 +334,7 @@ class MyAccessibilityService : AccessibilityService() {
 
     private fun performUndo() {
         val timeSinceCache = System.currentTimeMillis() - undoCacheTimestamp
-        if (lastNode != null && originalTextCache.isNotEmpty() && timeSinceCache < 120000) {
+        if (lastNode != null && originalTextCache.isNotEmpty() && timeSinceCache < 300000) {
             if (lastNode!!.refresh()) {
                 pasteText(lastNode!!, originalTextCache)
                 overlayManager.showToast("Undone!")
