@@ -104,20 +104,15 @@ class OverlayManager(private val context: Context) {
     }
 
     fun showPreviewDialog(text: String, isDarkMode: Boolean, onInsert: () -> Unit) {
-        if (!android.provider.Settings.canDrawOverlays(context)) {
-            onInsert()
-            showToast("Preview skipped: Missing overlay permission")
-            return
-        }
-
         mainHandler.post {
             removePreviewInternal()
             
-            val cardBgColor = if (isDarkMode) 0xFF1F2937.toInt() else 0xFFFFFFFF.toInt()
-            val primaryTextColor = if (isDarkMode) Color.WHITE else Color.BLACK
-            val secondaryTextColor = if (isDarkMode) 0xFFD1D5DB.toInt() else 0xFF333333.toInt()
-            val discardTextColor = if (isDarkMode) 0xFF9CA3AF.toInt() else Color.GRAY
-            val insertTextColor = if (isDarkMode) 0xFF818CF8.toInt() else 0xFF4F46E5.toInt()
+            // Material 3 Colors from Theme.kt
+            val cardBgColor = if (isDarkMode) 0xFF1C1B1F.toInt() else 0xFFFFFBFE.toInt() // Surface
+            val primaryTextColor = if (isDarkMode) 0xFF818CF8.toInt() else 0xFF4F46E5.toInt() // Primary
+            val secondaryTextColor = if (isDarkMode) 0xFFE6E1E5.toInt() else 0xFF1C1B1F.toInt() // OnSurface
+            val discardTextColor = if (isDarkMode) 0xFFCAC4D0.toInt() else 0xFF49454F.toInt() // OnSurfaceVariant
+            val insertTextColor = if (isDarkMode) 0xFF818CF8.toInt() else 0xFF4F46E5.toInt() // Primary
 
             // The Card (As Root View)
             val card = android.widget.LinearLayout(context).apply {
@@ -194,7 +189,7 @@ class OverlayManager(private val context: Context) {
             val rootParams = WindowManager.LayoutParams(
                 (context.resources.displayMetrics.widthPixels * 0.75).toInt(), 
                 WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                 WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
                 PixelFormat.TRANSLUCENT
