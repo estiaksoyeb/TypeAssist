@@ -104,6 +104,12 @@ class OverlayManager(private val context: Context) {
     }
 
     fun showPreviewDialog(text: String, isDarkMode: Boolean, onInsert: () -> Unit) {
+        if (!android.provider.Settings.canDrawOverlays(context)) {
+            onInsert()
+            showToast("Preview skipped: Missing overlay permission")
+            return
+        }
+
         mainHandler.post {
             removePreviewInternal()
             
