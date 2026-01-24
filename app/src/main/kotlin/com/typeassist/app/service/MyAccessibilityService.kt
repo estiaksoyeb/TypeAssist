@@ -102,7 +102,7 @@ class MyAccessibilityService : AccessibilityService() {
                 // -- Snippets Logic --
                 val snippetPrefix = config.snippetTriggerPrefix
                 val saveSnippetPattern = config.saveSnippetPattern
-                val snippets = config.snippets
+                val snippets = config.snippets.sortedByDescending { it.trigger.length }
 
                 for (s in snippets) {
                     val fullTrigger = snippetPrefix + s.trigger
@@ -110,10 +110,17 @@ class MyAccessibilityService : AccessibilityService() {
                     if (idx != -1) {
                         val isAtEnd = idx + fullTrigger.length == currentText.length
                         if (config.allowTriggerAnywhere || isAtEnd) {
-                            val prefix = currentText.substring(0, idx)
-                            val suffix = currentText.substring(idx + fullTrigger.length)
-                            val newText = prefix + s.content + suffix
-                            pasteText(inputNode, newText)
+                            // Schedule the snippet expansion (Debounced)
+                            val runnable = Runnable {
+                                // Re-verify text context in case it changed (though handler is usually cancelled)
+                                if (!inputNode.refresh()) return@Runnable
+                                val prefix = currentText.substring(0, idx)
+                                val suffix = currentText.substring(idx + fullTrigger.length)
+                                val newText = prefix + s.content + suffix
+                                pasteText(inputNode, newText)
+                            }
+                            pendingTriggerRunnable = runnable
+                            debounceHandler.postDelayed(runnable, config.triggerDebounceMs)
                             return
                         }
                     }
