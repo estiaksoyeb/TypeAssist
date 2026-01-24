@@ -391,8 +391,8 @@ fun DeveloperCreditSection() {
                 Spacer(modifier = Modifier.height(16.dp))
                 SocialLink(
                     icon = R.drawable.ic_fab_telegram,
-                    text = "Telegram",
-                    url = "https://t.me/estiaksoyeb"
+                    text = "Telegram Group",
+                    url = "https://t.me/TypeAssist"
                 )
             }
 
