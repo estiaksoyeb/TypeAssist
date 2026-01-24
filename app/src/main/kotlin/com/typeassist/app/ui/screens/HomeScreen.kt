@@ -68,17 +68,6 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: UpdateInfo?, onT
     val prefs = context.getSharedPreferences("GeminiConfig", Context.MODE_PRIVATE)
     val hasSeenDidYouKnow = prefs.getBoolean("did_you_know_seen", false)
     
-    // Reset Status Bar Color
-    val view = LocalView.current
-    val primaryColor = MaterialTheme.colorScheme.primary.toArgb()
-    if (!view.isInEditMode) {
-        SideEffect {
-            val window = (view.context as Activity).window
-            window.statusBarColor = primaryColor
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false // Assume dark primary, white icons
-        }
-    }
-    
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) { hasPermission = activity.isAccessibilityEnabled() }
@@ -127,34 +116,34 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: UpdateInfo?, onT
 
     Column(modifier = Modifier.fillMaxSize()) {
         
-        // === 1. FIXED HEADER & MASTER SWITCH ===
+        // === 1. HEADER & MASTER SWITCH ===
         Column(
             modifier = Modifier.fillMaxWidth().zIndex(1f)
         ) {
-            // Blue Background Section
+            // Header Section
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.primary)
+                    .background(MaterialTheme.colorScheme.surface)
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 16.dp, bottom = 45.dp),
+                        .padding(top = 16.dp, bottom = 16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("TypeAssist", color = MaterialTheme.colorScheme.onPrimary, fontSize = 28.sp, fontWeight = FontWeight.Bold)
-                    Text("AI Power for your keyboard", color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f), fontSize = 14.sp)
+                    Text("TypeAssist", color = MaterialTheme.colorScheme.primary, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+                    Text("AI Power for your keyboard", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
                 }
             }
 
             // Master Switch Card
             Card(
-                elevation = CardDefaults.cardElevation(6.dp),
+                elevation = CardDefaults.cardElevation(2.dp),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .offset(y = (-35).dp)
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Row(
                     modifier = Modifier.padding(20.dp).fillMaxWidth(),
@@ -162,15 +151,21 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: UpdateInfo?, onT
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
-                        Text("Master Switch", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                        Text("Master Switch", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = MaterialTheme.colorScheme.onSurface)
                         val isUpdateForced = updateInfo?.forceUpdate == true
                         val statusText = if (isUpdateForced) "Update Required" else if(config.isAppEnabled) "Service Active" else "Service Paused"
-                        val statusColor = if (isUpdateForced) MaterialTheme.colorScheme.error else if(config.isAppEnabled) MaterialTheme.colorScheme.secondary else Color.Gray
+                        val statusColor = if (isUpdateForced) MaterialTheme.colorScheme.error else if(config.isAppEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                         Text(statusText, color = statusColor, fontSize = 12.sp)
                     }
                     Switch(
                         checked = config.isAppEnabled, 
                         enabled = updateInfo?.forceUpdate != true,
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                            checkedTrackColor = MaterialTheme.colorScheme.primary,
+                            uncheckedThumbColor = MaterialTheme.colorScheme.outline,
+                            uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
+                        ),
                         onCheckedChange = { newState ->
                             if (newState) {
                                 if (!activity.isAccessibilityEnabled()) {
@@ -219,18 +214,18 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: UpdateInfo?, onT
             Text("Menu", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                MenuCard(Modifier.weight(1f), "Commands", Icons.Default.Edit, MaterialTheme.colorScheme.primary) { onNavigate("commands") }
-                MenuCard(Modifier.weight(1f), "Settings", Icons.Default.Settings, MaterialTheme.colorScheme.primary) { onNavigate("settings") }
+                MenuCard(Modifier.weight(1f), "Commands", Icons.Default.Edit, MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer) { onNavigate("commands") }
+                MenuCard(Modifier.weight(1f), "Settings", Icons.Default.Settings, MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant) { onNavigate("settings") }
             }
             Spacer(modifier = Modifier.height(12.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                MenuCard(Modifier.weight(1f), "Backup", Icons.Default.Code, Color(0xFF607D8B)) { onNavigate("json") }
-                MenuCard(Modifier.weight(1f), "Test Lab", Icons.Default.Science, MaterialTheme.colorScheme.secondary) { onNavigate("test") }
+                MenuCard(Modifier.weight(1f), "Backup", Icons.Default.Code, MaterialTheme.colorScheme.secondaryContainer, MaterialTheme.colorScheme.onSecondaryContainer) { onNavigate("json") }
+                MenuCard(Modifier.weight(1f), "Test Lab", Icons.Default.Science, MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.colorScheme.onTertiaryContainer) { onNavigate("test") }
             }
             Spacer(modifier = Modifier.height(12.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                MenuCard(Modifier.weight(1f), "History", Icons.AutoMirrored.Filled.List, Color(0xFF8E24AA)) { onNavigate("history") }
-                MenuCard(Modifier.weight(1f), "Snippets", Icons.Default.Favorite, Color(0xFFF59E0B)) { onNavigate("snippets") } // Favorite used for snippets here based on previous code or just a star
+                MenuCard(Modifier.weight(1f), "History", Icons.AutoMirrored.Filled.List, MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant) { onNavigate("history") }
+                MenuCard(Modifier.weight(1f), "Snippets", Icons.Default.Favorite, MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer) { onNavigate("snippets") }
             }
 
             // Live Preview
@@ -241,12 +236,16 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: UpdateInfo?, onT
 
             // Instructions
             Spacer(modifier = Modifier.height(24.dp))
-            Card(elevation = CardDefaults.cardElevation(1.dp), modifier = Modifier.fillMaxWidth()) {
+            Card(
+                elevation = CardDefaults.cardElevation(1.dp), 
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.Info, null, tint = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("How to Use", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                        Text("How to Use", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = MaterialTheme.colorScheme.onSurface)
                     }
                     Spacer(modifier = Modifier.height(12.dp))
                     StepItem("1", "Enable Master Switch & Permission above.")
@@ -299,7 +298,8 @@ fun StepItem(num: String, text: String) {
 fun CommandItem(cmd: String, title: String, desc: String) {
     Card(
         elevation = CardDefaults.cardElevation(1.dp),
-        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp)
+        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Row(
             modifier = Modifier.padding(12.dp),
@@ -333,16 +333,16 @@ fun CommandItem(cmd: String, title: String, desc: String) {
 }
 
 @Composable
-fun MenuCard(modifier: Modifier, title: String, icon: ImageVector, color: Color, onClick: () -> Unit) {
+fun MenuCard(modifier: Modifier, title: String, icon: ImageVector, containerColor: Color, contentColor: Color, onClick: () -> Unit) {
     Card(
         modifier = modifier.height(90.dp).clickable { onClick() }, 
         elevation = CardDefaults.cardElevation(2.dp),
-        colors = CardDefaults.cardColors(containerColor = color)
+        colors = CardDefaults.cardColors(containerColor = containerColor)
     ) {
         Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(icon, null, tint = Color.White)
+            Icon(icon, null, tint = contentColor)
             Spacer(modifier = Modifier.height(8.dp))
-            Text(title, fontWeight = FontWeight.Bold, color = Color.White)
+            Text(title, fontWeight = FontWeight.Bold, color = contentColor)
         }
     }
 }
@@ -352,7 +352,8 @@ fun DeveloperCreditSection() {
     val uriHandler = LocalUriHandler.current
     Card(
         elevation = CardDefaults.cardElevation(1.dp),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -361,7 +362,8 @@ fun DeveloperCreditSection() {
                 Text(
                     "DEVELOPER",
                     fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
             Spacer(modifier = Modifier.height(16.dp))
@@ -427,7 +429,8 @@ fun SocialLink(icon: Int, text: String, url: String) {
         Spacer(modifier = Modifier.width(12.dp))
         Text(
             text = annotatedString,
-            fontSize = 16.sp
+            fontSize = 16.sp,
+            color = MaterialTheme.colorScheme.onSurface
         )
     }
 }
@@ -439,16 +442,18 @@ fun DonationSection() {
     
     Card(
         elevation = CardDefaults.cardElevation(1.dp),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.Favorite, null, tint = Color(0xFFE11D48)) // Pink/Red color for heart
+                Icon(Icons.Default.Favorite, null, tint = MaterialTheme.colorScheme.error) // Heart uses error color (red)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     "Support Development",
                     fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
@@ -476,6 +481,7 @@ fun DonationSection() {
         }
     }
 }
+
 
 @Composable
 fun DonationItem(label: String, value: String, clipboardManager: androidx.compose.ui.platform.ClipboardManager, context: Context) {

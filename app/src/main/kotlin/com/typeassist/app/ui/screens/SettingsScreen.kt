@@ -47,12 +47,22 @@ fun SettingsScreen(config: AppConfig, client: OkHttpClient, onSave: (AppConfig) 
     val view = LocalView.current
     val primaryColor = MaterialTheme.colorScheme.primary
 
-    Scaffold(topBar = { TopAppBar(title = { Text("Settings") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } }, colors = TopAppBarDefaults.topAppBarColors(containerColor = primaryColor, titleContentColor = Color.White, navigationIconContentColor = Color.White)) }) { innerPadding ->
+    Scaffold(topBar = { 
+        TopAppBar(
+            title = { Text("Settings") }, 
+            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } }, 
+            colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+                titleContentColor = MaterialTheme.colorScheme.primary,
+                navigationIconContentColor = MaterialTheme.colorScheme.primary
+            ) 
+        ) 
+    }) { innerPadding ->
         Column(modifier = Modifier.padding(innerPadding)) {
             TabRow(
                 selectedTabIndex = selectedTab,
-                containerColor = primaryColor,
-                contentColor = Color.White
+                containerColor = MaterialTheme.colorScheme.surface,
+                contentColor = MaterialTheme.colorScheme.primary
             ) {
                 Tab(selected = selectedTab == 0, onClick = { selectedTab = 0 }, text = { Text("General") })
                 Tab(selected = selectedTab == 1, onClick = { selectedTab = 1 }, text = { Text("AI Provider") })
@@ -80,7 +90,7 @@ fun GeneralSettingsTab(config: AppConfig, onSave: (AppConfig) -> Unit) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f)) {
             Text("Show Undo Button", fontWeight = FontWeight.Bold)
-            Text("Show an 'UNDO' button overlay after text replacement.", fontSize = 12.sp, color = Color.Gray)
+            Text("Show an 'UNDO' button overlay after text replacement.", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Switch(checked = enableUndoOverlay, onCheckedChange = { 
             enableUndoOverlay = it
@@ -95,7 +105,7 @@ fun GeneralSettingsTab(config: AppConfig, onSave: (AppConfig) -> Unit) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f)) {
             Text("Show Loading Indicator", fontWeight = FontWeight.Bold)
-            Text("Show a spinner overlay while AI is processing.", fontSize = 12.sp, color = Color.Gray)
+            Text("Show a spinner overlay while AI is processing.", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Switch(checked = enableLoadingOverlay, onCheckedChange = { 
             enableLoadingOverlay = it
@@ -111,7 +121,7 @@ fun GeneralSettingsTab(config: AppConfig, onSave: (AppConfig) -> Unit) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f)) {
             Text("Allow Trigger Anywhere", fontWeight = FontWeight.Bold)
-            Text("Process commands even if followed by other text (e.g. 'text .g more').", fontSize = 12.sp, color = Color.Gray)
+            Text("Process commands even if followed by other text (e.g. 'text .g more').", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Switch(checked = allowTriggerAnywhere, onCheckedChange = { 
             allowTriggerAnywhere = it
@@ -148,7 +158,7 @@ fun GeneralSettingsTab(config: AppConfig, onSave: (AppConfig) -> Unit) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f)) {
             Text("Enable Preview Dialog", fontWeight = FontWeight.Bold)
-            Text("Show a scrollable preview for long AI responses (>15 words). Requires 'Display over other apps' permission.", fontSize = 12.sp, color = Color.Gray)
+            Text("Show a scrollable preview for long AI responses (>15 words). Requires 'Display over other apps' permission.", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Switch(
             checked = enablePreviewDialog, 

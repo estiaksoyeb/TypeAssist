@@ -54,7 +54,11 @@ fun CommandsScreen(config: AppConfig, onSave: (AppConfig) -> Unit, onBack: () ->
             TopAppBar(
                 title = { Text("Commands") }, 
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Back") } },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = primaryColor, titleContentColor = Color.White, navigationIconContentColor = Color.White)
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.primary,
+                    navigationIconContentColor = MaterialTheme.colorScheme.primary
+                ) 
             ) 
         },
         floatingActionButtonPosition = FabPosition.Center,
@@ -75,8 +79,8 @@ fun CommandsScreen(config: AppConfig, onSave: (AppConfig) -> Unit, onBack: () ->
         Column(modifier = Modifier.padding(p)) {
             TabRow(
                 selectedTabIndex = selectedTab,
-                containerColor = primaryColor,
-                contentColor = Color.White
+                containerColor = MaterialTheme.colorScheme.surface,
+                contentColor = MaterialTheme.colorScheme.primary
             ) {
                 Tab(selected = selectedTab == 0, onClick = { selectedTab = 0 }, text = { Text("Standard") })
                 Tab(selected = selectedTab == 1, onClick = { selectedTab = 1 }, text = { Text("Inline") })
@@ -91,19 +95,20 @@ fun CommandsScreen(config: AppConfig, onSave: (AppConfig) -> Unit, onBack: () ->
                         ) {
                             Column(modifier = Modifier.padding(16.dp)) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Default.Lightbulb, null, tint = MaterialTheme.colorScheme.primary)
+                                    Icon(Icons.Default.Lightbulb, null, tint = MaterialTheme.colorScheme.onSecondaryContainer)
                                     Spacer(Modifier.width(8.dp))
-                                    Text("Pro Tip: Edit Mid-Sentence", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                                    Text("Pro Tip: Edit Mid-Sentence", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondaryContainer)
                                     Spacer(Modifier.weight(1f))
                                     IconButton(onClick = { showTip = false }, modifier = Modifier.size(24.dp)) {
-                                        Icon(Icons.Default.Close, "Dismiss", tint = Color.Gray)
+                                        Icon(Icons.Default.Close, "Dismiss", tint = MaterialTheme.colorScheme.onSecondaryContainer)
                                     }
                                 }
                                 Spacer(Modifier.height(8.dp))
                                 Text(
                                     "You can create custom commands to transform just a part of your text without losing context.",
                                     fontSize = 13.sp,
-                                    lineHeight = 18.sp
+                                    lineHeight = 18.sp,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer
                                 )
                                 Spacer(Modifier.height(8.dp))
                                 Text(
@@ -169,7 +174,7 @@ fun CommandsScreen(config: AppConfig, onSave: (AppConfig) -> Unit, onBack: () ->
                             minLines = 3
                         )
                         if (selectedTab == 1) {
-                            Text("Use '%' as placeholder for user text.", fontSize = 12.sp, color = Color.Gray, modifier = Modifier.padding(top = 4.dp))
+                            Text("Use '%' as placeholder for user text.", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
                         }
                     }
                 },
@@ -234,7 +239,8 @@ fun CommandItem(pattern: String, prompt: String, onEdit: () -> Unit, onDelete: (
             .fillMaxWidth()
             .padding(bottom = 8.dp)
             .clickable { onEdit() }, 
-        elevation = CardDefaults.cardElevation(2.dp)
+        elevation = CardDefaults.cardElevation(2.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Row(
             modifier = Modifier.padding(16.dp), 
@@ -242,10 +248,10 @@ fun CommandItem(pattern: String, prompt: String, onEdit: () -> Unit, onDelete: (
         ) {
             Column(modifier = Modifier.weight(1f)) { 
                 Text(pattern, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, fontSize = 16.sp)
-                Text(prompt, maxLines = 1, fontSize = 12.sp, color = Color.Gray) 
+                Text(prompt, maxLines = 1, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) 
             }
             IconButton(onClick = onDelete) { 
-                Icon(Icons.Default.Delete, "Delete", tint = Color.Red) 
+                Icon(Icons.Default.Delete, "Delete", tint = MaterialTheme.colorScheme.error) 
             }
         }
     }

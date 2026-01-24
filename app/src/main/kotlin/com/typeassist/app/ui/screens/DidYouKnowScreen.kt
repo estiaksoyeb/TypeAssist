@@ -37,14 +37,8 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun DidYouKnowScreen(onFinished: () -> Unit) {
-    val view = LocalView.current
-    val isDark = isSystemInDarkTheme()
-    
-    SideEffect {
-        val window = (view.context as Activity).window
-        window.statusBarColor = Color.Transparent.toArgb() 
-        WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !isDark
-    }
+    // Status bar logic is handled by Theme.kt now, so we remove the SideEffect here
+    // to prevent overriding the correct behavior.
 
     val features = listOf(
         DiscoveryFeature(
@@ -56,7 +50,8 @@ fun DidYouKnowScreen(onFinished: () -> Unit) {
                 "Hola amigo ...Translate to English..." to "Hello friend",
                 "Meeting at 5pm ...Add calendar emoji..." to "Meeting at 5pm 📅"
             ),
-            color = Color(0xFFE1BEE7) // Purple-ish
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
         ),
         DiscoveryFeature(
             title = "Instant Math",
@@ -67,7 +62,8 @@ fun DidYouKnowScreen(onFinished: () -> Unit) {
                 "Share: (.c: 150 / 3)" to "Share: 50",
                 "Area: (.c: 3.14 * 5^2)" to "Area: 78.5"
             ),
-            color = Color(0xFFB2DFDB) // Teal-ish
+            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
         ),
         DiscoveryFeature(
             title = "Snippets",
@@ -78,7 +74,8 @@ fun DidYouKnowScreen(onFinished: () -> Unit) {
                 "..addr" to "123 Main St, New York, NY",
                 "(.save:ph:+15550199)" to "(Snippet 'ph' saved!)"
             ),
-            color = Color(0xFFFFCCBC) // Orange-ish
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+            contentColor = MaterialTheme.colorScheme.onTertiaryContainer
         )
     )
 
@@ -164,13 +161,14 @@ data class DiscoveryFeature(
     val subtitle: String,
     val description: String,
     val examples: List<Pair<String, String>>,
-    val color: Color
+    val containerColor: Color,
+    val contentColor: Color
 )
 
 @Composable
 fun FeatureDiscoveryCard(feature: DiscoveryFeature) {
     Card(
-        colors = CardDefaults.cardColors(containerColor = feature.color),
+        colors = CardDefaults.cardColors(containerColor = feature.containerColor),
         elevation = CardDefaults.cardElevation(4.dp),
         modifier = Modifier.fillMaxSize()
     ) {
@@ -178,8 +176,8 @@ fun FeatureDiscoveryCard(feature: DiscoveryFeature) {
             modifier = Modifier.padding(24.dp).fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(feature.title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = Color.Black)
-            Text(feature.subtitle, style = MaterialTheme.typography.titleMedium, color = Color.Black.copy(alpha = 0.7f))
+            Text(feature.title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = feature.contentColor)
+            Text(feature.subtitle, style = MaterialTheme.typography.titleMedium, color = feature.contentColor.copy(alpha = 0.8f))
             
             Spacer(Modifier.height(8.dp))
             
@@ -187,7 +185,7 @@ fun FeatureDiscoveryCard(feature: DiscoveryFeature) {
             
             Spacer(Modifier.height(8.dp))
             
-            Text(feature.description, style = MaterialTheme.typography.bodyLarge, color = Color.Black.copy(alpha = 0.8f))
+            Text(feature.description, style = MaterialTheme.typography.bodyLarge, color = feature.contentColor.copy(alpha = 0.9f))
         }
     }
 }
@@ -222,7 +220,7 @@ fun LivePreviewBox(examples: List<Pair<String, String>>) {
     }
 
     Card(
-        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.9f)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier.fillMaxWidth().height(140.dp)
     ) {
@@ -230,20 +228,21 @@ fun LivePreviewBox(examples: List<Pair<String, String>>) {
             Text(
                 text = buildAnnotatedString {
                     if (displayedText == "Processing...") {
-                        withStyle(SpanStyle(color = Color.Gray, fontStyle = FontStyle.Italic)) {
+                        withStyle(SpanStyle(color = MaterialTheme.colorScheme.onSurfaceVariant, fontStyle = FontStyle.Italic)) {
                             append(displayedText)
                         }
                     } else {
                         append(displayedText)
                         if (isTyping) {
-                            withStyle(SpanStyle(color = Color.Black, fontWeight = FontWeight.Bold)) { append("|") }
+                            withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)) { append("|") }
                         }
                     }
                 },
                 fontFamily = FontFamily.Monospace,
                 fontSize = 16.sp,
-                color = Color.Black
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }
 }
+

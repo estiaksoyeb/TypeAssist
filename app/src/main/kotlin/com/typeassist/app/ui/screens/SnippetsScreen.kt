@@ -43,7 +43,7 @@ fun SnippetsScreen(config: AppConfig, onSave: (AppConfig) -> Unit, onBack: () ->
             TopAppBar(
                 title = { Text("Snippets") }, 
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Back") } },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = primaryColor, titleContentColor = Color.White, navigationIconContentColor = Color.White)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface, titleContentColor = MaterialTheme.colorScheme.primary, navigationIconContentColor = MaterialTheme.colorScheme.primary)
             ) 
         },
         floatingActionButtonPosition = FabPosition.Center,
@@ -67,11 +67,11 @@ fun SnippetsScreen(config: AppConfig, onSave: (AppConfig) -> Unit, onBack: () ->
                 modifier = Modifier.fillMaxWidth().padding(16.dp)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Usage:", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                    Text("Type '${config.snippetTriggerPrefix}' + Trigger Name to expand.", fontSize = 14.sp)
+                    Text("Usage:", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                    Text("Type '${config.snippetTriggerPrefix}' + Trigger Name to expand.", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSecondaryContainer)
                     Spacer(Modifier.height(4.dp))
-                    Text("Quick Save:", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                    Text("Type '(.save:name:content)' to save instantly.", fontSize = 14.sp)
+                    Text("Quick Save:", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                    Text("Type '(.save:name:content)' to save instantly.", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSecondaryContainer)
                 }
             }
 
@@ -87,7 +87,7 @@ fun SnippetsScreen(config: AppConfig, onSave: (AppConfig) -> Unit, onBack: () ->
                                 originalTrigger = s.trigger
                                 showEditDialog = true 
                             }, 
-                        colors = CardDefaults.cardColors(),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                         elevation = CardDefaults.cardElevation(2.dp)
                     ) {
                         Row(
@@ -96,10 +96,10 @@ fun SnippetsScreen(config: AppConfig, onSave: (AppConfig) -> Unit, onBack: () ->
                         ) {
                             Column(modifier = Modifier.weight(1f)) { 
                                 Text(s.trigger, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, fontSize = 16.sp)
-                                Text(s.content, maxLines = 1, fontSize = 12.sp, color = Color.Gray) 
+                                Text(s.content, maxLines = 1, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) 
                             }
                             IconButton(onClick = { snippetToDelete = s }) { 
-                                Icon(Icons.Default.Delete, "Delete", tint = Color.Red) 
+                                Icon(Icons.Default.Delete, "Delete", tint = MaterialTheme.colorScheme.error) 
                             }
                         }
                     }

@@ -114,7 +114,7 @@ fun TypingAnimationPreview() {
             Text(
                 text = "Live Preview",
                 fontSize = 10.sp,
-                color = Color.Gray,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(4.dp)
             )
         }

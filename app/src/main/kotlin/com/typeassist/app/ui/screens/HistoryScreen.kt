@@ -44,27 +44,28 @@ fun HistoryScreen(onBack: () -> Unit) {
             TopAppBar(
                 title = { Text("History (Last 2 Min)") }, 
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Back") } },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = primaryColor, titleContentColor = Color.White, navigationIconContentColor = Color.White)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface, titleContentColor = MaterialTheme.colorScheme.primary, navigationIconContentColor = MaterialTheme.colorScheme.primary)
             ) 
         }
     ) { p ->
         if (historyItems.isEmpty()) {
             Box(modifier = Modifier.padding(p).fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("No history available.", color = Color.Gray)
+                Text("No history available.", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         } else {
             LazyColumn(modifier = Modifier.padding(p).padding(16.dp)) {
                 items(historyItems) { item ->
                     Card(
                         modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-                        elevation = CardDefaults.cardElevation(2.dp)
+                        elevation = CardDefaults.cardElevation(2.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(
                                     text = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(item.timestamp)),
                                     fontSize = 12.sp,
-                                    color = Color.Gray,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.weight(1f)
                                 )
                                 IconButton(onClick = {

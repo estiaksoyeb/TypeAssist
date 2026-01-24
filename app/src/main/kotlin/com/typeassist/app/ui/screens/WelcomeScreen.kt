@@ -47,17 +47,6 @@ fun WelcomeScreen(onFinished: () -> Unit) {
     val lifecycleOwner = LocalLifecycleOwner.current
     var isAccessibilityEnabled by remember { mutableStateOf(false) }
 
-    // --- Status Bar Color ---
-    val view = LocalView.current
-    val surfaceColor = MaterialTheme.colorScheme.surface
-    if (!view.isInEditMode) {
-        SideEffect {
-            val window = (view.context as Activity).window
-            window.statusBarColor = surfaceColor.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = true
-        }
-    }
-
     // --- Lifecycle Observer for Permission Check ---
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -85,7 +74,7 @@ fun WelcomeScreen(onFinished: () -> Unit) {
             Text(
                 text = "Welcome to",
                 fontSize = 20.sp,
-                color = Color.Gray
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
                 text = "TypeAssist",
@@ -103,7 +92,7 @@ fun WelcomeScreen(onFinished: () -> Unit) {
             text = "Type anywhere, add a trigger, and let AI handle the rest.",
             textAlign = TextAlign.Center,
             fontSize = 16.sp,
-            color = Color.DarkGray,
+            color = MaterialTheme.colorScheme.onSurface,
             lineHeight = 24.sp
         )
 
@@ -115,10 +104,11 @@ fun WelcomeScreen(onFinished: () -> Unit) {
             modifier = Modifier.fillMaxWidth()
         ) {
             // Permission Status Card
+            val containerColor = if (isAccessibilityEnabled) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.errorContainer
+            val contentColor = if (isAccessibilityEnabled) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onErrorContainer
+            
             Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = if (isAccessibilityEnabled) Color(0xFFDCFCE7) else Color(0xFFFEE2E2)
-                ),
+                colors = CardDefaults.cardColors(containerColor = containerColor),
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -129,20 +119,20 @@ fun WelcomeScreen(onFinished: () -> Unit) {
                     Icon(
                         imageVector = if (isAccessibilityEnabled) Icons.Default.CheckCircle else Icons.Default.Settings,
                         contentDescription = null,
-                        tint = if (isAccessibilityEnabled) Color(0xFF16A34A) else Color(0xFFDC2626)
+                        tint = contentColor
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text(
                             text = if (isAccessibilityEnabled) "Service Enabled" else "Service Required",
                             fontWeight = FontWeight.Bold,
-                            color = if (isAccessibilityEnabled) Color(0xFF166534) else Color(0xFF991B1B)
+                            color = contentColor
                         )
                         if (!isAccessibilityEnabled) {
                             Text(
                                 text = "TypeAssist needs Accessibility permission to read and replace text.",
                                 fontSize = 12.sp,
-                                color = Color(0xFF7F1D1D)
+                                color = contentColor.copy(alpha = 0.9f)
                             )
                         }
                     }
