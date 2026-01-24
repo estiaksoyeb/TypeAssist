@@ -87,9 +87,25 @@ class OverlayManager(private val context: Context) {
         }
     }
 
+    fun hidePreviewDialog() {
+        mainHandler.post { removePreviewInternal() }
+    }
+
+    private fun removePreviewInternal() {
+        mainHandler.removeCallbacks(hidePreviewRunnable)
+        if (previewView != null) {
+            try {
+                windowManager?.removeView(previewView)
+            } catch (e: Exception) {
+            } finally {
+                previewView = null
+            }
+        }
+    }
+
     fun showPreviewDialog(text: String, isDarkMode: Boolean, onInsert: () -> Unit) {
         mainHandler.post {
-            if (previewView != null) hidePreviewDialog()
+            removePreviewInternal()
             
             val cardBgColor = if (isDarkMode) 0xFF1F2937.toInt() else 0xFFFFFFFF.toInt()
             val primaryTextColor = if (isDarkMode) Color.WHITE else Color.BLACK
@@ -184,13 +200,6 @@ class OverlayManager(private val context: Context) {
                 windowManager?.addView(previewView, rootParams) 
                 mainHandler.postDelayed(hidePreviewRunnable, 30000)
             } catch (e: Exception) {}
-        }
-    }
-
-    fun hidePreviewDialog() {
-        mainHandler.removeCallbacks(hidePreviewRunnable)
-        mainHandler.post {
-            if (previewView != null) { try { windowManager?.removeView(previewView); previewView = null } catch (e: Exception) {} }
         }
     }
     
