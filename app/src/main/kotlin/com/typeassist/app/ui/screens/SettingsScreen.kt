@@ -227,6 +227,43 @@ fun AiProviderSettingsTab(config: AppConfig, client: OkHttpClient, onSave: (AppC
 
     if (selectedProvider == "gemini") {
         // Gemini Setup
+        if (config.savedGeminiConfigs.isNotEmpty()) {
+            Text("Saved Gemini Configs", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = primaryColor)
+            Spacer(Modifier.height(8.dp))
+            config.savedGeminiConfigs.forEach { savedConfig ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
+                        .clickable {
+                             geminiKey = savedConfig.apiKey
+                             geminiModel = savedConfig.model
+                        },
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = savedConfig.model.ifBlank { "Unknown Model" },
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                        )
+                        Text(text = "Key: " + savedConfig.apiKey.take(4) + "...", style = MaterialTheme.typography.bodySmall)
+                    }
+                    IconButton(onClick = {
+                        val newSavedList = config.savedGeminiConfigs.toMutableList()
+                        newSavedList.remove(savedConfig)
+                        onSave(config.copy(savedGeminiConfigs = newSavedList))
+                    }) {
+                        Icon(Icons.Filled.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
+                    }
+                }
+                HorizontalDivider()
+            }
+            Spacer(Modifier.height(16.dp))
+        }
+
         OutlinedTextField(value = geminiKey, onValueChange = { geminiKey = it }, label = { Text("Gemini API Key") }, modifier = Modifier.fillMaxWidth(), visualTransformation = if (isKeyVisible) VisualTransformation.None else PasswordVisualTransformation(), trailingIcon = { IconButton(onClick = { isKeyVisible = !isKeyVisible }) { Icon(if (isKeyVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff, null) } })
         Spacer(Modifier.height(16.dp))
         ExposedDropdownMenuBox(expanded = modelExpanded, onExpandedChange = { modelExpanded = !modelExpanded }, modifier = Modifier.fillMaxWidth()) {
@@ -235,6 +272,44 @@ fun AiProviderSettingsTab(config: AppConfig, client: OkHttpClient, onSave: (AppC
         }
     } else if (selectedProvider == "cloudflare") {
         // Cloudflare Setup
+        if (config.savedCloudflareConfigs.isNotEmpty()) {
+            Text("Saved Cloudflare Configs", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = primaryColor)
+            Spacer(Modifier.height(8.dp))
+            config.savedCloudflareConfigs.forEach { savedConfig ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
+                        .clickable {
+                             cfAccountId = savedConfig.accountId
+                             cfApiToken = savedConfig.apiToken
+                             cfModel = savedConfig.model
+                        },
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = savedConfig.model.ifBlank { "Unknown Model" },
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                        )
+                        Text(text = "Account: " + savedConfig.accountId.take(4) + "...", style = MaterialTheme.typography.bodySmall)
+                    }
+                    IconButton(onClick = {
+                        val newSavedList = config.savedCloudflareConfigs.toMutableList()
+                        newSavedList.remove(savedConfig)
+                        onSave(config.copy(savedCloudflareConfigs = newSavedList))
+                    }) {
+                        Icon(Icons.Filled.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
+                    }
+                }
+                HorizontalDivider()
+            }
+            Spacer(Modifier.height(16.dp))
+        }
+
         OutlinedTextField(value = cfAccountId, onValueChange = { cfAccountId = it }, label = { Text("Cloudflare Account ID") }, modifier = Modifier.fillMaxWidth())
         Spacer(Modifier.height(16.dp))
         OutlinedTextField(value = cfApiToken, onValueChange = { cfApiToken = it }, label = { Text("Cloudflare API Token") }, modifier = Modifier.fillMaxWidth(), visualTransformation = if (isKeyVisible) VisualTransformation.None else PasswordVisualTransformation(), trailingIcon = { IconButton(onClick = { isKeyVisible = !isKeyVisible }) { Icon(if (isKeyVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff, null) } })
@@ -296,25 +371,40 @@ fun AiProviderSettingsTab(config: AppConfig, client: OkHttpClient, onSave: (AppC
                 apiKey = customApiKey.trim(),
                 model = customModel.trim()
             )
-            
-            val updatedSavedConfigs = config.savedCustomConfigs.toMutableList()
+            val newGeminiConfig = com.typeassist.app.data.SavedGeminiConfig(
+                apiKey = geminiKey.trim(),
+                model = geminiModel.trim()
+            )
+            val newCloudflareConfig = CloudflareConfig(
+                accountId = cfAccountId.trim(),
+                apiToken = cfApiToken.trim(),
+                model = cfModel.trim()
+            )
+
+            val updatedSavedCustom = config.savedCustomConfigs.toMutableList()
             if (selectedProvider == "custom" && customBaseUrl.isNotBlank() && customModel.isNotBlank()) {
-                 if (updatedSavedConfigs.none { it == newCustomConfig }) {
-                     updatedSavedConfigs.add(newCustomConfig)
-                 }
+                 if (updatedSavedCustom.none { it == newCustomConfig }) updatedSavedCustom.add(newCustomConfig)
+            }
+
+            val updatedSavedGemini = config.savedGeminiConfigs.toMutableList()
+            if (selectedProvider == "gemini" && geminiKey.isNotBlank()) {
+                 if (updatedSavedGemini.none { it == newGeminiConfig }) updatedSavedGemini.add(newGeminiConfig)
+            }
+
+            val updatedSavedCloudflare = config.savedCloudflareConfigs.toMutableList()
+            if (selectedProvider == "cloudflare" && cfApiToken.isNotBlank()) {
+                 if (updatedSavedCloudflare.none { it == newCloudflareConfig }) updatedSavedCloudflare.add(newCloudflareConfig)
             }
 
             var newConfig = config.copy(
                 provider = selectedProvider,
                 apiKey = geminiKey.trim(),
                 model = geminiModel,
-                cloudflareConfig = CloudflareConfig(
-                    accountId = cfAccountId.trim(),
-                    apiToken = cfApiToken.trim(),
-                    model = cfModel.trim()
-                ),
+                cloudflareConfig = newCloudflareConfig,
                 customApiConfig = newCustomConfig,
-                savedCustomConfigs = updatedSavedConfigs
+                savedCustomConfigs = updatedSavedCustom,
+                savedGeminiConfigs = updatedSavedGemini,
+                savedCloudflareConfigs = updatedSavedCloudflare
             )
             
             // Auto-enable logic

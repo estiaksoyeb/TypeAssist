@@ -10,6 +10,8 @@ data class AppConfig(
     var cloudflareConfig: CloudflareConfig = CloudflareConfig(),
     var customApiConfig: CustomApiConfig = CustomApiConfig(),
     var savedCustomConfigs: MutableList<CustomApiConfig> = mutableListOf(),
+    var savedGeminiConfigs: MutableList<SavedGeminiConfig> = mutableListOf(), // New saved list for Gemini
+    var savedCloudflareConfigs: MutableList<CloudflareConfig> = mutableListOf(), // New saved list for Cloudflare
     var triggerDebounceMs: Long = 400L,
     var generationConfig: GenConfig = GenConfig(),
     var triggers: MutableList<Trigger> = mutableListOf(),
@@ -28,6 +30,11 @@ data class CloudflareConfig(
     var accountId: String = "",
     var apiToken: String = "",
     var model: String = "@cf/meta/llama-3-8b-instruct"
+) : Serializable
+
+data class SavedGeminiConfig(
+    var apiKey: String = "",
+    var model: String = ""
 ) : Serializable
 
 data class CustomApiConfig(
@@ -65,6 +72,8 @@ fun createDefaultConfig(): AppConfig {
         cloudflareConfig = CloudflareConfig(),
         customApiConfig = CustomApiConfig(),
         savedCustomConfigs = mutableListOf(),
+        savedGeminiConfigs = mutableListOf(),
+        savedCloudflareConfigs = mutableListOf(),
         triggerDebounceMs = 400L,
         generationConfig = GenConfig(temperature = 0.2, topP = 0.95),
         triggers = mutableListOf(
