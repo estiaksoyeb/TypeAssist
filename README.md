@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <b>Intelligent AI-Powered Keyboard Assistant for Android</b>
+  <b>AI & Utility in every Android text field.</b>
 </p>
 
 <p align="center">
@@ -15,9 +15,7 @@
   <img src="https://img.shields.io/github/downloads/estiaksoyeb/TypeAssist/total?style=for-the-badge&color=FF5722&label=Downloads" />
 </p>
 
-TypeAssist is a powerful Android Accessibility Service that acts as an intelligent layer over your existing keyboard. It integrates cutting-edge AI (Google Gemini, Cloudflare Workers AI) and a suite of offline utility tools directly into any text input field on your device.
-
-No more switching apps to fix grammar, translate text, or calculate math. TypeAssist is always just a trigger away.
+TypeAssist uses Accessibility to trigger AI actions via simple commands, with support for multiple AI providers.
 
 ---
 
