@@ -11,10 +11,11 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Platform-Android-brightgreen.svg" />
   <img src="https://img.shields.io/badge/License-GPLv3-blue.svg" />
-  <img src="https://img.shields.io/badge/Kotlin-1.9+-purple.svg" />
+  <img src="https://img.shields.io/badge/Kotlin-2.1.0-purple.svg" />
+  <img src="https://img.shields.io/github/downloads/estiaksoyeb/TypeAssist/total?style=for-the-badge&color=FF5722&label=Downloads" />
 </p>
 
-TypeAssist is a powerful Android Accessibility Service that acts as an intelligent layer over your existing keyboard. It integrates cutting-edge AI (Google Gemini, Cloudflare Workers AI) and a suite of offline utility tools directly into any text input field on your device. 
+TypeAssist is a powerful Android Accessibility Service that acts as an intelligent layer over your existing keyboard. It integrates cutting-edge AI (Google Gemini, Cloudflare Workers AI) and a suite of offline utility tools directly into any text input field on your device.
 
 No more switching apps to fix grammar, translate text, or calculate math. TypeAssist is always just a trigger away.
 
@@ -22,35 +23,39 @@ No more switching apps to fix grammar, translate text, or calculate math. TypeAs
 
 ## 📸 Screenshots
 
-<p align="center">
-  <img src="screenshots/1.png" width="200" />
-  <img src="screenshots/2.png" width="200" />
-  <img src="screenshots/3.png" width="200" />
-</p>
-<p align="center">
-  <img src="screenshots/4.png" width="200" />
-  <img src="screenshots/5.png" width="200" />
-  <img src="screenshots/6.png" width="200" />
-</p>
+  <!-- Screenshots -->
+  <div align="center">
+    <img src="screenshots/7.PNG" width="30%"  alt=""/>
+    <img src="screenshots/8.PNG" width="30%"  alt=""/>
+    <img src="screenshots/9.PNG" width="30%"  alt=""/>
+  </div>
 
 ---
 
 ## ✨ Features
 
 ### 🤖 AI Capabilities
-*   **Ask AI:** Query Google Gemini or Cloudflare Workers AI directly from any app.
+*   **Ask AI:** Query Google Gemini, Cloudflare Workers AI, or **any OpenAI-compatible Custom API** directly from any app.
 *   **Grammar Fix:** Instantly correct spelling, punctuation, and grammar errors.
 *   **Translation:** Translate text from any language to English (or your preferred language).
 *   **Tone Adjustment:** Rewrite messages to be more professional, polite, or friendly.
 *   **Inline Commands:** Embed AI queries within sentences using `(.ta: your prompt)`.
+*   **Global Rewrite:** Transform the entire text field with a custom instruction using `...instruction...`.
+    *   Example: `meeting at 3pm, bring laptop ...expand to formal invite...`
+    *   **Result:** "Please join us for a meeting at 3:00 PM. Kindly remember to bring your laptop as we will be working through some examples together."
 
 ### 🛠 Utility Belt (Offline Tools)
 *   **Smart Calculator:** Solve math expressions in-place.
     *   Example: `(.c: 25 * 4 + 10)` -> `110`
 *   **Snippets (Text Expander):** Expand shortcuts into full text blocks.
     *   Example: `..email` -> `user@example.com`
+    *   **Quick Save:** Save new snippets instantly without opening the app: `(.save:trigger:content)`
 *   **Date & Time:** Insert current timestamps with `.now` or `.date`.
 *   **Password Generator:** Generate strong random passwords on the fly with `.pass`.
+
+### 💾 Data Management
+*   **Backup & Restore:** Securely export your settings, snippets, and API configurations to a `.tabak` file.
+*   **Saved Configurations:** Save and switch between multiple API setups (e.g., "Personal Gemini", "Work Custom API").
 
 ### 🛡 Safety & Privacy
 *   **Global Undo:** Revert any action instantly using `.undo`.
@@ -70,7 +75,10 @@ Type your text followed by a trigger to process it.
 | `.g` | Fix Grammar | `i go home yestarday .g` |
 | `.tr` | Translate | `你好世界 .tr` |
 | `.polite` | Polite Tone | `Give me the money .polite` |
+| `...` | Global Rewrite | `I am late ...make polite...` |
 | `.undo` | Undo | Reverts the last replacement |
+
+
 
 ---
 
@@ -78,7 +86,8 @@ Type your text followed by a trigger to process it.
 
 1.  **Download:** Get the latest APK from the [Releases](https://github.com/estiaksoyeb/TypeAssist/releases) page.
 2.  **Permissions:** Enable the **TypeAssist Accessibility Service** in your Android Settings.
-3.  **API Key:** Open the app, go to **Settings**, and add your **Google Gemini** or **Cloudflare** API key.
+3.  **API Key:** Open the app, go to **Settings**, and add your API keys.
+    *   Supports Google Gemini, Cloudflare Workers AI, and Custom OpenAI Endpoints.
 4.  **Start Typing:** Open any app (WhatsApp, Notes, Chrome) and try a trigger!
 
 ---
@@ -100,9 +109,10 @@ If TypeAssist helps you in your daily workflow, consider supporting the developm
 
 ## 🛠 Tech Stack
 *   **UI:** Jetpack Compose (Material 3)
-*   **Language:** Kotlin
+*   **Language:** Kotlin 2.1.0
 *   **Network:** OkHttp / Gson
 *   **Service:** Android AccessibilityService
+*   **Architecture:** MVVM
 
 ---
 
@@ -111,8 +121,16 @@ Distributed under the **GPLv3 License**. See `LICENSE` for more information.
 
 ---
 
-## 🔒 Privacy Note
-TypeAssist uses an Accessibility Service to function. 
-- It does **not** log your keystrokes.
-- It does **not** send data to any server unless you explicitly use an AI trigger (`.ta`, `.g`, etc.).
-- It is fully **Open Source**, so you can audit the code yourself for peace of mind.
+## 🔒 Privacy & Data Security
+
+TypeAssist is designed with a **Zero-Middleman Architecture** to ensure your privacy is paramount.
+
+### How We Handle Data
+*   **Direct Connection:** Text is sent **directly** from your device to your chosen API provider (Google or Cloudflare). **No intermediate servers** are used, meaning we have no access to your data.
+*   **On-Demand Only:** The Accessibility Service runs locally. No data leaves your device unless you explicitly type a trigger (e.g., `.ta`, `.g`).
+*   **Open Source:** The entire codebase is open for audit. You can verify exactly how your data is handled.
+
+### 📜 Provider Policies
+Your input data is processed by the provider you configure. Please review their policies:
+*   **Google Gemini:** [API Terms of Service](https://ai.google.dev/gemini-api/terms)
+*   **Cloudflare Workers AI:** [Data Usage & Privacy](https://developers.cloudflare.com/workers-ai/platform/data-usage/)
