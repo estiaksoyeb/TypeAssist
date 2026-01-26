@@ -70,7 +70,7 @@ class MyAccessibilityService : AccessibilityService() {
                 }
 
                 // --- 0. Global Inline Transformation ---
-                val globalTransformRegex = Pattern.compile("""(?s)(.*)\.\.\.(.+?)\.\.\.$""")
+                val globalTransformRegex = Pattern.compile("""(?s)(.*)\.\.\.(.+?)\.\.\.\s*$""")
                 val globalMatcher = globalTransformRegex.matcher(currentText)
                 if (globalMatcher.find()) {
                     val contextText = globalMatcher.group(1) ?: ""
