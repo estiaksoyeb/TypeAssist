@@ -1,6 +1,7 @@
 name: Official Release
 
 on:
+  workflow_dispatch:
   push:
     tags:
       - 'v*' # Triggers on tags like v1.0, v1.1, etc.
@@ -49,6 +50,7 @@ jobs:
     # 4. Create GitHub Release and upload APK
     - name: Create Release
       uses: softprops/action-gh-release@v2
+      if: startsWith(github.ref, 'refs/tags/')
       with:
         files: TypeAssist-${{ github.ref_name }}.apk
         generate_release_notes: true
