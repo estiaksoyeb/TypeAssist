@@ -132,9 +132,18 @@ class OverlayManager(private val context: Context) {
                 textSize = 18f
                 setTextColor(primaryTextColor)
                 setTypeface(null, android.graphics.Typeface.BOLD)
-                setPadding(0, 0, 0, 20)
+                setPadding(0, 0, 0, 5) // Reduced padding for hint
             }
             card.addView(title)
+
+            val hint = android.widget.TextView(context).apply {
+                this.text = "Long press and drag to select text portion"
+                textSize = 11f
+                setTextColor(discardTextColor)
+                setTypeface(null, android.graphics.Typeface.ITALIC)
+                setPadding(0, 0, 0, 15)
+            }
+            card.addView(hint)
 
             val scrollView = android.widget.ScrollView(context).apply {
                 layoutParams = android.widget.LinearLayout.LayoutParams(
@@ -149,6 +158,7 @@ class OverlayManager(private val context: Context) {
                 this.text = text
                 textSize = 14f
                 setTextColor(secondaryTextColor)
+                setTextIsSelectable(true) // Make text selectable
             }
             scrollView.addView(contentText)
             card.addView(scrollView)
@@ -168,18 +178,41 @@ class OverlayManager(private val context: Context) {
                         context.theme.resolveAttribute(android.R.attr.selectableItemBackground, tv, true)
                         context.resources.getDrawable(tv.resourceId, context.theme)
                     }
-                    setPadding(30, 20, 30, 20)
+                    setPadding(15, 20, 15, 20) // Reduced padding to fit 3 buttons
                     setOnClickListener { onClick() }
                 }
             }
 
-            val discardBtn = createButton("Discard", discardTextColor) { hidePreviewDialog() }
+            val discardBtn = createButton("Close", discardTextColor) { hidePreviewDialog() }
+            val copyBtn = createButton("Copy", primaryTextColor) {
+                val start = contentText.selectionStart
+                val end = contentText.selectionEnd
+                val min = kotlin.math.min(start, end)
+                val max = kotlin.math.max(start, end)
+
+                val textToCopy = if (min >= 0 && max > min) {
+                    contentText.text.subSequence(min, max).toString()
+                } else {
+                    text
+                }
+
+                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                val clip = android.content.ClipData.newPlainText("TypeAssist AI Response", textToCopy)
+                clipboard.setPrimaryClip(clip)
+                
+                if (min >= 0 && max > min) {
+                    showToast("Copied selection")
+                } else {
+                    showToast("Copied full text")
+                }
+            }
             val insertBtn = createButton("Insert", insertTextColor) { 
                 onInsert()
                 hidePreviewDialog() 
             }
 
             btnRow.addView(discardBtn)
+            btnRow.addView(copyBtn)
             btnRow.addView(insertBtn)
             card.addView(btnRow)
 
