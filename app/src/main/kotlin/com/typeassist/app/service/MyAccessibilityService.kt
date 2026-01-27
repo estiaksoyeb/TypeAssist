@@ -49,10 +49,18 @@ class MyAccessibilityService : AccessibilityService() {
             if (!isTesting) return
         }
 
+        // Refresh focus on window state changes to fix issues with apps like Gmail
+        if (event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED ||
+            event.eventType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED) {
+            rootInActiveWindow?.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)?.refresh()
+            return
+        }
+
         if (event.eventType == AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED) {
             debounceHandler.removeCallbacksAndMessages(null)
 
-            val inputNode = event.source ?: return
+            // enhanced node retrieval
+            val inputNode = event.source ?: rootInActiveWindow?.findFocus(AccessibilityNodeInfo.FOCUS_INPUT) ?: return
             var currentText = inputNode.text?.toString() ?: ""
             if (currentText.isEmpty() && event.text != null && event.text.isNotEmpty()) {
                 currentText = event.text.joinToString("")
