@@ -444,4 +444,16 @@ class MyAccessibilityService : AccessibilityService() {
     }
 
     override fun onInterrupt() { overlayManager.hideAll() }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        super.onTaskRemoved(rootIntent)
+        // Required for stopWithTask="false" to work effectively on some devices
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        if (::overlayManager.isInitialized) {
+            overlayManager.hideAll()
+        }
+    }
 }

@@ -34,6 +34,7 @@
             android:name="com.typeassist.app.service.MyAccessibilityService"
             android:exported="true"
             android:label="TypeAssist AI"
+            android:stopWithTask="false"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
             <intent-filter>
                 <action android:name="android.accessibilityservice.AccessibilityService" />
