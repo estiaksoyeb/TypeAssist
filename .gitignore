@@ -64,3 +64,6 @@ keystore.properties
 
 # editor folder
 /.acside/
+
+# Reference projects
+SysBlock/

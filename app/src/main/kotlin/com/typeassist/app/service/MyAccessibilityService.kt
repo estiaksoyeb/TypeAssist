@@ -69,7 +69,7 @@ class MyAccessibilityService : AccessibilityService() {
             val notification = NotificationCompat.Builder(this, "typeassist_service")
                 .setContentTitle("TypeAssist is Active")
                 .setContentText("Ready to assist with your typing.")
-                .setSmallIcon(R.mipmap.ic_launcher) // Fallback to launcher icon
+                .setSmallIcon(R.drawable.ic_launcher_monochrome) // Use monochrome icon for notifications
                 .setContentIntent(pendingIntent)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setOngoing(true)
