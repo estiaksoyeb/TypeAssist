@@ -1,66 +1,100 @@
-name: Official Release
-
-on:
-  workflow_dispatch:
-  push:
-    tags:
-      - 'v*' # Triggers on tags like v1.0, v1.1, etc.
+name: Make release
 
 permissions:
   contents: write
 
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
 jobs:
-  build:
+  release-for-github:
+    name: "Release for GitHub"
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-        cache: gradle
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'adopt'
+          java-version: 17
 
-    # 1. Build the Unsigned APK
-    - name: Build Release APK
-      run: ./gradlew assembleRelease
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
 
-    # 2. Sign the APK using your GitHub Secrets
-    - name: Sign Release APK
-      uses: r0adkll/sign-android-release@v1
-      id: sign_app
-      with:
-        releaseDirectory: app/build/outputs/apk/release
-        signingKeyBase64: ${{ secrets.SIGNING_KEY_BASE64 }}
-        alias: ${{ secrets.ALIAS }}
-        keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
-        keyPassword: ${{ secrets.KEY_PASSWORD }}
-      env:
-        BUILD_TOOLS_VERSION: "34.0.0"
+      - name: Build release with Gradle
+        run: ./gradlew assembleRelease --stacktrace
 
-    # 3. Rename APK to something nicer
-    - name: Rename Signed APK
-      run: mv "${{ steps.sign_app.outputs.signedReleaseFile }}" "TypeAssist-${{ github.ref_name }}.apk"
+      - name: Get tag name
+        if: startsWith(github.ref, 'refs/tags/')
+        run: echo "VERSION_TAG=$(basename $GITHUB_REF)" >> $GITHUB_ENV
 
-    # 4. Create GitHub Release and upload APK
-    - name: Create Release
-      uses: softprops/action-gh-release@v2
-      if: startsWith(github.ref, 'refs/tags/')
-      with:
-        files: TypeAssist-${{ github.ref_name }}.apk
-        generate_release_notes: true
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Verify build output
+        run: |
+          RELEASE_DIR="app/build/outputs/apk/release"
+          if [ ! -d "$RELEASE_DIR" ]; then
+            echo "Release directory does not exist!"
+            find app/build/outputs -name "*.apk" -type f
+            exit 1
+          fi
+          ls -lah "$RELEASE_DIR"
 
-    # 5. Upload APK as Artifact
-    - name: Upload Signed APK Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: TypeAssist-Signed-APK
-        path: TypeAssist-${{ github.ref_name }}.apk
-        if-no-files-found: error
+      - name: Sign APKs
+        run: |
+          set -e
+          RELEASE_DIR="app/build/outputs/apk/release"
+          
+          # Decode Keystore from Secret (BASE64)
+          echo "${{ secrets.SIGNING_KEY_BASE64 }}" | base64 -d > release.keystore
+          
+          apk_file="$RELEASE_DIR/app-release-unsigned.apk"
+          signed_apk="$RELEASE_DIR/TypeAssist-${VERSION_TAG}.apk"
+          
+          if [ ! -f "$apk_file" ]; then
+            echo "Unsigned APK file not found: $apk_file"
+            ls -lah "$RELEASE_DIR"
+            rm release.keystore
+            exit 1
+          fi
+          
+          $ANDROID_HOME/build-tools/34.0.0/apksigner sign \
+            --ks release.keystore \
+            --ks-key-alias "${{ secrets.ALIAS }}" \
+            --ks-pass "pass:${{ secrets.KEY_STORE_PASSWORD }}" \
+            --key-pass "pass:${{ secrets.KEY_PASSWORD }}" \
+            --out "$signed_apk" \
+            "$apk_file"
+          
+          $ANDROID_HOME/build-tools/34.0.0/apksigner verify "$signed_apk"
+          
+          rm release.keystore
+          ls -lh "$signed_apk"
+          
+          checksum=$(sha256sum "$signed_apk" | awk '{ print $1 }')
+          echo "apk_sha256=$checksum" >> "$GITHUB_ENV"
+          echo "signed_apk_path=$signed_apk" >> "$GITHUB_ENV"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.VERSION_TAG }}
+          name: TypeAssist ${{ env.VERSION_TAG }}
+          body: |
+            ---
+            ### Checksums
+
+            | Variant | SHA-256 |
+            | ------- | ------- |
+            | Release | ${{ env.apk_sha256 }} |
+          files: |
+            ${{ env.signed_apk_path }}
+          draft: true
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,32 +1,102 @@
-name: Pre-Release (Nightly)
+name: Make Pre release
+
+permissions:
+  contents: write
 
 on:
   push:
-    branches: [ "master" ]
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+-preview.[0-9]+'
 
 jobs:
-  build:
+  release-for-github:
+    name: "Preview Release for GitHub"
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-        cache: gradle
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'adopt'
+          java-version: 17
 
-    - name: Build Debug APK
-      run: ./gradlew assembleDebug
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
 
-    - name: Upload APK
-      uses: actions/upload-artifact@v4 # <--- CRITICAL FIX: Version 4
-      with:
-        name: app-debug
-        path: app/build/outputs/apk/debug/app-debug.apk
-        overwrite: true
+      - name: Build release APKs (Preview)
+        run: ./gradlew assembleRelease --stacktrace
+
+      - name: Get tag name
+        if: startsWith(github.ref, 'refs/tags/')
+        run: echo "VERSION_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+      - name: Verify build output
+        run: |
+          RELEASE_DIR="app/build/outputs/apk/release"
+          if [ ! -d "$RELEASE_DIR" ]; then
+            echo "Release directory does not exist!"
+            find app/build/outputs -name "*.apk" -type f
+            exit 1
+          fi
+          ls -lah "$RELEASE_DIR"
+
+      - name: Sign APKs
+        run: |
+          set -e
+          RELEASE_DIR="app/build/outputs/apk/release"
+          
+          # Decode the Keystore from the Secret (BASE64)
+          echo "${{ secrets.SIGNING_KEY_BASE64 }}" | base64 -d > release.keystore
+          
+          apk_file="$RELEASE_DIR/app-release-unsigned.apk"
+          # Rename output file to include tag
+          signed_apk="$RELEASE_DIR/TypeAssist-preview-${VERSION_TAG}.apk"
+          
+          if [ ! -f "$apk_file" ]; then
+            echo "Unsigned APK file not found: $apk_file"
+            ls -lah "$RELEASE_DIR"
+            rm release.keystore
+            exit 1
+          fi
+          
+          # Sign the APK
+          $ANDROID_HOME/build-tools/34.0.0/apksigner sign \
+            --ks release.keystore \
+            --ks-key-alias "${{ secrets.ALIAS }}" \
+            --ks-pass "pass:${{ secrets.KEY_STORE_PASSWORD }}" \
+            --key-pass "pass:${{ secrets.KEY_PASSWORD }}" \
+            --out "$signed_apk" \
+            "$apk_file"
+          
+          # Verify the signature
+          $ANDROID_HOME/build-tools/34.0.0/apksigner verify "$signed_apk"
+          
+          rm release.keystore
+          ls -lh "$signed_apk"
+          
+          checksum=$(sha256sum "$signed_apk" | awk '{ print $1 }')
+          echo "apk_sha256=$checksum" >> "$GITHUB_ENV"
+          echo "signed_apk_path=$signed_apk" >> "$GITHUB_ENV"
+
+      - name: Create GitHub pre-release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ env.VERSION_TAG }}
+          name: "TypeAssist ${{ env.VERSION_TAG }}"
+          body: |
+            
+            ### Checksums
+            | Variant | SHA-256 |
+            | ------- | ------- |
+            | Preview | ${{ env.apk_sha256 }} |
+          files: |
+            ${{ env.signed_apk_path }}
+          draft: false
+          prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
