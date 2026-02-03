@@ -1,20 +1,27 @@
 package com.typeassist.app.service
 
 import android.accessibilityservice.AccessibilityService
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
-import java.util.regex.Pattern
-import com.typeassist.app.api.GeminiApiClient
+import androidx.core.app.NotificationCompat
+import com.google.gson.Gson
+import com.typeassist.app.R
 import com.typeassist.app.api.CloudflareApiClient
 import com.typeassist.app.api.CustomApiClient
-import com.typeassist.app.data.HistoryManager
+import com.typeassist.app.api.GeminiApiClient
 import com.typeassist.app.data.AppConfig
-import com.google.gson.Gson
+import com.typeassist.app.data.HistoryManager
 import okhttp3.*
+import java.util.regex.Pattern
 
 class MyAccessibilityService : AccessibilityService() {
 
@@ -38,6 +45,40 @@ class MyAccessibilityService : AccessibilityService() {
         super.onServiceConnected()
         overlayManager = OverlayManager(this)
         overlayManager.onUndoAction = { performUndo() }
+        startPersistentNotification()
+    }
+
+    private fun startPersistentNotification() {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val channel = NotificationChannel(
+                    "typeassist_service",
+                    "TypeAssist Service",
+                    NotificationManager.IMPORTANCE_LOW
+                ).apply {
+                    description = "Keeps TypeAssist running in the background"
+                    setShowBadge(false)
+                }
+                val manager = getSystemService(NotificationManager::class.java)
+                manager.createNotificationChannel(channel)
+            }
+
+            val intent = Intent(this, com.typeassist.app.MainActivity::class.java)
+            val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
+
+            val notification = NotificationCompat.Builder(this, "typeassist_service")
+                .setContentTitle("TypeAssist is Active")
+                .setContentText("Ready to assist with your typing.")
+                .setSmallIcon(R.mipmap.ic_launcher) // Fallback to launcher icon
+                .setContentIntent(pendingIntent)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setOngoing(true)
+                .build()
+
+            startForeground(101, notification)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
