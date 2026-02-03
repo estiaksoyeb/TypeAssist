@@ -183,7 +183,7 @@ class OverlayManager(private val context: Context) {
                 }
             }
 
-            val discardBtn = createButton("Close", discardTextColor) { hidePreviewDialog() }
+            val discardBtn = createButton("Discard", discardTextColor) { hidePreviewDialog() }
             val copyBtn = createButton("Copy", primaryTextColor) {
                 val start = contentText.selectionStart
                 val end = contentText.selectionEnd
@@ -232,7 +232,7 @@ class OverlayManager(private val context: Context) {
             
             try { 
                 windowManager?.addView(previewView, rootParams) 
-                mainHandler.postDelayed(hidePreviewRunnable, 30000)
+                // Removed auto-hide to allow reading
             } catch (e: Exception) {}
         }
     }
