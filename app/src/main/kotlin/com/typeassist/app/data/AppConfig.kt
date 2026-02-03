@@ -20,6 +20,8 @@ data class AppConfig(
     var undoCommandPattern: String = ".undo",
     var snippetTriggerPrefix: String = "ta#", // Default prefix for using snippets
     var saveSnippetPattern: String = "(.save:%:%)", // Default pattern for saving snippets
+    var globalTriggerPattern: String = "...%...", // Global rewrite trigger pattern
+    var isHistoryEnabled: Boolean = true, // Toggle history logging
     var enableUndoOverlay: Boolean = true,
     var enableLoadingOverlay: Boolean = true,
     var enablePreviewDialog: Boolean = false, // Default off, requires permission
@@ -96,6 +98,8 @@ fun createDefaultConfig(): AppConfig {
         undoCommandPattern = ".undo",
         snippetTriggerPrefix = "..",
         saveSnippetPattern = "(.save:%:%)",
+        globalTriggerPattern = "...%...",
+        isHistoryEnabled = true,
         enableUndoOverlay = true,
         enableLoadingOverlay = true,
         enablePreviewDialog = false,

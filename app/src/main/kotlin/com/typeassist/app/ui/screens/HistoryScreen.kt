@@ -44,6 +44,15 @@ fun HistoryScreen(onBack: () -> Unit) {
             TopAppBar(
                 title = { Text("History (Last 5 Min)") }, 
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Back") } },
+                actions = {
+                    TextButton(onClick = {
+                        HistoryManager.clear()
+                        historyItems = HistoryManager.getHistory()
+                        Toast.makeText(context, "History Cleared", Toast.LENGTH_SHORT).show()
+                    }) {
+                        Text("Clear", color = MaterialTheme.colorScheme.primary)
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface, titleContentColor = MaterialTheme.colorScheme.primary, navigationIconContentColor = MaterialTheme.colorScheme.primary)
             ) 
         }

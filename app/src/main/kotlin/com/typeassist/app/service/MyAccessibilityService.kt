@@ -78,7 +78,9 @@ class MyAccessibilityService : AccessibilityService() {
                 }
 
                 // --- 0. Global Inline Transformation ---
-                val globalTransformRegex = Pattern.compile("""(?s)(.*)\.\.\.(.+?)\.\.\.\s*$""")
+                val globalTriggerPattern = config.globalTriggerPattern
+                val globalRegexStr = buildGlobalTriggerRegex(globalTriggerPattern)
+                val globalTransformRegex = Pattern.compile(globalRegexStr)
                 val globalMatcher = globalTransformRegex.matcher(currentText)
                 if (globalMatcher.find()) {
                     val contextText = globalMatcher.group(1) ?: ""
@@ -86,7 +88,7 @@ class MyAccessibilityService : AccessibilityService() {
 
                     if (contextText.isNotBlank() && instruction.isNotBlank()) {
                         originalTextCache = currentText
-                        HistoryManager.add(originalTextCache)
+                        if (config.isHistoryEnabled) HistoryManager.add(originalTextCache)
                         lastNode = inputNode
                         undoCacheTimestamp = System.currentTimeMillis()
 
@@ -155,7 +157,7 @@ class MyAccessibilityService : AccessibilityService() {
                 findBalancedCommand(currentText, "(.c:")?.let { (fullMatch, expr) ->
                     val result = com.typeassist.app.utils.UtilityBelt.evaluateMath(expr)
                     originalTextCache = currentText
-                    HistoryManager.add(originalTextCache)
+                    if (config.isHistoryEnabled) HistoryManager.add(originalTextCache)
                     lastNode = inputNode
                     undoCacheTimestamp = System.currentTimeMillis()
                     
@@ -184,7 +186,7 @@ class MyAccessibilityService : AccessibilityService() {
                          if (config.allowTriggerAnywhere || isAtEnd) {
                              val result = uAction()
                              originalTextCache = currentText
-                             HistoryManager.add(originalTextCache)
+                             if (config.isHistoryEnabled) HistoryManager.add(originalTextCache)
                              lastNode = inputNode
                              undoCacheTimestamp = System.currentTimeMillis()
                              
@@ -221,7 +223,7 @@ class MyAccessibilityService : AccessibilityService() {
                         val userPrompt = matcher.group(1) ?: continue
 
                         originalTextCache = currentText
-                        HistoryManager.add(originalTextCache)
+                        if (config.isHistoryEnabled) HistoryManager.add(originalTextCache)
                         lastNode = inputNode
 
                         overlayManager.showLoading(config)
@@ -271,7 +273,7 @@ class MyAccessibilityService : AccessibilityService() {
                                 originalTextCache = textToProcess
                                 lastNode = inputNode
                                 undoCacheTimestamp = System.currentTimeMillis()
-                                HistoryManager.add(originalTextCache)
+                                if (config.isHistoryEnabled) HistoryManager.add(originalTextCache)
 
                                 overlayManager.showLoading(config)
                                 overlayManager.hideUndoButton() 
@@ -389,6 +391,12 @@ class MyAccessibilityService : AccessibilityService() {
         }
         if (endIndex != -1) return Pair(text.substring(startIndex, endIndex + 1), text.substring(contentStartIndex, endIndex))
         return null
+    }
+
+    private fun buildGlobalTriggerRegex(pattern: String): String {
+        val parts = pattern.split("%", limit = 2)
+        if (parts.size != 2) return "(?s)(.*)\\Q${pattern}\\E\\s*$" // Fallback if no %
+        return "(?s)(.*)" + Pattern.quote(parts[0]) + "(.+?)" + Pattern.quote(parts[1]) + "\\s*$"
     }
 
     override fun onInterrupt() { overlayManager.hideAll() }

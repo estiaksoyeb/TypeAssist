@@ -118,6 +118,8 @@ fun GeneralSettingsTab(config: AppConfig, onSave: (AppConfig) -> Unit) {
     Spacer(Modifier.height(16.dp))
 
     var allowTriggerAnywhere by remember { mutableStateOf(config.allowTriggerAnywhere) }
+    var globalTriggerPattern by remember { mutableStateOf(config.globalTriggerPattern) }
+    
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f)) {
             Text("Allow Trigger Anywhere", fontWeight = FontWeight.Bold)
@@ -126,6 +128,39 @@ fun GeneralSettingsTab(config: AppConfig, onSave: (AppConfig) -> Unit) {
         Switch(checked = allowTriggerAnywhere, onCheckedChange = { 
             allowTriggerAnywhere = it
             onSave(config.copy(allowTriggerAnywhere = it))
+        })
+    }
+
+    Spacer(Modifier.height(16.dp))
+    HorizontalDivider()
+    Spacer(Modifier.height(16.dp))
+    
+    Text("Global Trigger Pattern", fontWeight = FontWeight.Bold)
+    Text("Pattern for rewriting text. Use '%' as the placeholder for instruction.", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Spacer(Modifier.height(8.dp))
+    OutlinedTextField(
+        value = globalTriggerPattern, 
+        onValueChange = { 
+            globalTriggerPattern = it
+            onSave(config.copy(globalTriggerPattern = it))
+        },
+        label = { Text("Pattern (e.g. ...%...)") },
+        modifier = Modifier.fillMaxWidth()
+    )
+
+    Spacer(Modifier.height(16.dp))
+    HorizontalDivider()
+    Spacer(Modifier.height(16.dp))
+
+    var isHistoryEnabled by remember { mutableStateOf(config.isHistoryEnabled) }
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text("Enable History", fontWeight = FontWeight.Bold)
+            Text("Save processed text to history for later access.", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Switch(checked = isHistoryEnabled, onCheckedChange = { 
+            isHistoryEnabled = it
+            onSave(config.copy(isHistoryEnabled = it))
         })
     }
 

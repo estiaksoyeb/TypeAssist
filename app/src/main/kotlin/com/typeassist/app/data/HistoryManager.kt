@@ -21,6 +21,10 @@ object HistoryManager {
         return history.toList()
     }
 
+    fun clear() {
+        history.clear()
+    }
+
     private fun cleanup() {
         val now = System.currentTimeMillis()
         history.removeIf { now - it.timestamp > EXPIRATION_TIME_MS }
