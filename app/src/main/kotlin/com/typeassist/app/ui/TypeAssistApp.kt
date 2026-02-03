@@ -128,7 +128,7 @@ fun TypeAssistApp(client: OkHttpClient, updateInfo: UpdateInfo?) {
                 "snippets" -> SnippetsScreen(config, { saveConfig(it) }, { navigateTo("home") })
                 "guide" -> GuideScreen({ navigateTo("home") })
                 "did_you_know" -> DidYouKnowScreen(onFinished = {
-                    prefs.edit().putBoolean("did_you_know_seen", true).apply()
+                    prefs.edit().putInt("did_you_know_version", 2).apply()
                     navigateTo("home")
                 })
                 "test" -> TestScreen(

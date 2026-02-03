@@ -66,7 +66,10 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: UpdateInfo?, onT
     
     // Read preference for Did You Know
     val prefs = context.getSharedPreferences("GeminiConfig", Context.MODE_PRIVATE)
-    val hasSeenDidYouKnow = prefs.getBoolean("did_you_know_seen", false)
+    // Check version to show "shine" for new features even if previously seen
+    val lastSeenVersion = prefs.getInt("did_you_know_version", 0)
+    val currentContentVersion = 2 
+    val hasSeenDidYouKnow = lastSeenVersion >= currentContentVersion
     
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->

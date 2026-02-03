@@ -76,6 +76,15 @@ fun DidYouKnowScreen(onFinished: () -> Unit) {
             ),
             containerColor = MaterialTheme.colorScheme.tertiaryContainer,
             contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+        ),
+        DiscoveryFeature(
+            title = "Wrong Language?",
+            subtitle = "Customize AI Prompts",
+            description = "Is the AI replying in English when you want German or Spanish?\n\nYou can edit ANY command! Go to the 'Commands' menu, tap a trigger, and add 'Return in same language.' to the system prompt.\n\nIt's all about prompting—you are in control.",
+            examples = emptyList(),
+            containerColor = MaterialTheme.colorScheme.errorContainer,
+            contentColor = MaterialTheme.colorScheme.onErrorContainer,
+            showLivePreview = false
         )
     )
 
@@ -162,7 +171,8 @@ data class DiscoveryFeature(
     val description: String,
     val examples: List<Pair<String, String>>,
     val containerColor: Color,
-    val contentColor: Color
+    val contentColor: Color,
+    val showLivePreview: Boolean = true
 )
 
 @Composable
@@ -179,13 +189,41 @@ fun FeatureDiscoveryCard(feature: DiscoveryFeature) {
             Text(feature.title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = feature.contentColor)
             Text(feature.subtitle, style = MaterialTheme.typography.titleMedium, color = feature.contentColor.copy(alpha = 0.8f))
             
-            Spacer(Modifier.height(8.dp))
-            
-            LivePreviewBox(feature.examples)
+            if (feature.examples.isNotEmpty()) {
+                Spacer(Modifier.height(8.dp))
+                if (feature.showLivePreview) {
+                    LivePreviewBox(feature.examples)
+                } else {
+                    StaticExamplesBox(feature.examples)
+                }
+            }
             
             Spacer(Modifier.height(8.dp))
             
             Text(feature.description, style = MaterialTheme.typography.bodyLarge, color = feature.contentColor.copy(alpha = 0.9f))
+        }
+    }
+}
+
+@Composable
+fun StaticExamplesBox(examples: List<Pair<String, String>>) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.fillMaxWidth().height(140.dp)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize().padding(16.dp),
+            verticalArrangement = Arrangement.SpaceEvenly
+        ) {
+            examples.forEach { (input, output) ->
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    Text(input, fontSize = 12.sp, fontFamily = FontFamily.Monospace, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
+                    Icon(Icons.AutoMirrored.Filled.ArrowForward, null, modifier = Modifier.size(12.dp), tint = MaterialTheme.colorScheme.primary)
+                    Spacer(Modifier.width(4.dp))
+                    Text(output, fontSize = 12.sp, fontFamily = FontFamily.Monospace, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
+                }
+            }
         }
     }
 }
