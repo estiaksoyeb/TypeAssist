@@ -56,26 +56,24 @@ fun WelcomeScreen(onFinished: () -> Unit) {
                 }
             }
             
-            // Indicators (Only on first page, as second page has its own bottom button)
-            if (pagerState.currentPage == 0) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(24.dp),
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    repeat(2) { iteration ->
-                        Box(
-                            modifier = Modifier
-                                .padding(4.dp)
-                                .size(8.dp)
-                                .clip(CircleShape)
-                                .background(
-                                    if (pagerState.currentPage == iteration) MaterialTheme.colorScheme.primary 
-                                    else MaterialTheme.colorScheme.surfaceVariant
-                                )
-                        )
-                    }
+            // Indicators
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                repeat(2) { iteration ->
+                    Box(
+                        modifier = Modifier
+                            .padding(4.dp)
+                            .size(8.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (pagerState.currentPage == iteration) MaterialTheme.colorScheme.primary 
+                                else MaterialTheme.colorScheme.surfaceVariant
+                            )
+                    )
                 }
             }
         }
@@ -126,14 +124,11 @@ fun WelcomeContent(onNext: () -> Unit) {
         Button(
             onClick = onNext,
             modifier = Modifier.fillMaxWidth().height(50.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-            shape = RoundedCornerShape(12.dp)
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
         ) {
             Text("Next")
             Spacer(modifier = Modifier.width(8.dp))
             Icon(Icons.Default.ArrowForward, contentDescription = null)
         }
-        
-        Spacer(modifier = Modifier.height(20.dp))
     }
 }
