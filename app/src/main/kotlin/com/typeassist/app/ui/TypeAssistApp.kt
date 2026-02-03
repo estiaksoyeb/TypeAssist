@@ -98,6 +98,10 @@ fun TypeAssistApp(client: OkHttpClient, updateInfo: UpdateInfo?) {
                         navigateTo("home")
                     }
                 )
+                "permissions" -> PermissionsScreen(
+                    onFinished = { navigateTo("settings:0") },
+                    isStandalone = true
+                )
                 "home" -> HomeScreen(
                     config = config,
                     context = context,
@@ -114,7 +118,8 @@ fun TypeAssistApp(client: OkHttpClient, updateInfo: UpdateInfo?) {
                         config = config,
                         client = client,
                         onSave = { saveConfig(it) },
-                        onBack = { navigateTo("home") }, // Use custom navigate
+                        onBack = { navigateTo("home") },
+                        onNavigate = { navigateTo(it) },
                         initialTab = tab
                     )
                 }

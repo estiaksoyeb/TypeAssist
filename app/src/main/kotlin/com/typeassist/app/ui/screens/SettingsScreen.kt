@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
@@ -41,7 +42,7 @@ import java.io.IOException
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(config: AppConfig, client: OkHttpClient, onSave: (AppConfig) -> Unit, onBack: () -> Unit, initialTab: Int = 0) {
+fun SettingsScreen(config: AppConfig, client: OkHttpClient, onSave: (AppConfig) -> Unit, onBack: () -> Unit, onNavigate: (String) -> Unit, initialTab: Int = 0) {
     var selectedTab by remember { mutableStateOf(initialTab) }
     
     val view = LocalView.current
@@ -70,7 +71,7 @@ fun SettingsScreen(config: AppConfig, client: OkHttpClient, onSave: (AppConfig) 
             
             Column(modifier = Modifier.padding(16.dp).verticalScroll(rememberScrollState())) {
                 if (selectedTab == 0) {
-                    GeneralSettingsTab(config, onSave)
+                    GeneralSettingsTab(config, onSave, onNavigate)
                 } else {
                     AiProviderSettingsTab(config, client, onSave)
                 }
@@ -80,7 +81,7 @@ fun SettingsScreen(config: AppConfig, client: OkHttpClient, onSave: (AppConfig) 
 }
 
 @Composable
-fun GeneralSettingsTab(config: AppConfig, onSave: (AppConfig) -> Unit) {
+fun GeneralSettingsTab(config: AppConfig, onSave: (AppConfig) -> Unit, onNavigate: (String) -> Unit) {
     var enableUndoOverlay by remember { mutableStateOf(config.enableUndoOverlay) }
     var enableLoadingOverlay by remember { mutableStateOf(config.enableLoadingOverlay) }
     
@@ -115,6 +116,31 @@ fun GeneralSettingsTab(config: AppConfig, onSave: (AppConfig) -> Unit) {
 
     Spacer(Modifier.height(16.dp))
     HorizontalDivider()
+    Spacer(Modifier.height(16.dp))
+    
+    // Permission & Troubleshooting
+    Text("Troubleshooting", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = MaterialTheme.colorScheme.primary)
+    Spacer(Modifier.height(16.dp))
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onNavigate("permissions") },
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text("Check Permissions", fontWeight = FontWeight.Bold)
+            Text("Fix issues with background service, battery optimization, and notifications.", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, modifier = Modifier.rotate(180f)) // Forward arrow hack or use appropriate icon
+    }
+
+    Spacer(Modifier.height(16.dp))
+    HorizontalDivider()
+    Spacer(Modifier.height(16.dp))
+
+    Text("Triggers & History", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = MaterialTheme.colorScheme.primary)
     Spacer(Modifier.height(16.dp))
 
     var allowTriggerAnywhere by remember { mutableStateOf(config.allowTriggerAnywhere) }

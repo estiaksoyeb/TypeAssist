@@ -1,67 +1,92 @@
 package com.typeassist.app.ui.screens
 
-import android.app.Activity
-import android.content.Context
-import android.content.Intent
-import android.provider.Settings
-import androidx.compose.animation.core.*
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.view.WindowCompat
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import com.typeassist.app.MainActivity
 import com.typeassist.app.ui.components.TypingAnimationPreview
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun WelcomeScreen(onFinished: () -> Unit) {
-    val context = LocalContext.current
-    val activity = context as MainActivity
-    val lifecycleOwner = LocalLifecycleOwner.current
-    var isAccessibilityEnabled by remember { mutableStateOf(false) }
+    val pagerState = rememberPagerState(pageCount = { 2 })
+    val coroutineScope = rememberCoroutineScope()
 
-    // --- Lifecycle Observer for Permission Check ---
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                isAccessibilityEnabled = activity.isAccessibilityEnabled()
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.surface
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()
+        ) {
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.weight(1f),
+                userScrollEnabled = false // Force users to use buttons to ensure flow
+            ) { page ->
+                when (page) {
+                    0 -> WelcomeContent(
+                        onNext = {
+                            coroutineScope.launch { pagerState.animateScrollToPage(1) }
+                        }
+                    )
+                    1 -> PermissionsScreen(
+                        onFinished = onFinished,
+                        isStandalone = false
+                    )
+                }
+            }
+            
+            // Indicators (Only on first page, as second page has its own bottom button)
+            if (pagerState.currentPage == 0) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    repeat(2) { iteration ->
+                        Box(
+                            modifier = Modifier
+                                .padding(4.dp)
+                                .size(8.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    if (pagerState.currentPage == iteration) MaterialTheme.colorScheme.primary 
+                                    else MaterialTheme.colorScheme.surfaceVariant
+                                )
+                        )
+                    }
+                }
             }
         }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
+}
 
+@Composable
+fun WelcomeContent(onNext: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface)
             .padding(24.dp)
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -84,7 +109,7 @@ fun WelcomeScreen(onFinished: () -> Unit) {
             )
         }
 
-        // 2. Visualization (The Animation)
+        // 2. Visualization
         TypingAnimationPreview()
 
         // 3. Explanation
@@ -98,71 +123,17 @@ fun WelcomeScreen(onFinished: () -> Unit) {
 
         Spacer(modifier = Modifier.weight(1f))
 
-        // 4. Permission & Action Buttons
-        Column(
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.fillMaxWidth()
+        Button(
+            onClick = onNext,
+            modifier = Modifier.fillMaxWidth().height(50.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+            shape = RoundedCornerShape(12.dp)
         ) {
-            // Permission Status Card
-            val containerColor = if (isAccessibilityEnabled) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.errorContainer
-            val contentColor = if (isAccessibilityEnabled) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onErrorContainer
-            
-            Card(
-                colors = CardDefaults.cardColors(containerColor = containerColor),
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = if (isAccessibilityEnabled) Icons.Default.CheckCircle else Icons.Default.Settings,
-                        contentDescription = null,
-                        tint = contentColor
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column {
-                        Text(
-                            text = if (isAccessibilityEnabled) "Service Enabled" else "Service Required",
-                            fontWeight = FontWeight.Bold,
-                            color = contentColor
-                        )
-                        if (!isAccessibilityEnabled) {
-                            Text(
-                                text = "TypeAssist needs Accessibility permission to read and replace text.",
-                                fontSize = 12.sp,
-                                color = contentColor.copy(alpha = 0.9f)
-                            )
-                        }
-                    }
-                }
-            }
-
-            if (!isAccessibilityEnabled) {
-                Button(
-                    onClick = { context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) },
-                    modifier = Modifier.fillMaxWidth().height(50.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text("Enable Accessibility Service")
-                }
-            } else {
-                Button(
-                    onClick = onFinished,
-                    modifier = Modifier.fillMaxWidth().height(50.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text("Get Started")
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Icon(Icons.Default.ArrowForward, contentDescription = null)
-                }
-            }
+            Text("Next")
+            Spacer(modifier = Modifier.width(8.dp))
+            Icon(Icons.Default.ArrowForward, contentDescription = null)
         }
         
         Spacer(modifier = Modifier.height(20.dp))
     }
 }
-
