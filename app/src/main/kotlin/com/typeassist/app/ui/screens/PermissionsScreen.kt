@@ -24,6 +24,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
@@ -215,16 +216,16 @@ fun PermissionsScreen(
         AlertDialog(
             onDismissRequest = { showSkipDialog = false },
             title = { Text("Skip Stability Settings?") },
-            text = { Text("Without these permissions, TypeAssist may stop working unexpectedly.\n\nAre you sure?") },
+            text = { Text("Without these permissions, TypeAssist may stop working unexpectedly.\n\nIf the app doesn't work then you have to grant permission.") },
             confirmButton = {
                 Button(
                     onClick = {
                         showSkipDialog = false
                         onFinished()
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFBC02D))
                 ) {
-                    Text("Yes, Proceed")
+                    Text("Okay", color = Color.Black)
                 }
             },
             dismissButton = {
