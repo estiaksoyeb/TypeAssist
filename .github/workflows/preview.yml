@@ -41,6 +41,7 @@ jobs:
 
       - name: Sign APK
         uses: r0adkll/sign-android-release@v1
+        id: sign_app
         with:
           releaseDirectory: app/build/outputs/apk/release
           signingKeyBase64: ${{ secrets.SIGNING_KEY_BASE64 }}
@@ -60,7 +61,7 @@ jobs:
           echo "build_time=$build_time" >> $GITHUB_OUTPUT
 
           mkdir -p output
-          src="app/build/outputs/apk/release/app-release-signed.apk"
+          src="${{ steps.sign_app.outputs.signedReleaseFile }}"
           dest="output/TypeAssist-preview-r${commit_count}.apk"
           cp "$src" "$dest"
           
