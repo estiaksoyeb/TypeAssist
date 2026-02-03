@@ -66,10 +66,13 @@ class MyAccessibilityService : AccessibilityService() {
             val intent = Intent(this, com.typeassist.app.MainActivity::class.java)
             val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
 
+            val largeIcon = android.graphics.BitmapFactory.decodeResource(resources, R.mipmap.ic_launcher)
+
             val notification = NotificationCompat.Builder(this, "typeassist_service")
                 .setContentTitle("TypeAssist is Active")
                 .setContentText("Ready to assist with your typing.")
-                .setSmallIcon(R.drawable.ic_launcher_monochrome) // Use monochrome icon for notifications
+                .setSmallIcon(R.drawable.ic_notification_monochrome) // Use upscaled monochrome icon
+                .setLargeIcon(largeIcon)
                 .setContentIntent(pendingIntent)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setOngoing(true)
@@ -103,7 +106,7 @@ class MyAccessibilityService : AccessibilityService() {
             // enhanced node retrieval
             val inputNode = event.source ?: rootInActiveWindow?.findFocus(AccessibilityNodeInfo.FOCUS_INPUT) ?: return
             var currentText = inputNode.text?.toString() ?: ""
-            if (currentText.isEmpty() && event.text != null && event.text.isNotEmpty()) {
+            if (currentText.isEmpty() && event.text.isNotEmpty()) {
                 currentText = event.text.joinToString("")
             }
 
