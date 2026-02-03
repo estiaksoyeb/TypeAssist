@@ -80,10 +80,17 @@ Type your text followed by a trigger to process it.
 
 ---
 
+## 🧪 Preview Builds
+
+Want to try the latest features before they are officially released? You can download the latest automated builds here:
+
+[![Download Preview Builds](https://img.shields.io/badge/Download-Preview%20Builds-red?style=for-the-badge)](https://estiaksoyeb.github.io/TypeAssist/)
+
+---
+
 ## 📥 Installation & Setup
 
 1.  **Download:** Get the latest APK from the [Releases](https://github.com/estiaksoyeb/TypeAssist/releases) page.
-    *   [![Download Preview Builds](https://img.shields.io/badge/Download-Preview%20Builds-red?style=for-the-badge)](https://estiaksoyeb.github.io/TypeAssist/)
 2.  **Permissions:** Enable the **TypeAssist Accessibility Service** in your Android Settings.
 3.  **API Key:** Open the app, go to **Settings**, and add your API keys.
     *   Supports Google Gemini, Cloudflare Workers AI, and Custom OpenAI Endpoints.
