@@ -21,11 +21,63 @@
 #-renamesourcefileattribute SourceFile
 
 # Gson specific rules
+
 -keepattributes Signature
+
 -keepattributes *Annotation*
+
+-keepattributes EnclosingMethod
+
+-keepattributes InnerClasses
+
 -keep class com.google.gson.reflect.TypeToken { *; }
+
 -keep class * extends com.google.gson.reflect.TypeToken
 
-# Keep data classes safe for Gson serialization/deserialization
+
+
+# Retrofit 2 rules
+
+-keep class retrofit2.** { *; }
+
+-keepattributes Exceptions
+
+-dontwarn retrofit2.**
+
+-keepclassmembers,allowshrinking,allowobfuscation interface * {
+
+    @retrofit2.http.* <methods>;
+
+}
+
+
+
+# OkHttp 3 rules
+
+-keep class okhttp3.** { *; }
+
+-dontwarn okhttp3.**
+
+-dontwarn okio.**
+
+
+
+# Keep data classes and network interfaces
+
 -keep class com.typeassist.app.data.** { *; }
--keep class com.typeassist.app.data.model.GitHubRelease { *; }
+
+-keep class com.typeassist.app.data.model.** { *; }
+
+-keep class com.typeassist.app.data.network.** { *; }
+
+-keepclassmembers class com.typeassist.app.data.model.** { *; }
+
+
+
+# Fix for Kotlin Coroutines / Retrofit Reflection
+
+-keep class kotlin.coroutines.Continuation { *; }
+
+-keep class kotlin.Result { *; }
+
+-keepnames class com.typeassist.app.data.network.** { *; }
