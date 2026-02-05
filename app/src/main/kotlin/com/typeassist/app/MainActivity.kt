@@ -16,19 +16,22 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.typeassist.app.ui.AppTheme
 import com.typeassist.app.ui.TypeAssistApp
 import com.typeassist.app.ui.components.UpdateDialog
-import com.typeassist.app.utils.UpdateInfo
-import com.typeassist.app.utils.UpdateManager
+import com.typeassist.app.data.model.GitHubRelease
+import com.typeassist.app.data.repository.UpdateRepository
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 
 class MainActivity : ComponentActivity() {
     
     private val client = OkHttpClient()
-    private var updateInfoState by mutableStateOf<UpdateInfo?>(null)
+    private var updateInfoState by mutableStateOf<GitHubRelease?>(null)
+    private lateinit var updateRepository: UpdateRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
+        
+        updateRepository = UpdateRepository(this)
 
         loadCachedUpdateInfo()
         checkForUpdates()
@@ -38,50 +41,52 @@ class MainActivity : ComponentActivity() {
                 TypeAssistApp(client, updateInfo = updateInfoState)
                 
                 updateInfoState?.let { update ->
-                    UpdateDialog(info = update, onDismiss = { updateInfoState = null })
+                    UpdateDialog(release = update, onDismiss = { updateInfoState = null })
                 }
             }
         }
     }
 
-    private fun getCurrentVersionCode(): Int {
-        return try { packageManager.getPackageInfo(packageName, 0).versionCode } catch (e: Exception) { 0 }
-    }
-
     private fun loadCachedUpdateInfo() {
         val prefs = getSharedPreferences("UpdateInfo", Context.MODE_PRIVATE)
-        val json = prefs.getString("update_json", null)
+        
+        // Migration: Clear old update info key if it exists
+        if (prefs.contains("update_json")) {
+            prefs.edit().remove("update_json").apply()
+        }
+
+        val json = prefs.getString("github_release_json", null)
         if (json != null) {
             try {
-                val info = Gson().fromJson(json, UpdateInfo::class.java)
-                if (info.versionCode > getCurrentVersionCode()) {
+                val info = Gson().fromJson(json, GitHubRelease::class.java)
+                // Safety: Ensure critical fields aren't null (Gson bypasses Kotlin nullability)
+                if (info.tagName != null && info.htmlUrl != null) {
                     updateInfoState = info
                 }
             } catch (e: Exception) {
-                // Ignore parsing errors
+                prefs.edit().remove("github_release_json").apply()
             }
         }
     }
     
     private fun checkForUpdates() {
         lifecycleScope.launch {
-            val remoteInfo = UpdateManager.checkForUpdates(this@MainActivity)
+            val result = updateRepository.checkForUpdate("estiaksoyeb", "TypeAssist")
             val prefs = getSharedPreferences("UpdateInfo", Context.MODE_PRIVATE)
-            val currentVersion = getCurrentVersionCode()
             
-            if (remoteInfo != null) {
-                if (remoteInfo.versionCode > currentVersion) {
+            result.onSuccess { release ->
+                if (release != null) {
                     // Valid new update found
-                    prefs.edit().putString("update_json", Gson().toJson(remoteInfo)).apply()
-                    updateInfoState = remoteInfo
+                    prefs.edit().putString("github_release_json", Gson().toJson(release)).apply()
+                    updateInfoState = release
                 } else {
-                    // Remote version is same or older (e.g. user updated, or server downgrade)
-                    // Force clear cache and hide dialog
-                    prefs.edit().remove("update_json").apply()
+                    // No update available
+                    prefs.edit().remove("github_release_json").apply()
                     updateInfoState = null
                 }
-            } 
-            // If remoteInfo is null (network error), we do nothing and let the cached info (loaded in onCreate) persist if it exists.
+            }.onFailure {
+                // Keep cached info if network fails
+            }
         }
     }
     

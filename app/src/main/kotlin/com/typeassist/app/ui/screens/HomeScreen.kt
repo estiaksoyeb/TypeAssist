@@ -2,7 +2,7 @@ package com.typeassist.app.ui.screens
 
 import com.typeassist.app.MainActivity
 import com.typeassist.app.data.AppConfig
-import com.typeassist.app.utils.UpdateInfo
+import com.typeassist.app.data.model.GitHubRelease
 import com.typeassist.app.R
 import com.typeassist.app.ui.components.TypingAnimationPreview
 
@@ -57,7 +57,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.material.icons.filled.Lightbulb
 
 @Composable
-fun HomeScreen(config: AppConfig, context: Context, updateInfo: UpdateInfo?, onToggle: (Boolean) -> Unit, onNavigate: (String) -> Unit) {
+fun HomeScreen(config: AppConfig, context: Context, updateInfo: GitHubRelease?, onToggle: (Boolean) -> Unit, onNavigate: (String) -> Unit) {
     val activity = context as MainActivity
     var hasPermission by remember { mutableStateOf(false) }
     var showApiKeyDialog by remember { mutableStateOf(false) }
@@ -155,14 +155,12 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: UpdateInfo?, onT
                 ) {
                     Column {
                         Text("Master Switch", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = MaterialTheme.colorScheme.onSurface)
-                        val isUpdateForced = updateInfo?.forceUpdate == true
-                        val statusText = if (isUpdateForced) "Update Required" else if(config.isAppEnabled) "Service Active" else "Service Paused"
-                        val statusColor = if (isUpdateForced) MaterialTheme.colorScheme.error else if(config.isAppEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                        val statusText = if(config.isAppEnabled) "Service Active" else "Service Paused"
+                        val statusColor = if(config.isAppEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                         Text(statusText, color = statusColor, fontSize = 12.sp)
                     }
                     Switch(
                         checked = config.isAppEnabled, 
-                        enabled = updateInfo?.forceUpdate != true,
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
                             checkedTrackColor = MaterialTheme.colorScheme.primary,

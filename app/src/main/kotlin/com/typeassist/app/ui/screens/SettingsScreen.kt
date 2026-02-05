@@ -37,6 +37,8 @@ import com.typeassist.app.data.CloudflareConfig
 import com.typeassist.app.data.CustomApiConfig
 import com.typeassist.app.api.CloudflareApiClient
 import com.typeassist.app.api.CustomApiClient
+import com.typeassist.app.BuildConfig
+import kotlinx.coroutines.launch
 import okhttp3.*
 import java.io.IOException
 
@@ -82,6 +84,7 @@ fun SettingsScreen(config: AppConfig, client: OkHttpClient, onSave: (AppConfig) 
 
 @Composable
 fun GeneralSettingsTab(config: AppConfig, onSave: (AppConfig) -> Unit, onNavigate: (String) -> Unit) {
+    val context = LocalContext.current
     var enableUndoOverlay by remember { mutableStateOf(config.enableUndoOverlay) }
     var enableLoadingOverlay by remember { mutableStateOf(config.enableLoadingOverlay) }
     
@@ -208,6 +211,54 @@ fun GeneralSettingsTab(config: AppConfig, onSave: (AppConfig) -> Unit, onNavigat
                 onSave(config.copy(enablePreviewDialog = it))
             }
         )
+    }
+
+    Spacer(Modifier.height(16.dp))
+    HorizontalDivider()
+    Spacer(Modifier.height(16.dp))
+
+    Text("Updates", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = MaterialTheme.colorScheme.primary)
+    Spacer(Modifier.height(16.dp))
+
+    val updateRepository = remember { com.typeassist.app.data.repository.UpdateRepository(context) }
+    val scope = rememberCoroutineScope()
+    var isCheckingForUpdate by remember { mutableStateOf(false) }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = !isCheckingForUpdate) {
+                isCheckingForUpdate = true
+                scope.launch {
+                    val result = updateRepository.checkForUpdate("estiaksoyeb", "TypeAssist")
+                    isCheckingForUpdate = false
+                    result.onSuccess { release ->
+                        if (release != null) {
+                            Toast.makeText(context, "New Update Available: ${release.tagName}", Toast.LENGTH_LONG).show()
+                            // We could trigger the dialog here, but for now a toast is fine since 
+                            // MainActivity will show it on next restart or we can just open the link.
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(release.htmlUrl))
+                            context.startActivity(intent)
+                        } else {
+                            Toast.makeText(context, "You are on the latest version! ✅", Toast.LENGTH_SHORT).show()
+                        }
+                    }.onFailure {
+                        Toast.makeText(context, "Failed to check for updates: ${it.message}", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            },
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text("Check for Updates", fontWeight = FontWeight.Bold)
+            Text(if (isCheckingForUpdate) "Checking..." else "Current Version: ${BuildConfig.VERSION_NAME}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        if (isCheckingForUpdate) {
+            CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+        } else {
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, modifier = Modifier.rotate(180f))
+        }
     }
 }
 

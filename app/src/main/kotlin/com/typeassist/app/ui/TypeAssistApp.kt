@@ -21,13 +21,13 @@ import com.google.gson.GsonBuilder
 import com.typeassist.app.MainActivity
 import com.typeassist.app.data.AppConfig
 import com.typeassist.app.data.createDefaultConfig
+import com.typeassist.app.data.model.GitHubRelease
 import com.typeassist.app.ui.screens.*
-import com.typeassist.app.utils.UpdateInfo
 import okhttp3.OkHttpClient
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-fun TypeAssistApp(client: OkHttpClient, updateInfo: UpdateInfo?) {
+fun TypeAssistApp(client: OkHttpClient, updateInfo: GitHubRelease?) {
     val context = LocalContext.current
     val gson = GsonBuilder().setPrettyPrinting().create()
     val prefs = context.getSharedPreferences("GeminiConfig", Context.MODE_PRIVATE)
@@ -57,13 +57,6 @@ fun TypeAssistApp(client: OkHttpClient, updateInfo: UpdateInfo?) {
     fun saveConfig(newConfig: AppConfig) {
         config = newConfig
         prefs.edit().putString("config_json", gson.toJson(newConfig)).apply()
-    }
-
-    // Effect to handle forced updates
-    LaunchedEffect(updateInfo) {
-        if (updateInfo?.forceUpdate == true && config.isAppEnabled) {
-            saveConfig(config.copy(isAppEnabled = false))
-        }
     }
 
     // Custom navigate function to track previous screen

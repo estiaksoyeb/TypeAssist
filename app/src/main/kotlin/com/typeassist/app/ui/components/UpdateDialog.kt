@@ -16,17 +16,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
-import com.typeassist.app.utils.UpdateInfo
+import com.typeassist.app.data.model.GitHubRelease
+import dev.jeziellago.compose.markdowntext.MarkdownText
 
 @Composable
-fun UpdateDialog(info: UpdateInfo, onDismiss: () -> Unit) {
+fun UpdateDialog(release: GitHubRelease, onDismiss: () -> Unit) {
     val context = LocalContext.current
 
     AlertDialog(
-        onDismissRequest = if (info.forceUpdate) ({}) else onDismiss,
+        onDismissRequest = onDismiss,
         properties = DialogProperties(
-            dismissOnBackPress = !info.forceUpdate,
-            dismissOnClickOutside = !info.forceUpdate
+            dismissOnBackPress = true,
+            dismissOnClickOutside = true
         ),
         icon = { 
             Icon(Icons.Default.RocketLaunch, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(48.dp)) 
@@ -36,39 +37,44 @@ fun UpdateDialog(info: UpdateInfo, onDismiss: () -> Unit) {
         },
         text = {
             Column {
-                Text("Version ${info.versionName} is ready to install.", fontSize = 14.sp, color = Color.Gray)
+                Text("Version ${release.tagName} is now available.", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(modifier = Modifier.height(16.dp))
                 Text("What's New:", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 Spacer(modifier = Modifier.height(8.dp))
                 Box(modifier = Modifier
-                    .heightIn(max = 200.dp)
+                    .heightIn(max = 250.dp)
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
                 ) {
-                    Text(info.changelog, fontSize = 14.sp, lineHeight = 20.sp)
+                    MarkdownText(
+                        markdown = release.body,
+                        style = LocalTextStyle.current.copy(
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontSize = 14.sp,
+                            lineHeight = 20.sp
+                        )
+                    )
                 }
             }
         },
         confirmButton = {
             Button(
                 onClick = {
-                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(info.apkUrl))
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(release.htmlUrl))
                     context.startActivity(intent)
                 },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
-                Text("Update Now")
+                Text("View Release")
             }
         },
         dismissButton = {
-            if (!info.forceUpdate) {
-                TextButton(
-                    onClick = onDismiss,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Later", color = Color.Gray)
-                }
+            TextButton(
+                onClick = onDismiss,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Later", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     )

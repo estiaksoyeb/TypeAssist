@@ -28,4 +28,4 @@
 
 # Keep data classes safe for Gson serialization/deserialization
 -keep class com.typeassist.app.data.** { *; }
--keep class com.typeassist.app.utils.UpdateInfo { *; }
+-keep class com.typeassist.app.data.model.GitHubRelease { *; }
