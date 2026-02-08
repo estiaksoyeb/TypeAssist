@@ -33,7 +33,7 @@ fun UpdateDialog(release: GitHubRelease, onDismiss: () -> Unit) {
             Icon(Icons.Default.RocketLaunch, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(48.dp)) 
         },
         title = { 
-            Text(text = "New Update Available! 🚀", fontWeight = FontWeight.Bold) 
+            Text(text = "New Update Available!", fontWeight = FontWeight.Bold) 
         },
         text = {
             Column {
