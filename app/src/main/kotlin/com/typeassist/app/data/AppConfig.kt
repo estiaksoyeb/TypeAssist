@@ -25,7 +25,8 @@ data class AppConfig(
     var enableUndoOverlay: Boolean = true,
     var enableLoadingOverlay: Boolean = true,
     var enablePreviewDialog: Boolean = false, // Default off, requires permission
-    var allowTriggerAnywhere: Boolean = false
+    var allowTriggerAnywhere: Boolean = false,
+    var ignorePrecedingWhitespace: Boolean = false
 ) : Serializable
 
 data class CloudflareConfig(
@@ -103,6 +104,7 @@ fun createDefaultConfig(): AppConfig {
         enableUndoOverlay = true,
         enableLoadingOverlay = true,
         enablePreviewDialog = false,
-        allowTriggerAnywhere = false
+        allowTriggerAnywhere = false,
+        ignorePrecedingWhitespace = false
     )
 }

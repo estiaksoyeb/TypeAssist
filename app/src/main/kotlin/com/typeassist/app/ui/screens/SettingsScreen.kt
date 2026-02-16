@@ -147,6 +147,7 @@ fun GeneralSettingsTab(config: AppConfig, onSave: (AppConfig) -> Unit, onNavigat
     Spacer(Modifier.height(16.dp))
 
     var allowTriggerAnywhere by remember { mutableStateOf(config.allowTriggerAnywhere) }
+    var ignorePrecedingWhitespace by remember { mutableStateOf(config.ignorePrecedingWhitespace) }
     var globalTriggerPattern by remember { mutableStateOf(config.globalTriggerPattern) }
     
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
@@ -157,6 +158,21 @@ fun GeneralSettingsTab(config: AppConfig, onSave: (AppConfig) -> Unit, onNavigat
         Switch(checked = allowTriggerAnywhere, onCheckedChange = { 
             allowTriggerAnywhere = it
             onSave(config.copy(allowTriggerAnywhere = it))
+        })
+    }
+
+    Spacer(Modifier.height(16.dp))
+    HorizontalDivider()
+    Spacer(Modifier.height(16.dp))
+
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text("Ignore Preceding Space", fontWeight = FontWeight.Bold)
+            Text("Allow triggers immediately after words/punctuation (e.g. 'word.ta' vs 'word .ta').", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Switch(checked = ignorePrecedingWhitespace, onCheckedChange = { 
+            ignorePrecedingWhitespace = it
+            onSave(config.copy(ignorePrecedingWhitespace = it))
         })
     }
 

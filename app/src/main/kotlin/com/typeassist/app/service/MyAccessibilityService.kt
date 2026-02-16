@@ -304,7 +304,7 @@ class MyAccessibilityService : AccessibilityService() {
                     val pattern = trigger.pattern
                     val prompt = trigger.prompt
 
-                    val triggerIndex = findTriggerIndex(currentText, pattern, config.allowTriggerAnywhere)
+                    val triggerIndex = findTriggerIndex(currentText, pattern, config.allowTriggerAnywhere, config.ignorePrecedingWhitespace)
                     if (triggerIndex != -1) {
                         val textToProcess = currentText.substring(0, triggerIndex).trim()
                         val suffix = if (currentText.length > triggerIndex + pattern.length) {
@@ -372,17 +372,17 @@ class MyAccessibilityService : AccessibilityService() {
         }
     }
 
-    private fun findTriggerIndex(text: String, trigger: String, allowAnywhere: Boolean): Int {
+    private fun findTriggerIndex(text: String, trigger: String, allowAnywhere: Boolean, ignoreWhitespace: Boolean): Int {
         if (!allowAnywhere) {
             if (!text.endsWith(trigger)) return -1
             val triggerStartIndex = text.length - trigger.length
-            if (triggerStartIndex > 0 && !text[triggerStartIndex - 1].isWhitespace()) return -1
+            if (!ignoreWhitespace && triggerStartIndex > 0 && !text[triggerStartIndex - 1].isWhitespace()) return -1
             return triggerStartIndex
         }
 
         var idx = text.lastIndexOf(trigger)
         while (idx != -1) {
-            val startOk = (idx == 0) || text[idx - 1].isWhitespace()
+            val startOk = ignoreWhitespace || (idx == 0) || text[idx - 1].isWhitespace()
             val endIdx = idx + trigger.length
             val endOk = (endIdx == text.length) || text[endIdx].isWhitespace()
             
