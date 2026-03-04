@@ -12,7 +12,7 @@
   <img src="https://img.shields.io/badge/Platform-Android-brightgreen.svg" />
   <img src="https://img.shields.io/badge/License-GPLv3-blue.svg" />
   <img src="https://img.shields.io/badge/Kotlin-2.1.0-purple.svg" />
-  <img src="https://img.shields.io/github/downloads/estiaksoyeb/TypeAssist/total?style=for-the-badge&color=FF5722&label=Downloads" />
+  <a href="https://github.com/estiaksoyeb/TypeAssist/releases"><img src="https://img.shields.io/github/downloads/estiaksoyeb/TypeAssist/total?logo=Github"/></a>
 </p>
 
 TypeAssist uses Accessibility to trigger AI actions via simple commands, with support for multiple AI providers.
