@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -29,7 +30,7 @@ import com.typeassist.app.data.Trigger
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CommandsScreen(config: AppConfig, onSave: (AppConfig) -> Unit, onBack: () -> Unit) {
+fun CommandsScreen(config: AppConfig, onSave: (AppConfig) -> Unit, onBack: () -> Unit, onNavigateLibrary: () -> Unit) {
     var selectedTab by remember { mutableStateOf(0) }
     var showEditDialog by remember { mutableStateOf(false) }
     var showTip by rememberSaveable { mutableStateOf(true) }
@@ -54,6 +55,11 @@ fun CommandsScreen(config: AppConfig, onSave: (AppConfig) -> Unit, onBack: () ->
             TopAppBar(
                 title = { Text("Commands") }, 
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Back") } },
+                actions = {
+                    IconButton(onClick = onNavigateLibrary) {
+                        Icon(Icons.Default.AutoAwesome, "Browse Gallery", tint = MaterialTheme.colorScheme.primary)
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
                     titleContentColor = MaterialTheme.colorScheme.primary,

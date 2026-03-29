@@ -66,7 +66,11 @@ fun TypeAssistApp(client: OkHttpClient, updateInfo: GitHubRelease?) {
     }
 
     BackHandler(enabled = currentScreen != "home" && currentScreen != "welcome") {
-        navigateTo("home") // Use the custom navigate function for back press
+        if (currentScreen == "library") {
+            navigateTo("commands")
+        } else {
+            navigateTo("home")
+        }
     }
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -74,10 +78,15 @@ fun TypeAssistApp(client: OkHttpClient, updateInfo: GitHubRelease?) {
             targetState = currentScreen,
             label = "Screen Animation",
             transitionSpec = {
-                if (targetState == "home" && previousScreen != "home") { // Navigating back to home
+                // Logic to determine if it's a "back" animation
+                val isBackTransition = (targetState == "home" && previousScreen != "home") ||
+                                       (targetState == "commands" && previousScreen == "library") ||
+                                       (targetState == "settings" && previousScreen == "permissions")
+                
+                if (isBackTransition) {
                     slideInHorizontally { fullWidth -> -fullWidth } togetherWith // New screen from left
                     slideOutHorizontally { fullWidth -> fullWidth } // Old screen to right
-                } else { // Navigating forward or within sub-screens not back to home
+                } else { // Navigating forward
                     slideInHorizontally { fullWidth -> fullWidth } togetherWith // New screen from right
                     slideOutHorizontally { fullWidth -> -fullWidth } // Old screen to left
                 }
@@ -104,7 +113,8 @@ fun TypeAssistApp(client: OkHttpClient, updateInfo: GitHubRelease?) {
                     },
                     onNavigate = { navigateTo(it) } // Use custom navigate
                 )
-                "commands" -> CommandsScreen(config, { saveConfig(it) }, { navigateTo("home") }) // Use custom navigate
+                "commands" -> CommandsScreen(config, { saveConfig(it) }, { navigateTo("home") }, onNavigateLibrary = { navigateTo("library") })
+                "library" -> CommandLibraryScreen(config, { saveConfig(it) }, { navigateTo("commands") })
                 "settings" -> {
                     val tab = try { screen.split(":")[1].toInt() } catch (e: Exception) { 0 }
                     SettingsScreen(
