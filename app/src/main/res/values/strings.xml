@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">TypeAssist</string>
+    <string name="app_name_service">TypeAssist AI</string>
 </resources>
