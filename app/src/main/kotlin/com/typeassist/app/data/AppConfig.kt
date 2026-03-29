@@ -88,9 +88,9 @@ fun createDefaultConfig(): AppConfig {
             Trigger(".tr", "Translate to English. Return only the translated text.")
         ),
         inlineCommands = mutableListOf(
-            InlineCommand("(.ta:%)", "Give only the most relevant and complete answer to the query. Do not explain, do not add introductions, disclaimers, or extra text. Output only the answer."),
-            InlineCommand("(.g:%)", "Fix grammar, spelling, and punctuation. Return only the corrected text."),
-            InlineCommand("(.polite:%)", "Rewrite the text in a polite and professional tone. Return only the rewritten text.")
+            InlineCommand("(%:.ta)", "Give only the most relevant and complete answer to the query. Do not explain, do not add introductions, disclaimers, or extra text. Output only the answer."),
+            InlineCommand("(%:.g)", "Fix grammar, spelling, and punctuation. Return only the corrected text."),
+            InlineCommand("(%:.polite)", "Rewrite the text in a polite and professional tone. Return only the rewritten text.")
         ),
         snippets = mutableListOf( // Default snippets
             Snippet("email", "user@example.com"),

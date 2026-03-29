@@ -55,7 +55,7 @@ object CommandLibrary {
         CommandTemplate(
             title = "Inline Ask",
             description = "Place this anywhere to get a quick answer mid-sentence.",
-            recommendedTrigger = "(%:?)",
+            recommendedTrigger = "(%:.ta)",
             systemPrompt = "Give a very brief, one-sentence answer to the query. No explanations. Return only the answer.",
             isInline = true
         )
