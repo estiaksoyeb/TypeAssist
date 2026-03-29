@@ -6,6 +6,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.IOException
+import java.util.concurrent.TimeUnit
 
 class CustomApiClient(private val client: OkHttpClient) {
 
@@ -15,6 +16,7 @@ class CustomApiClient(private val client: OkHttpClient) {
         model: String,
         prompt: String,
         userText: String,
+        timeoutSeconds: Long,
         callback: (Result<String>) -> Unit
     ) {
         val jsonBody = JSONObject()
@@ -57,7 +59,12 @@ class CustomApiClient(private val client: OkHttpClient) {
             requestBuilder.addHeader("Authorization", "Bearer $apiKey")
         }
 
-        client.newCall(requestBuilder.build()).enqueue(object : Callback {
+        client.newBuilder()
+            .connectTimeout(timeoutSeconds, TimeUnit.SECONDS)
+            .readTimeout(timeoutSeconds, TimeUnit.SECONDS)
+            .writeTimeout(timeoutSeconds, TimeUnit.SECONDS)
+            .build()
+            .newCall(requestBuilder.build()).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
                 callback(Result.failure(e))
             }

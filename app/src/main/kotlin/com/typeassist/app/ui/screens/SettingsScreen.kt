@@ -233,6 +233,25 @@ fun GeneralSettingsTab(config: AppConfig, onSave: (AppConfig) -> Unit, onNavigat
     HorizontalDivider()
     Spacer(Modifier.height(16.dp))
 
+    var apiTimeoutSeconds by remember { mutableStateOf(config.apiTimeoutSeconds.toFloat()) }
+
+    Text("API Timeout", fontWeight = FontWeight.Bold)
+    Text("Maximum time to wait for AI response: ${apiTimeoutSeconds.toInt()}s", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Spacer(Modifier.height(8.dp))
+    Slider(
+        value = apiTimeoutSeconds,
+        onValueChange = { apiTimeoutSeconds = it },
+        onValueChangeFinished = {
+            onSave(config.copy(apiTimeoutSeconds = apiTimeoutSeconds.toLong()))
+        },
+        valueRange = 10f..120f,
+        steps = 22 // (120-10)/5 = 22 intervals for 5s steps (10, 15, ..., 120)
+    )
+
+    Spacer(Modifier.height(16.dp))
+    HorizontalDivider()
+    Spacer(Modifier.height(16.dp))
+
     Text("Updates", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = MaterialTheme.colorScheme.primary)
     Spacer(Modifier.height(16.dp))
 
@@ -315,7 +334,7 @@ fun AiProviderSettingsTab(config: AppConfig, client: OkHttpClient, onSave: (AppC
 
     fun verifyCloudflare(acc: String, tok: String, mod: String) {
         val cloudflareClient = CloudflareApiClient(client)
-        cloudflareClient.callCloudflare(acc, tok, mod, "You are a helpful assistant.", "hi") { result ->
+        cloudflareClient.callCloudflare(acc, tok, mod, "You are a helpful assistant.", "hi", config.apiTimeoutSeconds) { result ->
             (context as ComponentActivity).runOnUiThread {
                 result.onSuccess {
                     Toast.makeText(context, "Cloudflare API Verified! ✅", Toast.LENGTH_SHORT).show()
@@ -328,7 +347,7 @@ fun AiProviderSettingsTab(config: AppConfig, client: OkHttpClient, onSave: (AppC
 
     fun verifyCustomApi(baseUrl: String, apiKey: String, model: String) {
         val customClient = CustomApiClient(client)
-        customClient.callCustomApi(baseUrl, apiKey, model, "You are a helpful assistant.", "hi") { result ->
+        customClient.callCustomApi(baseUrl, apiKey, model, "You are a helpful assistant.", "hi", config.apiTimeoutSeconds) { result ->
             (context as ComponentActivity).runOnUiThread {
                 result.onSuccess {
                     Toast.makeText(context, "Custom API Verified! ✅", Toast.LENGTH_SHORT).show()

@@ -6,6 +6,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.IOException
+import java.util.concurrent.TimeUnit
 
 class CloudflareApiClient(private val client: OkHttpClient) {
 
@@ -15,6 +16,7 @@ class CloudflareApiClient(private val client: OkHttpClient) {
         model: String,
         prompt: String,
         userText: String,
+        timeoutSeconds: Long,
         callback: (Result<String>) -> Unit
     ) {
         val jsonBody = JSONObject()
@@ -43,7 +45,12 @@ class CloudflareApiClient(private val client: OkHttpClient) {
             .post(requestBody)
             .build()
 
-        client.newCall(request).enqueue(object : Callback {
+        client.newBuilder()
+            .connectTimeout(timeoutSeconds, TimeUnit.SECONDS)
+            .readTimeout(timeoutSeconds, TimeUnit.SECONDS)
+            .writeTimeout(timeoutSeconds, TimeUnit.SECONDS)
+            .build()
+            .newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
                 callback(Result.failure(e))
             }

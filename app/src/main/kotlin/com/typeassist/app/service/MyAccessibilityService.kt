@@ -364,11 +364,11 @@ class MyAccessibilityService : AccessibilityService() {
 
     private fun performAICall(config: AppConfig, prompt: String, userText: String, callback: (Result<String>) -> Unit) {
         if (config.provider == "cloudflare") {
-            cloudflareApiClient.callCloudflare(config.cloudflareConfig.accountId, config.cloudflareConfig.apiToken, config.cloudflareConfig.model, prompt, userText, callback)
+            cloudflareApiClient.callCloudflare(config.cloudflareConfig.accountId, config.cloudflareConfig.apiToken, config.cloudflareConfig.model, prompt, userText, config.apiTimeoutSeconds, callback)
         } else if (config.provider == "custom") {
-            customApiClient.callCustomApi(config.customApiConfig.baseUrl, config.customApiConfig.apiKey, config.customApiConfig.model, prompt, userText, callback)
+            customApiClient.callCustomApi(config.customApiConfig.baseUrl, config.customApiConfig.apiKey, config.customApiConfig.model, prompt, userText, config.apiTimeoutSeconds, callback)
         } else {
-            geminiApiClient.callGemini(config.apiKey, config.model, prompt, userText, config.generationConfig.temperature, config.generationConfig.topP, callback)
+            geminiApiClient.callGemini(config.apiKey, config.model, prompt, userText, config.generationConfig.temperature, config.generationConfig.topP, config.apiTimeoutSeconds, callback)
         }
     }
 

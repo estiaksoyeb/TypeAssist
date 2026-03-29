@@ -7,6 +7,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.IOException
+import java.util.concurrent.TimeUnit
 
 class GeminiApiClient(private val client: OkHttpClient) {
 
@@ -17,6 +18,7 @@ class GeminiApiClient(private val client: OkHttpClient) {
         userText: String,
         temp: Double,
         topP: Double,
+        timeoutSeconds: Long,
         callback: (Result<String>) -> Unit
     ) {
         val jsonBody = JSONObject()
@@ -40,7 +42,12 @@ class GeminiApiClient(private val client: OkHttpClient) {
 
         val request = Request.Builder().url(url).post(requestBody).build()
 
-        client.newCall(request).enqueue(object : Callback {
+        client.newBuilder()
+            .connectTimeout(timeoutSeconds, TimeUnit.SECONDS)
+            .readTimeout(timeoutSeconds, TimeUnit.SECONDS)
+            .writeTimeout(timeoutSeconds, TimeUnit.SECONDS)
+            .build()
+            .newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
                 callback(Result.failure(e))
             }
