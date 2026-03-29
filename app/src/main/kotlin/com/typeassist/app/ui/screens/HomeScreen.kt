@@ -117,7 +117,7 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: GitHubRelease?, 
         )
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
         
         // === 1. HEADER & MASTER SWITCH ===
         Column(
@@ -132,6 +132,7 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: GitHubRelease?, 
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .statusBarsPadding()
                         .padding(top = 16.dp, bottom = 16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {

@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Warning
@@ -35,6 +36,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.typeassist.app.utils.XiaomiUtils
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PermissionsScreen(
     onFinished: () -> Unit,
@@ -93,22 +95,35 @@ fun PermissionsScreen(
     // "Recommended" are notifications (if Android 13+) and Battery Opt + Xiaomi stuff
     val recommendedGranted = isNotificationsEnabled && !isBatteryOptimized && (!isXiaomi || isXiaomiBgStartEnabled)
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp)
-    ) {
-        if (isStandalone) {
-            // Header handled by Scaffold in parent usually, but we can add title here
+    Scaffold(
+        topBar = {
+            if (isStandalone) {
+                TopAppBar(
+                    title = { Text("Troubleshooting") },
+                    navigationIcon = {
+                        IconButton(onClick = onFinished) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                        }
+                    }
+                )
+            }
         }
-        
-        Text(
-            text = if (isStandalone) "Troubleshooting" else "Permissions",
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-        Spacer(modifier = Modifier.height(8.dp))
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(24.dp)
+        ) {
+            if (!isStandalone) {
+                Text(
+                    text = "Permissions",
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+            }
         Text(
             text = "TypeAssist works best with these permissions.",
             fontSize = 14.sp,
@@ -210,7 +225,7 @@ fun PermissionsScreen(
         ) {
             Text(if (isStandalone) "Back to Settings" else "Get Started")
         }
-    }
+    } }
     
     if (showSkipDialog) {
         AlertDialog(

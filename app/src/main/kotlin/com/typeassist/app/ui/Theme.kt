@@ -88,10 +88,6 @@ fun AppTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            // Status bar follows background/surface color
-            window.statusBarColor = colorScheme.background.toArgb()
-            window.navigationBarColor = colorScheme.background.toArgb()
-            
             val insetsController = WindowCompat.getInsetsController(window, view)
             // Light status bar icons if background is light (i.e. not dark theme)
             insetsController.isAppearanceLightStatusBars = !darkTheme
