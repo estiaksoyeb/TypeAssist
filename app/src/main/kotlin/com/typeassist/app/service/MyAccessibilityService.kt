@@ -22,9 +22,11 @@ import com.typeassist.app.data.AppConfig
 import com.typeassist.app.data.HistoryManager
 import okhttp3.*
 import java.util.regex.Pattern
+import android.util.Log
 
 class MyAccessibilityService : AccessibilityService() {
 
+    private val TAG = "TypeAssistService"
     private val client = OkHttpClient()
     private val geminiApiClient = GeminiApiClient(client)
     private val cloudflareApiClient = CloudflareApiClient(client)
@@ -46,6 +48,7 @@ class MyAccessibilityService : AccessibilityService() {
         overlayManager = OverlayManager(this)
         overlayManager.onUndoAction = { performUndo() }
         startPersistentNotification()
+        Log.d(TAG, "Service Connected")
     }
 
     private fun startPersistentNotification() {
@@ -71,7 +74,7 @@ class MyAccessibilityService : AccessibilityService() {
             val notification = NotificationCompat.Builder(this, "typeassist_service")
                 .setContentTitle("TypeAssist is Active")
                 .setContentText("Ready to assist with your typing.")
-                .setSmallIcon(R.drawable.ic_notification_monochrome) // Use upscaled monochrome icon
+                .setSmallIcon(R.drawable.ic_notification_monochrome) 
                 .setLargeIcon(largeIcon)
                 .setContentIntent(pendingIntent)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
@@ -80,7 +83,7 @@ class MyAccessibilityService : AccessibilityService() {
 
             startForeground(101, notification)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Error starting notification", e)
         }
     }
 
@@ -93,7 +96,6 @@ class MyAccessibilityService : AccessibilityService() {
             if (!isTesting) return
         }
 
-        // Refresh focus on window state changes to fix issues with apps like Gmail
         if (event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED ||
             event.eventType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED) {
             rootInActiveWindow?.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)?.refresh()
@@ -103,7 +105,6 @@ class MyAccessibilityService : AccessibilityService() {
         if (event.eventType == AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED) {
             debounceHandler.removeCallbacksAndMessages(null)
 
-            // enhanced node retrieval
             val inputNode = event.source ?: rootInActiveWindow?.findFocus(AccessibilityNodeInfo.FOCUS_INPUT) ?: return
             var currentText = inputNode.text?.toString() ?: ""
             if (currentText.isEmpty() && event.text.isNotEmpty()) {
@@ -123,24 +124,26 @@ class MyAccessibilityService : AccessibilityService() {
 
                 // --- 0. Global Inline Transformation ---
                 val globalTriggerPattern = config.globalTriggerPattern
-                val globalRegexStr = buildGlobalTriggerRegex(globalTriggerPattern)
-                val globalTransformRegex = Pattern.compile(globalRegexStr)
-                val globalMatcher = globalTransformRegex.matcher(currentText)
-                if (globalMatcher.find()) {
-                    val contextText = globalMatcher.group(1) ?: ""
-                    val instruction = globalMatcher.group(2) ?: ""
+                if (globalTriggerPattern.contains("%") && globalTriggerPattern.length >= 3) {
+                    val globalRegexStr = buildGlobalTriggerRegex(globalTriggerPattern)
+                    val globalTransformRegex = Pattern.compile(globalRegexStr)
+                    val globalMatcher = globalTransformRegex.matcher(currentText)
+                    if (globalMatcher.find()) {
+                        Log.d(TAG, "Global Trigger Match Found")
+                        val contextText = globalMatcher.group(1) ?: ""
+                        val instruction = globalMatcher.group(2) ?: ""
 
-                    if (contextText.isNotBlank() && instruction.isNotBlank()) {
-                        originalTextCache = currentText
-                        if (config.isHistoryEnabled) HistoryManager.add(originalTextCache)
-                        lastNode = inputNode
-                        undoCacheTimestamp = System.currentTimeMillis()
+                        if (contextText.isNotBlank() && instruction.isNotBlank()) {
+                            originalTextCache = currentText
+                            if (config.isHistoryEnabled) HistoryManager.add(originalTextCache)
+                            lastNode = inputNode
+                            undoCacheTimestamp = System.currentTimeMillis()
 
-                        overlayManager.showLoading(config)
-                        overlayManager.hideUndoButton()
+                            overlayManager.showLoading(config)
+                            overlayManager.hideUndoButton()
 
-                        val systemPrompt = "Rewrite the following text according to this instruction: $instruction. Return ONLY the rewritten text, no explanations, no chat."
-                        
+                            val systemPrompt = "Rewrite the following text according to this instruction: $instruction. Return ONLY the rewritten text, no explanations, no chat."
+                            
                         performAICall(config, systemPrompt, contextText) { result ->
                             overlayManager.hideLoading()
                             result.onSuccess { aiText ->
@@ -149,7 +152,9 @@ class MyAccessibilityService : AccessibilityService() {
                                 overlayManager.showToast(it.message ?: "Unknown error")
                             }
                         }
-                        return
+
+                            return
+                        }
                     }
                 }
 
@@ -164,9 +169,7 @@ class MyAccessibilityService : AccessibilityService() {
                     if (idx != -1) {
                         val isAtEnd = idx + fullTrigger.length == currentText.length
                         if (config.allowTriggerAnywhere || isAtEnd) {
-                            // Schedule the snippet expansion (Debounced)
                             val runnable = Runnable {
-                                // Re-verify text context in case it changed (though handler is usually cancelled)
                                 if (!inputNode.refresh()) return@Runnable
                                 val prefix = currentText.substring(0, idx)
                                 val suffix = currentText.substring(idx + fullTrigger.length)
@@ -180,20 +183,24 @@ class MyAccessibilityService : AccessibilityService() {
                     }
                 }
 
-                val saveMatcher = Pattern.compile(buildSaveSnippetRegex(saveSnippetPattern)).matcher(currentText)
-                if (saveMatcher.find()) {
-                    val fullMatch = saveMatcher.group(0) ?: ""
-                    val newTrigger = saveMatcher.group(1)?.trim() ?: ""
-                    val newContent = saveMatcher.group(2)?.trim() ?: ""
+                // Robust check for saveSnippetPattern
+                if (saveSnippetPattern.split("%").size == 3 && saveSnippetPattern.length >= 5) {
+                    val saveMatcher = Pattern.compile(buildSaveSnippetRegex(saveSnippetPattern)).matcher(currentText)
+                    if (saveMatcher.find()) {
+                        Log.d(TAG, "Save Snippet Match Found")
+                        val fullMatch = saveMatcher.group(0) ?: ""
+                        val newTrigger = saveMatcher.group(1)?.trim() ?: ""
+                        val newContent = saveMatcher.group(2)?.trim() ?: ""
 
-                    if (newTrigger.isNotEmpty() && newContent.isNotEmpty()) {
-                        config.snippets.removeIf { it.trigger == newTrigger }
-                        config.snippets.add(com.typeassist.app.data.Snippet(newTrigger, newContent))
-                        prefs.edit().putString("config_json", gson.toJson(config)).apply()
-                        val cleanText = currentText.replace(fullMatch, newContent)
-                        pasteText(inputNode, cleanText)
-                        overlayManager.showToast("Snippet '$newTrigger' saved!")
-                        return
+                        if (newTrigger.isNotEmpty() && newContent.isNotEmpty()) {
+                            config.snippets.removeIf { it.trigger == newTrigger }
+                            config.snippets.add(com.typeassist.app.data.Snippet(newTrigger, newContent))
+                            prefs.edit().putString("config_json", gson.toJson(config)).apply()
+                            val cleanText = currentText.replace(fullMatch, newContent)
+                            pasteText(inputNode, cleanText)
+                            overlayManager.showToast("Snippet '$newTrigger' saved!")
+                            return
+                        }
                     }
                 }
 
@@ -205,7 +212,6 @@ class MyAccessibilityService : AccessibilityService() {
                     lastNode = inputNode
                     undoCacheTimestamp = System.currentTimeMillis()
                     
-                    // Safe replacement using lastIndexOf to ensure we replace the found instance
                     val idx = currentText.lastIndexOf(fullMatch)
                     if (idx != -1) {
                         val prefix = currentText.substring(0, idx)
@@ -259,43 +265,33 @@ class MyAccessibilityService : AccessibilityService() {
                 for (inlineCommand in inlineCommands) {
                     val inlinePattern = inlineCommand.pattern
                     val inlinePromptTemplate = inlineCommand.prompt
-                    val regexPattern = Pattern.compile(buildRegexFromInlinePattern(inlinePattern))
-                    val matcher = regexPattern.matcher(currentText)
+                    if (inlinePattern.contains("%") && inlinePattern.length >= 3) {
+                        val regexPattern = Pattern.compile(buildRegexFromInlinePattern(inlinePattern))
+                        val matcher = regexPattern.matcher(currentText)
 
-                    if (matcher.find()) {
-                        val fullMatchedString = matcher.group(0) ?: continue
-                        val userPrompt = matcher.group(1) ?: continue
+                        if (matcher.find()) {
+                            Log.d(TAG, "Inline Command Match: $inlinePattern")
+                            val fullMatchedString = matcher.group(0) ?: continue
+                            val userPrompt = matcher.group(1) ?: continue
 
-                        originalTextCache = currentText
-                        if (config.isHistoryEnabled) HistoryManager.add(originalTextCache)
-                        lastNode = inputNode
+                            originalTextCache = currentText
+                            if (config.isHistoryEnabled) HistoryManager.add(originalTextCache)
+                            lastNode = inputNode
 
-                        overlayManager.showLoading(config)
-                        overlayManager.hideUndoButton()
+                            overlayManager.showLoading(config)
+                            overlayManager.hideUndoButton()
 
-                        performAICall(config, inlinePromptTemplate, userPrompt) { result ->
-                            overlayManager.hideLoading()
-                            result.onSuccess { aiText ->
-                                val wordCount = aiText.split("\\s+".toRegex()).size
-                                val nightModeFlags = resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK
-                                val isDarkMode = nightModeFlags == android.content.res.Configuration.UI_MODE_NIGHT_YES
-
-                                if (wordCount > 15 && config.enablePreviewDialog) {
-                                    overlayManager.showPreviewDialog(aiText, isDarkMode) {
-                                        val newText = currentText.replace(fullMatchedString, aiText)
-                                        pasteText(inputNode, newText)
-                                        overlayManager.showUndoButton(config)
-                                    }
-                                } else {
-                                    val newText = currentText.replace(fullMatchedString, aiText)
-                                    pasteText(inputNode, newText)
-                                    overlayManager.showUndoButton(config)
+                            performAICall(config, inlinePromptTemplate, userPrompt) { result ->
+                                overlayManager.hideLoading()
+                                result.onSuccess { aiText ->
+                                    val newText = currentText.replaceFirst(Pattern.quote(fullMatchedString).toRegex(), aiText)
+                                    processAiResult(config, inputNode, currentText, newText, replaceWhole = true)
+                                }.onFailure {
+                                    overlayManager.showToast(it.message ?: "Unknown error")
                                 }
-                            }.onFailure {
-                                overlayManager.showToast(it.message ?: "Unknown error")
                             }
+                            return
                         }
-                        return
                     }
                 }
 
@@ -306,6 +302,7 @@ class MyAccessibilityService : AccessibilityService() {
 
                     val triggerIndex = findTriggerIndex(currentText, pattern, config.allowTriggerAnywhere, config.ignorePrecedingWhitespace)
                     if (triggerIndex != -1) {
+                        Log.d(TAG, "Trailing Trigger Match: $pattern")
                         val textToProcess = currentText.substring(0, triggerIndex).trim()
                         val suffix = if (currentText.length > triggerIndex + pattern.length) {
                              currentText.substring(triggerIndex + pattern.length)
@@ -338,31 +335,30 @@ class MyAccessibilityService : AccessibilityService() {
                         return
                     }
                 }
-            } catch (e: Exception) {}
+            } catch (e: Exception) {
+                Log.e(TAG, "Error in onAccessibilityEvent", e)
+            }
         }
     }
 
     private fun processAiResult(config: AppConfig, node: AccessibilityNodeInfo, currentText: String?, aiText: String, replaceWhole: Boolean) {
-        val wordCount = aiText.split("\\s+".toRegex()).size
         val nightModeFlags = resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK
         val isDarkMode = nightModeFlags == android.content.res.Configuration.UI_MODE_NIGHT_YES
+        val wordCount = aiText.split("\\s+".toRegex()).size
 
         if (wordCount > 15 && config.enablePreviewDialog) {
             overlayManager.showPreviewDialog(aiText, isDarkMode) {
-                if (replaceWhole || currentText == null) {
-                    pasteText(node, aiText)
-                } 
+                pasteText(node, aiText)
                 overlayManager.showUndoButton(config)
             }
         } else {
-             if (replaceWhole || currentText == null) {
-                pasteText(node, aiText)
-            }
+            pasteText(node, aiText)
             overlayManager.showUndoButton(config)
         }
     }
 
     private fun performAICall(config: AppConfig, prompt: String, userText: String, callback: (Result<String>) -> Unit) {
+        Log.d(TAG, "Performing AI Call: Provider=${config.provider}, Timeout=${config.apiTimeoutSeconds}s")
         if (config.provider == "cloudflare") {
             cloudflareApiClient.callCloudflare(config.cloudflareConfig.accountId, config.cloudflareConfig.apiToken, config.cloudflareConfig.model, prompt, userText, config.apiTimeoutSeconds, callback)
         } else if (config.provider == "custom") {
@@ -407,7 +403,6 @@ class MyAccessibilityService : AccessibilityService() {
     private fun pasteText(node: AccessibilityNodeInfo, text: String) {
         val arguments = Bundle()
         arguments.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, text)
-        node.refresh()
         node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, arguments)
     }
 
@@ -439,7 +434,7 @@ class MyAccessibilityService : AccessibilityService() {
 
     private fun buildGlobalTriggerRegex(pattern: String): String {
         val parts = pattern.split("%", limit = 2)
-        if (parts.size != 2) return "(?s)(.*)\\Q${pattern}\\E\\s*$" // Fallback if no %
+        if (parts.size != 2) return "(?s)(.*)\\Q${pattern}\\E\\s*$"
         return "(?s)(.*)" + Pattern.quote(parts[0]) + "(.+?)" + Pattern.quote(parts[1]) + "\\s*$"
     }
 
@@ -447,7 +442,6 @@ class MyAccessibilityService : AccessibilityService() {
 
     override fun onTaskRemoved(rootIntent: Intent?) {
         super.onTaskRemoved(rootIntent)
-        // Required for stopWithTask="false" to work effectively on some devices
     }
 
     override fun onDestroy() {
