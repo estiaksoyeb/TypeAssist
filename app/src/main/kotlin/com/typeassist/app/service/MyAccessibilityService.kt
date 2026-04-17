@@ -28,6 +28,15 @@ import android.util.Log
 class MyAccessibilityService : AccessibilityService() {
 
     private val TAG = "TypeAssistService"
+
+    companion object {
+        init {
+            System.loadLibrary("typeassist")
+        }
+    }
+
+    external fun stringFromJNI(): String
+
     private val client = OkHttpClient()
     private val geminiApiClient = GeminiApiClient(client)
     private val cloudflareApiClient = CloudflareApiClient(client)
@@ -46,6 +55,7 @@ class MyAccessibilityService : AccessibilityService() {
 
     override fun onServiceConnected() {
         super.onServiceConnected()
+        Log.d(TAG, "JNI Test: ${stringFromJNI()}")
         overlayManager = OverlayManager(this)
         overlayManager.onUndoAction = { performUndo() }
         startPersistentNotification()
