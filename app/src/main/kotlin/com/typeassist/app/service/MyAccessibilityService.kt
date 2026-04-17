@@ -15,6 +15,7 @@ import android.view.accessibility.AccessibilityNodeInfo
 import androidx.core.app.NotificationCompat
 import com.google.gson.Gson
 import com.typeassist.app.R
+import com.typeassist.app.api.AiProvider
 import com.typeassist.app.api.CloudflareApiClient
 import com.typeassist.app.api.CustomApiClient
 import com.typeassist.app.api.GeminiApiClient
@@ -359,13 +360,12 @@ class MyAccessibilityService : AccessibilityService() {
 
     private fun performAICall(config: AppConfig, prompt: String, userText: String, callback: (Result<String>) -> Unit) {
         Log.d(TAG, "Performing AI Call: Provider=${config.provider}, Timeout=${config.apiTimeoutSeconds}s")
-        if (config.provider == "cloudflare") {
-            cloudflareApiClient.callCloudflare(config.cloudflareConfig.accountId, config.cloudflareConfig.apiToken, config.cloudflareConfig.model, prompt, userText, config.apiTimeoutSeconds, callback)
-        } else if (config.provider == "custom") {
-            customApiClient.callCustomApi(config.customApiConfig.baseUrl, config.customApiConfig.apiKey, config.customApiConfig.model, prompt, userText, config.apiTimeoutSeconds, callback)
-        } else {
-            geminiApiClient.callGemini(config.apiKey, config.model, prompt, userText, config.generationConfig.temperature, config.generationConfig.topP, config.apiTimeoutSeconds, callback)
+        val provider: AiProvider = when (config.provider) {
+            "cloudflare" -> cloudflareApiClient
+            "custom" -> customApiClient
+            else -> geminiApiClient
         }
+        provider.generateResponse(prompt, userText, config, callback)
     }
 
     private fun findTriggerIndex(text: String, trigger: String, allowAnywhere: Boolean, ignoreWhitespace: Boolean): Int {

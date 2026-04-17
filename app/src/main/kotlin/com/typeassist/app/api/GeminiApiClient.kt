@@ -2,6 +2,7 @@ package com.typeassist.app.api
 
 
 import okhttp3.*
+import com.typeassist.app.data.AppConfig
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
@@ -9,7 +10,25 @@ import org.json.JSONObject
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
-class GeminiApiClient(private val client: OkHttpClient) {
+class GeminiApiClient(private val client: OkHttpClient) : AiProvider {
+
+    override fun generateResponse(
+        prompt: String,
+        userText: String,
+        config: AppConfig,
+        callback: (Result<String>) -> Unit
+    ) {
+        callGemini(
+            apiKey = config.apiKey,
+            model = config.model,
+            prompt = prompt,
+            userText = userText,
+            temp = config.generationConfig.temperature,
+            topP = config.generationConfig.topP,
+            timeoutSeconds = config.apiTimeoutSeconds,
+            callback = callback
+        )
+    }
 
     fun callGemini(
         apiKey: String,

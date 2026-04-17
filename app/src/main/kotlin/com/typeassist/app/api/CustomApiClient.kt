@@ -1,6 +1,7 @@
 package com.typeassist.app.api
 
 import okhttp3.*
+import com.typeassist.app.data.AppConfig
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
@@ -8,7 +9,24 @@ import org.json.JSONObject
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
-class CustomApiClient(private val client: OkHttpClient) {
+class CustomApiClient(private val client: OkHttpClient) : AiProvider {
+
+    override fun generateResponse(
+        prompt: String,
+        userText: String,
+        config: AppConfig,
+        callback: (Result<String>) -> Unit
+    ) {
+        callCustomApi(
+            baseUrl = config.customApiConfig.baseUrl,
+            apiKey = config.customApiConfig.apiKey,
+            model = config.customApiConfig.model,
+            prompt = prompt,
+            userText = userText,
+            timeoutSeconds = config.apiTimeoutSeconds,
+            callback = callback
+        )
+    }
 
     fun callCustomApi(
         baseUrl: String,
