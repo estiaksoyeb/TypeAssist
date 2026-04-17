@@ -4,27 +4,28 @@ import java.io.Serializable
 
 data class AppConfig(
     var isAppEnabled: Boolean = false,
-    var provider: String = "gemini", // "gemini" or "cloudflare"
+    var provider: String = "gemini", // "gemini", "cloudflare", "custom", "local"
     var apiKey: String = "",
     var model: String = "gemini-2.5-flash-lite",
     var cloudflareConfig: CloudflareConfig = CloudflareConfig(),
     var customApiConfig: CustomApiConfig = CustomApiConfig(),
+    var localLlmConfig: LocalLlmConfig = LocalLlmConfig(),
     var savedCustomConfigs: MutableList<CustomApiConfig> = mutableListOf(),
-    var savedGeminiConfigs: MutableList<SavedGeminiConfig> = mutableListOf(), // New saved list for Gemini
-    var savedCloudflareConfigs: MutableList<CloudflareConfig> = mutableListOf(), // New saved list for Cloudflare
+    var savedGeminiConfigs: MutableList<SavedGeminiConfig> = mutableListOf(),
+    var savedCloudflareConfigs: MutableList<CloudflareConfig> = mutableListOf(),
     var triggerDebounceMs: Long = 400L,
     var generationConfig: GenConfig = GenConfig(),
     var triggers: MutableList<Trigger> = mutableListOf(),
     var inlineCommands: MutableList<InlineCommand> = mutableListOf(),
-    var snippets: MutableList<Snippet> = mutableListOf(), // New field for snippets
+    var snippets: MutableList<Snippet> = mutableListOf(),
     var undoCommandPattern: String = ".undo",
-    var snippetTriggerPrefix: String = "ta#", // Default prefix for using snippets
-    var saveSnippetPattern: String = "(.save:%:%)", // Default pattern for saving snippets
-    var globalTriggerPattern: String = "...%...", // Global rewrite trigger pattern
-    var isHistoryEnabled: Boolean = true, // Toggle history logging
+    var snippetTriggerPrefix: String = "ta#",
+    var saveSnippetPattern: String = "(.save:%:%)",
+    var globalTriggerPattern: String = "...%...",
+    var isHistoryEnabled: Boolean = true,
     var enableUndoOverlay: Boolean = true,
     var enableLoadingOverlay: Boolean = true,
-    var enablePreviewDialog: Boolean = false, // Default off, requires permission
+    var enablePreviewDialog: Boolean = false,
     var allowTriggerAnywhere: Boolean = false,
     var ignorePrecedingWhitespace: Boolean = false,
     var apiTimeoutSeconds: Long = 30L
@@ -47,6 +48,14 @@ data class CustomApiConfig(
     var model: String = "gpt-3.5-turbo"
 ) : Serializable
 
+data class LocalLlmConfig(
+    var modelPath: String = "",
+    var temperature: Float = 0.7f,
+    var topP: Float = 0.9f,
+    var maxTokens: Int = 512,
+    var numThreads: Int = 4
+) : Serializable
+
 data class GenConfig(
     var temperature: Double = 0.2,
     var topP: Double = 0.95
@@ -63,8 +72,8 @@ data class InlineCommand(
 ) : Serializable
 
 data class Snippet(
-    var trigger: String, // e.g., "email1"
-    var content: String  // e.g., "my.email@example.com"
+    var trigger: String,
+    var content: String
 ) : Serializable
 
 fun createDefaultConfig(): AppConfig {
@@ -75,6 +84,7 @@ fun createDefaultConfig(): AppConfig {
         model = "gemini-2.5-flash-lite",
         cloudflareConfig = CloudflareConfig(),
         customApiConfig = CustomApiConfig(),
+        localLlmConfig = LocalLlmConfig(),
         savedCustomConfigs = mutableListOf(),
         savedGeminiConfigs = mutableListOf(),
         savedCloudflareConfigs = mutableListOf(),
@@ -93,7 +103,7 @@ fun createDefaultConfig(): AppConfig {
             InlineCommand("(%:.g)", "Fix grammar, spelling, and punctuation. Return only the corrected text."),
             InlineCommand("(%:.polite)", "Rewrite the text in a polite and professional tone. Return only the rewritten text.")
         ),
-        snippets = mutableListOf( // Default snippets
+        snippets = mutableListOf(
             Snippet("email", "user@example.com"),
             Snippet("sign", "Best regards,\nUser")
         ),

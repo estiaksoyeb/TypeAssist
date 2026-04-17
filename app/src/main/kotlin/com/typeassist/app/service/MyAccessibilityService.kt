@@ -19,6 +19,7 @@ import com.typeassist.app.api.AiProvider
 import com.typeassist.app.api.CloudflareApiClient
 import com.typeassist.app.api.CustomApiClient
 import com.typeassist.app.api.GeminiApiClient
+import com.typeassist.app.api.LocalLlmClient
 import com.typeassist.app.data.AppConfig
 import com.typeassist.app.data.HistoryManager
 import okhttp3.*
@@ -36,6 +37,9 @@ class MyAccessibilityService : AccessibilityService() {
     }
 
     external fun stringFromJNI(): String
+    external fun loadModel(modelPath: String): Boolean
+    external fun generateResponseNative(prompt: String, temperature: Float, topP: Float, maxTokens: Int): String
+    external fun unloadModel()
 
     private val client = OkHttpClient()
     private val geminiApiClient = GeminiApiClient(client)
