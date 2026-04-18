@@ -46,6 +46,7 @@ import java.io.IOException
 @Composable
 fun SettingsScreen(config: AppConfig, client: OkHttpClient, onSave: (AppConfig) -> Unit, onBack: () -> Unit, onNavigate: (String) -> Unit, initialTab: Int = 0) {
     var selectedTab by remember { mutableStateOf(initialTab) }
+    val context = LocalContext.current
     
     val view = LocalView.current
     val primaryColor = MaterialTheme.colorScheme.primary
@@ -69,13 +70,29 @@ fun SettingsScreen(config: AppConfig, client: OkHttpClient, onSave: (AppConfig) 
             ) {
                 Tab(selected = selectedTab == 0, onClick = { selectedTab = 0 }, text = { Text("General") })
                 Tab(selected = selectedTab == 1, onClick = { selectedTab = 1 }, text = { Text("AI Provider") })
+                Tab(selected = selectedTab == 2, onClick = { selectedTab = 2 }, text = { Text("Local LLM") })
             }
             
             Column(modifier = Modifier.padding(16.dp).verticalScroll(rememberScrollState())) {
-                if (selectedTab == 0) {
-                    GeneralSettingsTab(config, onSave, onNavigate)
-                } else {
-                    AiProviderSettingsTab(config, client, onSave)
+                when (selectedTab) {
+                    0 -> GeneralSettingsTab(config, onSave, onNavigate)
+                    1 -> AiProviderSettingsTab(config, client, onSave)
+                    2 -> {
+                        LocalLlmSetup(config, onSave)
+                        Spacer(Modifier.height(24.dp))
+                        Button(
+                            onClick = {
+                                val updatedConfig = config.copy(provider = "local")
+                                onSave(updatedConfig)
+                                Toast.makeText(context, "Local LLM saved and set as active provider ✅", Toast.LENGTH_SHORT).show()
+                            },
+                            modifier = Modifier.fillMaxWidth().height(50.dp)
+                        ) {
+                            Text("Set Local as Active Provider")
+                        }
+                        Spacer(Modifier.height(24.dp))
+                        LocalLlmHelp(MaterialTheme.colorScheme.primary, context)
+                    }
                 }
             }
         }
@@ -549,6 +566,7 @@ fun AiProviderSettingsTab(config: AppConfig, client: OkHttpClient, onSave: (AppC
                 model = geminiModel,
                 cloudflareConfig = newCloudflareConfig,
                 customApiConfig = newCustomConfig,
+                localLlmConfig = config.localLlmConfig, // This is updated via the sliders in LocalLlmSetup
                 savedCustomConfigs = updatedSavedCustom,
                 savedGeminiConfigs = updatedSavedGemini,
                 savedCloudflareConfigs = updatedSavedCloudflare
@@ -558,7 +576,8 @@ fun AiProviderSettingsTab(config: AppConfig, client: OkHttpClient, onSave: (AppC
             val hasValidKey = when (selectedProvider) {
                 "gemini" -> geminiKey.isNotBlank()
                 "cloudflare" -> cfApiToken.isNotBlank()
-                "custom" -> customBaseUrl.isNotBlank() && customModel.isNotBlank() // Key might be optional for local
+                "custom" -> customBaseUrl.isNotBlank() && customModel.isNotBlank()
+                "local" -> config.localLlmConfig.modelPath.isNotBlank()
                 else -> false
             }
             
@@ -587,7 +606,101 @@ fun AiProviderSettingsTab(config: AppConfig, client: OkHttpClient, onSave: (AppC
         "gemini" -> GeminiHelp(primaryColor, context)
         "cloudflare" -> CloudflareHelp(primaryColor, context)
         "custom" -> CustomApiHelp(primaryColor, context)
+        "local" -> LocalLlmHelp(primaryColor, context)
     }
+}
+
+@Composable
+fun LocalLlmSetup(config: AppConfig, onSave: (AppConfig) -> Unit) {
+    val context = LocalContext.current
+    var modelPath by remember { mutableStateOf(config.localLlmConfig.modelPath) }
+    var temperature by remember { mutableStateOf(config.localLlmConfig.temperature) }
+    var topP by remember { mutableStateOf(config.localLlmConfig.topP) }
+    var maxTokens by remember { mutableStateOf(config.localLlmConfig.maxTokens.toFloat()) }
+    var threads by remember { mutableStateOf(config.localLlmConfig.numThreads.toFloat()) }
+
+    val launcher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        uri?.let {
+            try {
+                context.contentResolver.takePersistableUriPermission(
+                    it,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            } catch (e: Exception) {
+                // Some providers don't support persistable permissions
+                android.util.Log.w("SettingsScreen", "Could not take persistable permission: ${e.message}")
+            }
+            modelPath = it.toString()
+            onSave(config.copy(localLlmConfig = config.localLlmConfig.copy(modelPath = modelPath)))
+        }
+    }
+
+    Text("Model Configuration", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.primary)
+    Spacer(Modifier.height(8.dp))
+    
+    OutlinedTextField(
+        value = modelPath,
+        onValueChange = { 
+            modelPath = it
+            onSave(config.copy(localLlmConfig = config.localLlmConfig.copy(modelPath = it)))
+        },
+        label = { Text("Model Path (.gguf)") },
+        modifier = Modifier.fillMaxWidth(),
+        trailingIcon = {
+            IconButton(onClick = { launcher.launch(arrayOf("*/*")) }) {
+                Icon(Icons.Default.Visibility, contentDescription = "Select Model")
+            }
+        }
+    )
+    Text("Note: llama.cpp requires a direct file path. You may need to type the path manually if the picker returns a content URI.", fontSize = 11.sp, color = MaterialTheme.colorScheme.error, lineHeight = 14.sp)
+
+    Spacer(Modifier.height(16.dp))
+    
+    Text("Temperature: ${String.format("%.2f", temperature)}", fontSize = 14.sp)
+    Slider(value = temperature, onValueChange = { 
+        temperature = it
+        onSave(config.copy(localLlmConfig = config.localLlmConfig.copy(temperature = it)))
+    }, valueRange = 0f..2f)
+
+    Spacer(Modifier.height(8.dp))
+
+    Text("Top-P: ${String.format("%.2f", topP)}", fontSize = 14.sp)
+    Slider(value = topP, onValueChange = { 
+        topP = it
+        onSave(config.copy(localLlmConfig = config.localLlmConfig.copy(topP = it)))
+    }, valueRange = 0f..1f)
+
+    Spacer(Modifier.height(8.dp))
+
+    Text("Max Tokens: ${maxTokens.toInt()}", fontSize = 14.sp)
+    Slider(value = maxTokens, onValueChange = { 
+        maxTokens = it
+        onSave(config.copy(localLlmConfig = config.localLlmConfig.copy(maxTokens = it.toInt())))
+    }, valueRange = 64f..2048f, steps = 31)
+
+    Spacer(Modifier.height(8.dp))
+
+    Text("Threads: ${threads.toInt()}", fontSize = 14.sp)
+    Slider(value = threads, onValueChange = { 
+        threads = it
+        onSave(config.copy(localLlmConfig = config.localLlmConfig.copy(numThreads = it.toInt())))
+    }, valueRange = 1f..8f, steps = 7)
+}
+
+@Composable
+fun LocalLlmHelp(primaryColor: Color, context: android.content.Context) {
+    Text("Local LLM (llama.cpp) Setup", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+    Spacer(Modifier.height(16.dp))
+    Text("Run AI entirely on your device with no internet.", fontSize = 14.sp)
+    Spacer(Modifier.height(8.dp))
+    Text("1. Download a GGUF model from Hugging Face (e.g., Qwen2-0.5B-Instruct-GGUF).", fontSize = 14.sp)
+    Text("2. Place the file in your device storage.", fontSize = 14.sp)
+    Text("3. Provide the full absolute path to the .gguf file above.", fontSize = 14.sp)
+    Text("4. Set threads to match your CPU cores (usually 4 or 8).", fontSize = 14.sp)
+    Spacer(Modifier.height(8.dp))
+    Text("Warning: Local inference is slow on older devices and consumes significant battery.", fontSize = 14.sp, color = MaterialTheme.colorScheme.error)
 }
 
 @Composable

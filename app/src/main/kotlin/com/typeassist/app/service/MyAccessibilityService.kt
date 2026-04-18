@@ -45,6 +45,7 @@ class MyAccessibilityService : AccessibilityService() {
     private val geminiApiClient = GeminiApiClient(client)
     private val cloudflareApiClient = CloudflareApiClient(client)
     private val customApiClient = CustomApiClient(client)
+    private val localLlmClient = LocalLlmClient(this)
     
     private lateinit var overlayManager: OverlayManager
     
@@ -285,9 +286,9 @@ class MyAccessibilityService : AccessibilityService() {
                         val matcher = regexPattern.matcher(currentText)
 
                         if (matcher.find()) {
-                            Log.d(TAG, "Inline Command Match: $inlinePattern")
                             val fullMatchedString = matcher.group(0) ?: continue
                             val userPrompt = matcher.group(1) ?: continue
+                            Log.d(TAG, "Inline Command Match: $inlinePattern | User Prompt: $userPrompt")
 
                             originalTextCache = currentText
                             if (config.isHistoryEnabled) HistoryManager.add(originalTextCache)
@@ -299,9 +300,11 @@ class MyAccessibilityService : AccessibilityService() {
                             performAICall(config, inlinePromptTemplate, userPrompt) { result ->
                                 overlayManager.hideLoading()
                                 result.onSuccess { aiText ->
+                                    Log.d(TAG, "AI Success: ${aiText.take(50)}...")
                                     val newText = currentText.replaceFirst(Pattern.quote(fullMatchedString).toRegex(), aiText)
                                     processAiResult(config, inputNode, currentText, newText, replaceWhole = true)
                                 }.onFailure {
+                                    Log.e(TAG, "AI Failure: ${it.message}")
                                     overlayManager.showToast(it.message ?: "Unknown error")
                                 }
                             }
@@ -317,8 +320,9 @@ class MyAccessibilityService : AccessibilityService() {
 
                     val triggerIndex = findTriggerIndex(currentText, pattern, config.allowTriggerAnywhere, config.ignorePrecedingWhitespace)
                     if (triggerIndex != -1) {
-                        Log.d(TAG, "Trailing Trigger Match: $pattern")
                         val textToProcess = currentText.substring(0, triggerIndex).trim()
+                        Log.d(TAG, "Trigger Match: $pattern | Input Text: $textToProcess")
+                        
                         val suffix = if (currentText.length > triggerIndex + pattern.length) {
                              currentText.substring(triggerIndex + pattern.length)
                         } else { "" }
@@ -337,9 +341,11 @@ class MyAccessibilityService : AccessibilityService() {
                                 performAICall(config, prompt, textToProcess) { result ->
                                     overlayManager.hideLoading()
                                     result.onSuccess { aiText ->
+                                        Log.d(TAG, "AI Success: ${aiText.take(50)}...")
                                         val finalText = aiText + suffix
                                         processAiResult(config, inputNode, null, finalText, replaceWhole = true)
                                     }.onFailure {
+                                        Log.e(TAG, "AI Failure: ${it.message}")
                                         overlayManager.showToast(it.message ?: "Unknown error")
                                     }
                                 }
@@ -377,6 +383,7 @@ class MyAccessibilityService : AccessibilityService() {
         val provider: AiProvider = when (config.provider) {
             "cloudflare" -> cloudflareApiClient
             "custom" -> customApiClient
+            "local" -> localLlmClient
             else -> geminiApiClient
         }
         provider.generateResponse(prompt, userText, config, callback)
@@ -460,6 +467,7 @@ class MyAccessibilityService : AccessibilityService() {
 
     override fun onDestroy() {
         super.onDestroy()
+        unloadModel()
         if (::overlayManager.isInitialized) {
             overlayManager.hideAll()
         }
