@@ -28,9 +28,9 @@ Java_com_typeassist_app_service_MyAccessibilityService_loadModel(
     LOGD("NATIVE: Loading model: %s", path);
 
     llama_backend_init();
+    LOGD("NATIVE: llama.cpp system info: %s", llama_print_system_info());
 
     auto mparams = llama_model_default_params();
-    // Try to use memory mapping for faster loading
     mparams.use_mmap = true;
     
     model = llama_model_load_from_file(path, mparams);
@@ -42,8 +42,9 @@ Java_com_typeassist_app_service_MyAccessibilityService_loadModel(
     }
 
     auto cparams = llama_context_default_params();
-    cparams.n_ctx = 1024; // Smaller context for stability
-    cparams.n_threads = 4; 
+    cparams.n_ctx = 1024; 
+    cparams.n_threads = 4; // Most mobile big cores are in groups of 2 or 4
+    cparams.n_threads_batch = 4; // Crucial for faster prefill
 
     ctx = llama_init_from_model(model, cparams);
 
@@ -72,63 +73,77 @@ Java_com_typeassist_app_service_MyAccessibilityService_generateResponseNative(
     if (ctx == nullptr) return env->NewStringUTF("Error: Model not loaded");
 
     const char * prompt_text = env->GetStringUTFChars(prompt, nullptr);
-    LOGD("NATIVE: Tokenizing prompt...");
     
-    std::vector<llama_token> tokens_list;
-    tokens_list.resize(llama_n_ctx(ctx));
+    // First call to get the required number of tokens
+    int n_tokens_needed = llama_tokenize(llama_model_get_vocab(model), prompt_text, strlen(prompt_text), nullptr, 0, true, true);
+    if (n_tokens_needed < 0) {
+        n_tokens_needed = abs(n_tokens_needed);
+    }
+    
+    std::vector<llama_token> tokens_list(n_tokens_needed);
     const int n_tokens = llama_tokenize(llama_model_get_vocab(model), prompt_text, strlen(prompt_text), tokens_list.data(), tokens_list.size(), true, true);
+    
     if (n_tokens < 0) {
         env->ReleaseStringUTFChars(prompt, prompt_text);
         return env->NewStringUTF("Error: Tokenization failed");
     }
-    tokens_list.resize(n_tokens);
-    LOGD("NATIVE: %d tokens to process", n_tokens);
 
-    // Ultra-stable sampler setup
-    struct llama_sampler * smpl = llama_sampler_init_temp(temp);
-    // Note: older versions used different top_p init, we stick to basic temp if needed, 
-    // but let's try to add top_p safely
+    // Always clear memory (KV cache) before fresh generation
+    llama_memory_clear(llama_get_memory(ctx), true);
+
     struct llama_sampler * smpl_chain = llama_sampler_chain_init(llama_sampler_chain_default_params());
-    llama_sampler_chain_add(smpl_chain, smpl);
+    llama_sampler_chain_add(smpl_chain, llama_sampler_init_temp(temp));
     llama_sampler_chain_add(smpl_chain, llama_sampler_init_top_p(top_p, 1));
     llama_sampler_chain_add(smpl_chain, llama_sampler_init_dist(LLAMA_DEFAULT_SEED));
 
     std::string response = "";
     llama_batch batch = llama_batch_get_one(tokens_list.data(), tokens_list.size());
 
+    LOGD("NATIVE: Starting prefill for %d tokens...", n_tokens);
     int n_cur = 0;
-    LOGD("NATIVE: Starting decode loop...");
     while (n_cur < max_tokens) {
-        LOGD("NATIVE: Decoding token %d...", n_cur);
-        int decode_res = llama_decode(ctx, batch);
-        if (decode_res != 0) {
-            LOGE("NATIVE: Decode failed with code %d", decode_res);
+        if (llama_decode(ctx, batch)) {
+            LOGE("NATIVE: Decode failed");
             break;
+        }
+
+        if (n_cur == 0) {
+            LOGD("NATIVE: Prefill complete. Starting generation loop.");
         }
 
         llama_token id = llama_sampler_sample(smpl_chain, ctx, -1);
         llama_sampler_accept(smpl_chain, id);
         
-        if (llama_vocab_is_eog(llama_model_get_vocab(model), id)) {
-            LOGD("NATIVE: EOG reached");
-            break;
-        }
+        if (llama_vocab_is_eog(llama_model_get_vocab(model), id)) break;
 
         char buf[128];
         int n = llama_token_to_piece(llama_model_get_vocab(model), id, buf, sizeof(buf), 0, true);
         if (n > 0) {
-            response += std::string(buf, n);
-            LOGD("NATIVE: Generated piece: %s", std::string(buf, n).c_str());
+            std::string piece = std::string(buf, n);
+            response += piece;
+            
+            // STOP CHECK: If the model starts repeating the prompt structure, stop it.
+            if (response.find("\nInput:") != std::string::npos || 
+                response.find("\nResponse:") != std::string::npos ||
+                (response.find("Input:") == 0 && response.length() > 6)) {
+                LOGD("NATIVE: Stop sequence detected. Ending generation.");
+                break;
+            }
         }
 
         batch = llama_batch_get_one(&id, 1);
         n_cur++;
     }
 
-    LOGD("NATIVE: Inference finished. Response: %s", response.c_str());
-
     llama_sampler_free(smpl_chain);
     env->ReleaseStringUTFChars(prompt, prompt_text);
+    
+    // Clean up the response if we stopped on a sequence
+    size_t stop_pos = response.find("\nInput:");
+    if (stop_pos != std::string::npos) response = response.substr(0, stop_pos);
+    stop_pos = response.find("Input:");
+    if (stop_pos != std::string::npos) response = response.substr(0, stop_pos);
+
     return env->NewStringUTF(response.c_str());
 }
 
@@ -139,5 +154,5 @@ Java_com_typeassist_app_service_MyAccessibilityService_unloadModel(
     if (ctx) { llama_free(ctx); ctx = nullptr; }
     if (model) { llama_model_free(model); model = nullptr; }
     llama_backend_free();
-    LOGD("NATIVE: Cleanup complete");
+    LOGD("NATIVE: Model unloaded");
 }

@@ -52,7 +52,7 @@ data class LocalLlmConfig(
     var modelPath: String = "",
     var temperature: Float = 0.7f,
     var topP: Float = 0.9f,
-    var maxTokens: Int = 512,
+    var maxTokens: Int = 128,
     var numThreads: Int = 4
 ) : Serializable
 
