@@ -79,6 +79,13 @@ Java_com_typeassist_app_service_MyAccessibilityService_stopGenerationNative(
     LOGD("NATIVE: Stop signal received.");
 }
 
+static std::string trim(const std::string& s) {
+    size_t first = s.find_first_not_of(" \t\n\r");
+    if (std::string::npos == first) return "";
+    size_t last = s.find_last_not_of(" \t\n\r");
+    return s.substr(first, (last - first + 1));
+}
+
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_typeassist_app_service_MyAccessibilityService_generateResponseNative(
         JNIEnv* env,
@@ -125,6 +132,12 @@ Java_com_typeassist_app_service_MyAccessibilityService_generateResponseNative(
     llama_memory_clear(llama_get_memory(ctx), true);
 
     struct llama_sampler * smpl_chain = llama_sampler_chain_init(llama_sampler_chain_default_params());
+    
+    // 1. Add Repetition Penalty (Critical for small models)
+    // parameters: last_n, penalty_repeat, penalty_freq, penalty_present
+    llama_sampler_chain_add(smpl_chain, llama_sampler_init_penalties(64, 1.1f, 0.0f, 0.0f));
+    
+    // 2. Standard samplers
     llama_sampler_chain_add(smpl_chain, llama_sampler_init_temp(temp));
     llama_sampler_chain_add(smpl_chain, llama_sampler_init_top_p(top_p, 1));
     llama_sampler_chain_add(smpl_chain, llama_sampler_init_dist(LLAMA_DEFAULT_SEED));
@@ -135,7 +148,7 @@ Java_com_typeassist_app_service_MyAccessibilityService_generateResponseNative(
     LOGD("NATIVE: Starting prefill for %d tokens...", n_tokens);
     int n_cur = 0;
     while (n_cur < max_tokens) {
-        // 1. Check if we should abort before starting decoding
+        // Check for abort
         if (g_should_abort.load()) {
             LOGD("NATIVE: Abort detected in loop.");
             break;
@@ -161,10 +174,12 @@ Java_com_typeassist_app_service_MyAccessibilityService_generateResponseNative(
             std::string piece = std::string(buf, n);
             response += piece;
             
-            // STOP CHECK: If the model starts repeating the prompt structure, stop it.
-            if (response.find("\nInput:") != std::string::npos || 
-                response.find("\nResponse:") != std::string::npos ||
-                (response.find("Input:") == 0 && response.length() > 6)) {
+            // STOP CHECK: Improved detection for ChatML and newlines
+            if (response.find("<|im_end|>") != std::string::npos ||
+                response.find("<|endoftext|>") != std::string::npos ||
+                response.find("\n\n") != std::string::npos ||
+                response.find("User:") != std::string::npos ||
+                (response.find("Input:") != std::string::npos)) {
                 LOGD("NATIVE: Stop sequence detected. Ending generation.");
                 break;
             }
@@ -177,14 +192,15 @@ Java_com_typeassist_app_service_MyAccessibilityService_generateResponseNative(
     llama_sampler_free(smpl_chain);
     env->ReleaseStringUTFChars(prompt, prompt_text);
     
-    // Clean up the response if we stopped on a sequence
-    size_t stop_pos = response.find("\nInput:");
+    // Clean up the response
+    size_t stop_pos = response.find("<|");
     if (stop_pos != std::string::npos) response = response.substr(0, stop_pos);
-    stop_pos = response.find("Input:");
+    
+    stop_pos = response.find("\n\n");
     if (stop_pos != std::string::npos) response = response.substr(0, stop_pos);
 
     g_is_generating.store(false);
-    return env->NewStringUTF(response.c_str());
+    return env->NewStringUTF(trim(response).c_str());
 }
 
 extern "C" JNIEXPORT void JNICALL

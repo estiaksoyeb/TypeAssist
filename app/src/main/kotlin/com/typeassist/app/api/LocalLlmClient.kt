@@ -63,8 +63,15 @@ class LocalLlmClient(private val service: MyAccessibilityService) : AiProvider {
                     Log.d(TAG, "KOTLIN: Native loadModel successful")
                 }
 
-                // 3. Inference
-                val fullPrompt = "$prompt\n\nInput: $userText\n\nResponse:"
+                // 3. Inference - Use ChatML template for Instruct models
+                val fullPrompt = """
+                    <|im_start|>system
+                    $prompt<|im_end|>
+                    <|im_start|>user
+                    $userText<|im_end|>
+                    <|im_start|>assistant
+                """.trimIndent()
+                
                 Log.d(TAG, "KOTLIN: Calling native inference bridge...")
                 Log.d(TAG, "KOTLIN: Full Prompt Sent to C++: [$fullPrompt]")
                 
