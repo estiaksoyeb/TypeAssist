@@ -37,8 +37,9 @@ class MyAccessibilityService : AccessibilityService() {
     }
 
     external fun stringFromJNI(): String
-    external fun loadModel(modelPath: String): Boolean
-    external fun generateResponseNative(prompt: String, temperature: Float, topP: Float, maxTokens: Int): String
+    external fun loadModel(path: String): Boolean
+    external fun generateResponseNative(prompt: String, temp: Float, topP: Float, maxTokens: Int): String
+    external fun stopGenerationNative()
     external fun unloadModel()
 
     private val client = OkHttpClient()

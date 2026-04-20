@@ -37,6 +37,9 @@ class LocalLlmClient(private val service: MyAccessibilityService) : AiProvider {
 
         Thread {
             try {
+                // 0. Stop any previous generation
+                service.stopGenerationNative()
+
                 // 1. Resolve Path
                 Log.d(TAG, "KOTLIN: Resolving model path...")
                 val finalPath = resolveModelPath(modelUriOrPath)

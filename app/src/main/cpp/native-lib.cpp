@@ -2,6 +2,8 @@
 #include <string>
 #include <vector>
 #include <android/log.h>
+#include <atomic>
+#include <mutex>
 #include "llama.h"
 
 #define TAG "TypeAssistNative"
@@ -10,6 +12,14 @@
 
 static llama_model * model = nullptr;
 static llama_context * ctx = nullptr;
+static std::mutex g_mutex;
+static std::atomic<bool> g_is_generating(false);
+static std::atomic<bool> g_should_abort(false);
+
+// Callback for llama_decode to check if it should stop early
+static bool abort_callback(void * data) {
+    return g_should_abort.load();
+}
 
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_typeassist_app_service_MyAccessibilityService_stringFromJNI(
@@ -61,6 +71,14 @@ Java_com_typeassist_app_service_MyAccessibilityService_loadModel(
     return JNI_TRUE;
 }
 
+extern "C" JNIEXPORT void JNICALL
+Java_com_typeassist_app_service_MyAccessibilityService_stopGenerationNative(
+        JNIEnv* env,
+        jobject /* this */) {
+    g_should_abort.store(true);
+    LOGD("NATIVE: Stop signal received.");
+}
+
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_typeassist_app_service_MyAccessibilityService_generateResponseNative(
         JNIEnv* env,
@@ -70,7 +88,21 @@ Java_com_typeassist_app_service_MyAccessibilityService_generateResponseNative(
         jfloat top_p,
         jint max_tokens) {
 
+    std::lock_guard<std::mutex> lock(g_mutex);
     if (ctx == nullptr) return env->NewStringUTF("Error: Model not loaded");
+
+    // If another thread is already generating, stop it first
+    if (g_is_generating.load()) {
+        LOGD("NATIVE: Previous generation detected. Signalling abort.");
+        g_should_abort.store(true);
+        // Busy wait a tiny bit for it to actually exit if needed, though usually the lock handles it.
+    }
+
+    g_is_generating.store(true);
+    g_should_abort.store(false);
+    
+    // Register the abort callback with the context
+    llama_set_abort_callback(ctx, abort_callback, nullptr);
 
     const char * prompt_text = env->GetStringUTFChars(prompt, nullptr);
     
@@ -84,6 +116,7 @@ Java_com_typeassist_app_service_MyAccessibilityService_generateResponseNative(
     const int n_tokens = llama_tokenize(llama_model_get_vocab(model), prompt_text, strlen(prompt_text), tokens_list.data(), tokens_list.size(), true, true);
     
     if (n_tokens < 0) {
+        g_is_generating.store(false);
         env->ReleaseStringUTFChars(prompt, prompt_text);
         return env->NewStringUTF("Error: Tokenization failed");
     }
@@ -102,8 +135,14 @@ Java_com_typeassist_app_service_MyAccessibilityService_generateResponseNative(
     LOGD("NATIVE: Starting prefill for %d tokens...", n_tokens);
     int n_cur = 0;
     while (n_cur < max_tokens) {
+        // 1. Check if we should abort before starting decoding
+        if (g_should_abort.load()) {
+            LOGD("NATIVE: Abort detected in loop.");
+            break;
+        }
+
         if (llama_decode(ctx, batch)) {
-            LOGE("NATIVE: Decode failed");
+            LOGE("NATIVE: Decode failed or aborted");
             break;
         }
 
@@ -144,6 +183,7 @@ Java_com_typeassist_app_service_MyAccessibilityService_generateResponseNative(
     stop_pos = response.find("Input:");
     if (stop_pos != std::string::npos) response = response.substr(0, stop_pos);
 
+    g_is_generating.store(false);
     return env->NewStringUTF(response.c_str());
 }
 
