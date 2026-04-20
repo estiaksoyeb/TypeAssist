@@ -66,7 +66,13 @@ jobs:
           echo "build_time=$build_time" >> $GITHUB_OUTPUT
 
           mkdir -p output
-          src="${{ steps.sign_app.outputs.signedReleaseFile }}"
+          # Explicitly find the signed universal APK
+          src=$(find app/build/outputs/apk/release -name "*-universal-release.apk" | head -n 1)
+          if [ -z "$src" ]; then
+            echo "Signed universal APK not found!"
+            ls -R app/build/outputs/apk/release
+            exit 1
+          fi
           dest="output/TypeAssist-preview-r${commit_count}.apk"
           cp "$src" "$dest"
           
