@@ -37,7 +37,7 @@ class MyAccessibilityService : AccessibilityService() {
     }
 
     external fun stringFromJNI(): String
-    external fun loadModel(path: String): Boolean
+    external fun loadModel(path: String, useGpu: Boolean): Boolean
     external fun generateResponseNative(prompt: String, temp: Float, topP: Float, maxTokens: Int): String
     external fun stopGenerationNative()
     external fun unloadModel()

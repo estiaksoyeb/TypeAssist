@@ -671,6 +671,7 @@ fun LocalLlmSetup(config: AppConfig, onSave: (AppConfig) -> Unit) {
     var topP by remember { mutableStateOf(config.localLlmConfig.topP) }
     var maxTokens by remember { mutableStateOf(config.localLlmConfig.maxTokens.toFloat()) }
     var threads by remember { mutableStateOf(config.localLlmConfig.numThreads.toFloat()) }
+    var useGpu by remember { mutableStateOf(config.localLlmConfig.useGpu) }
 
     val launcher = androidx.activity.compose.rememberLauncherForActivityResult(
         contract = androidx.activity.result.contract.ActivityResultContracts.OpenDocument()
@@ -749,6 +750,30 @@ fun LocalLlmSetup(config: AppConfig, onSave: (AppConfig) -> Unit) {
     }
 
     Spacer(Modifier.height(24.dp))
+
+    Row(
+        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text("Use GPU Acceleration (Vulkan)", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            Text(
+                "Significantly faster on modern devices. Supports Mali and Adreno GPUs.", 
+                fontSize = 11.sp, 
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Switch(
+            checked = useGpu,
+            onCheckedChange = { 
+                useGpu = it
+                onSave(config.copy(localLlmConfig = config.localLlmConfig.copy(useGpu = it)))
+            }
+        )
+    }
+
+    Spacer(Modifier.height(16.dp))
     
     Text("Temperature: ${String.format("%.2f", temperature)}", fontSize = 14.sp)
     Slider(value = temperature, onValueChange = { 

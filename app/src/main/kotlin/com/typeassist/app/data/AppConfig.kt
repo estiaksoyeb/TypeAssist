@@ -54,7 +54,8 @@ data class LocalLlmConfig(
     var temperature: Float = 0.7f,
     var topP: Float = 0.9f,
     var maxTokens: Int = 128,
-    var numThreads: Int = 4
+    var numThreads: Int = 4,
+    var useGpu: Boolean = false
 ) : Serializable
 
 data class GenConfig(

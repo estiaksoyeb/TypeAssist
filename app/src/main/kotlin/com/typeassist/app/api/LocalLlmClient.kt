@@ -15,6 +15,7 @@ class LocalLlmClient(private val service: MyAccessibilityService) : AiProvider {
     private val TAG = "LocalLlmClient"
     private var lastResolvedUri: String = ""
     private var currentModelPath: String = ""
+    private var currentUseGpu: Boolean = false
     private val mainHandler = Handler(Looper.getMainLooper())
 
     override fun generateResponse(
@@ -50,16 +51,17 @@ class LocalLlmClient(private val service: MyAccessibilityService) : AiProvider {
                 }
                 Log.d(TAG, "KOTLIN: Resolved path: $finalPath")
 
-                // 2. Load Model if path changed
-                if (currentModelPath != finalPath) {
-                    Log.d(TAG, "KOTLIN: Requesting native model load...")
-                    val success = service.loadModel(finalPath)
+                // 2. Load Model if path or GPU setting changed
+                if (currentModelPath != finalPath || currentUseGpu != localLlmConfig.useGpu) {
+                    Log.d(TAG, "KOTLIN: Requesting native model load (GPU: ${localLlmConfig.useGpu})...")
+                    val success = service.loadModel(finalPath, localLlmConfig.useGpu)
                     if (!success) {
                         LogE("KOTLIN: Native loadModel returned false")
                         mainHandler.post { callback(Result.failure(Exception("llama.cpp failed to load model at $finalPath"))) }
                         return@Thread
                     }
                     currentModelPath = finalPath
+                    currentUseGpu = localLlmConfig.useGpu
                     Log.d(TAG, "KOTLIN: Native loadModel successful")
                 }
 

@@ -6,6 +6,10 @@
 #include <mutex>
 #include "llama.h"
 
+#ifdef GGML_VULKAN
+#include "ggml-vulkan.h"
+#endif
+
 #define TAG "TypeAssistNative"
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, TAG, __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, TAG, __VA_ARGS__)
@@ -27,24 +31,34 @@ Java_com_typeassist_app_service_MyAccessibilityService_stringFromJNI(
         jobject /* this */) {
     return env->NewStringUTF(llama_print_system_info());
 }
-
 extern "C" JNIEXPORT jboolean JNICALL
 Java_com_typeassist_app_service_MyAccessibilityService_loadModel(
         JNIEnv* env,
         jobject /* this */,
-        jstring model_path) {
-    
+        jstring model_path,
+        jboolean use_gpu) {
+    std::lock_guard<std::mutex> lock(g_mutex);
+
     const char * path = env->GetStringUTFChars(model_path, nullptr);
-    LOGD("NATIVE: Loading model: %s", path);
+    LOGD("NATIVE: Loading model: %s (GPU: %s)", path, use_gpu ? "ON" : "OFF");
 
     llama_backend_init();
     LOGD("NATIVE: llama.cpp system info: %s", llama_print_system_info());
 
     auto mparams = llama_model_default_params();
     mparams.use_mmap = true;
-    
-    model = llama_model_load_from_file(path, mparams);
 
+    #ifdef GGML_VULKAN
+    if (use_gpu) {
+        mparams.n_gpu_layers = 99; // Try to offload all layers to GPU
+    }
+    #else
+    if (use_gpu) {
+        LOGD("NATIVE: GPU requested but backend not compiled in.");
+    }
+    #endif
+
+    model = llama_model_load_from_file(path, mparams);
     if (model == nullptr) {
         LOGE("NATIVE: Failed to load model");
         env->ReleaseStringUTFChars(model_path, path);
