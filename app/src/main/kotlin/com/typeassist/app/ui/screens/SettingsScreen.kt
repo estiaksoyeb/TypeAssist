@@ -13,6 +13,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.FolderOpen
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
@@ -479,7 +481,7 @@ fun AiProviderSettingsTab(config: AppConfig, client: OkHttpClient, onSave: (AppC
         OutlinedTextField(value = cfApiToken, onValueChange = { cfApiToken = it }, label = { Text("Cloudflare API Token") }, modifier = Modifier.fillMaxWidth(), visualTransformation = if (isKeyVisible) VisualTransformation.None else PasswordVisualTransformation(), trailingIcon = { IconButton(onClick = { isKeyVisible = !isKeyVisible }) { Icon(if (isKeyVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff, null) } })
         Spacer(Modifier.height(16.dp))
         OutlinedTextField(value = cfModel, onValueChange = { cfModel = it }, label = { Text("Cloudflare Model ID") }, modifier = Modifier.fillMaxWidth(), placeholder = { Text("@cf/meta/llama-3-8b-instruct") })
-    } else {
+    } else if (selectedProvider == "custom") {
         // Custom API Setup
         if (config.savedCustomConfigs.isNotEmpty()) {
             Text("Saved Configurations", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = primaryColor)
@@ -524,6 +526,49 @@ fun AiProviderSettingsTab(config: AppConfig, client: OkHttpClient, onSave: (AppC
         OutlinedTextField(value = customApiKey, onValueChange = { customApiKey = it }, label = { Text("API Key (Optional)") }, modifier = Modifier.fillMaxWidth(), visualTransformation = if (isKeyVisible) VisualTransformation.None else PasswordVisualTransformation(), trailingIcon = { IconButton(onClick = { isKeyVisible = !isKeyVisible }) { Icon(if (isKeyVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff, null) } })
         Spacer(Modifier.height(16.dp))
         OutlinedTextField(value = customModel, onValueChange = { customModel = it }, label = { Text("Model Name") }, modifier = Modifier.fillMaxWidth(), placeholder = { Text("gpt-3.5-turbo") })
+    } else if (selectedProvider == "local") {
+        // Local LLM Saved Models List
+        if (config.savedLocalModels.isNotEmpty()) {
+            Text("Previously Selected Models", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = primaryColor)
+            Spacer(Modifier.height(8.dp))
+            config.savedLocalModels.forEach { savedPath ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
+                        .clickable {
+                             // Update the config with selected model
+                             onSave(config.copy(localLlmConfig = config.localLlmConfig.copy(modelPath = savedPath)))
+                             Toast.makeText(context, "Model selected: ${getFileName(context, savedPath)}", Toast.LENGTH_SHORT).show()
+                        },
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    val isCurrent = config.localLlmConfig.modelPath == savedPath
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = getFileName(context, savedPath),
+                            fontWeight = if (isCurrent) FontWeight.ExtraBold else FontWeight.Bold,
+                            color = if (isCurrent) primaryColor else MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                        )
+                        Text(text = savedPath, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                    }
+                    IconButton(onClick = {
+                        val newSavedList = config.savedLocalModels.toMutableList()
+                        newSavedList.remove(savedPath)
+                        onSave(config.copy(savedLocalModels = newSavedList))
+                    }) {
+                        Icon(Icons.Filled.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
+                    }
+                }
+                HorizontalDivider()
+            }
+            Spacer(Modifier.height(16.dp))
+        }
+        
+        Text("Go to the 'Local LLM' tab to select a new model file.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 
     Spacer(Modifier.height(24.dp))
@@ -560,6 +605,13 @@ fun AiProviderSettingsTab(config: AppConfig, client: OkHttpClient, onSave: (AppC
                  if (updatedSavedCloudflare.none { it == newCloudflareConfig }) updatedSavedCloudflare.add(newCloudflareConfig)
             }
 
+            val updatedSavedLocal = config.savedLocalModels.toMutableList()
+            if (selectedProvider == "local" && config.localLlmConfig.modelPath.isNotBlank()) {
+                if (updatedSavedLocal.none { it == config.localLlmConfig.modelPath }) {
+                    updatedSavedLocal.add(config.localLlmConfig.modelPath)
+                }
+            }
+
             var newConfig = config.copy(
                 provider = selectedProvider,
                 apiKey = geminiKey.trim(),
@@ -569,7 +621,8 @@ fun AiProviderSettingsTab(config: AppConfig, client: OkHttpClient, onSave: (AppC
                 localLlmConfig = config.localLlmConfig, // This is updated via the sliders in LocalLlmSetup
                 savedCustomConfigs = updatedSavedCustom,
                 savedGeminiConfigs = updatedSavedGemini,
-                savedCloudflareConfigs = updatedSavedCloudflare
+                savedCloudflareConfigs = updatedSavedCloudflare,
+                savedLocalModels = updatedSavedLocal
             )
             
             // Auto-enable logic
@@ -629,7 +682,6 @@ fun LocalLlmSetup(config: AppConfig, onSave: (AppConfig) -> Unit) {
                     Intent.FLAG_GRANT_READ_URI_PERMISSION
                 )
             } catch (e: Exception) {
-                // Some providers don't support persistable permissions
                 android.util.Log.w("SettingsScreen", "Could not take persistable permission: ${e.message}")
             }
             modelPath = it.toString()
@@ -640,23 +692,63 @@ fun LocalLlmSetup(config: AppConfig, onSave: (AppConfig) -> Unit) {
     Text("Model Configuration", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.primary)
     Spacer(Modifier.height(8.dp))
     
-    OutlinedTextField(
-        value = modelPath,
-        onValueChange = { 
-            modelPath = it
-            onSave(config.copy(localLlmConfig = config.localLlmConfig.copy(modelPath = it)))
-        },
-        label = { Text("Model Path (.gguf)") },
+    Card(
         modifier = Modifier.fillMaxWidth(),
-        trailingIcon = {
-            IconButton(onClick = { launcher.launch(arrayOf("*/*")) }) {
-                Icon(Icons.Default.Visibility, contentDescription = "Select Model")
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+        shape = MaterialTheme.shapes.medium
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                Icon(Icons.Default.FolderOpen, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                Spacer(Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Selected Model", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        text = getFileName(context, modelPath),
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 16.sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+            
+            if (modelPath.isNotBlank()) {
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = "Path: $modelPath",
+                    fontSize = 10.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                    lineHeight = 12.sp
+                )
+            }
+            
+            Spacer(Modifier.height(16.dp))
+            
+            Button(
+                onClick = { launcher.launch(arrayOf("*/*")) },
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.small
+            ) {
+                Icon(Icons.Default.FolderOpen, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text(if (modelPath.isBlank()) "Select Model" else "Change Model")
             }
         }
-    )
-    Text("Note: llama.cpp requires a direct file path. You may need to type the path manually if the picker returns a content URI.", fontSize = 11.sp, color = MaterialTheme.colorScheme.error, lineHeight = 14.sp)
+    }
 
-    Spacer(Modifier.height(16.dp))
+    Spacer(Modifier.height(12.dp))
+    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+        Icon(Icons.Default.Info, contentDescription = null, modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.width(4.dp))
+        Text(
+            "GGUF models are supported. Select a file from your storage.", 
+            fontSize = 11.sp, 
+            color = MaterialTheme.colorScheme.onSurfaceVariant, 
+            lineHeight = 14.sp
+        )
+    }
+
+    Spacer(Modifier.height(24.dp))
     
     Text("Temperature: ${String.format("%.2f", temperature)}", fontSize = 14.sp)
     Slider(value = temperature, onValueChange = { 
@@ -749,4 +841,23 @@ fun CustomApiHelp(primaryColor: Color, context: android.content.Context) {
     Text("1. Base URL: The API endpoint (e.g. https://api.groq.com/openai/v1 or http://localhost:11434/v1)", fontSize = 14.sp)
     Text("2. API Key: Your provider's API key (leave blank for local LLMs).", fontSize = 14.sp)
     Text("3. Model Name: The specific model ID (e.g. llama3-70b-8192, gpt-4o).", fontSize = 14.sp)
+}
+
+private fun getFileName(context: android.content.Context, uriOrPath: String): String {
+    if (uriOrPath.isBlank()) return "No model selected"
+    return try {
+        val uri = Uri.parse(uriOrPath)
+        if (uri.scheme == "content") {
+            context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                val nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                if (nameIndex != -1 && cursor.moveToFirst()) {
+                    cursor.getString(nameIndex)
+                } else null
+            } ?: uri.lastPathSegment ?: uriOrPath
+        } else {
+            uri.lastPathSegment ?: uriOrPath
+        }
+    } catch (e: Exception) {
+        uriOrPath.substringAfterLast("/")
+    }
 }
