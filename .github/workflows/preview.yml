@@ -14,11 +14,7 @@ jobs:
     outputs:
       commit_count: ${{ steps.set_commit.outputs.commit_count }}
       build_time: ${{ steps.set_commit.outputs.build_time }}
-      universal_size: ${{ steps.set_commit.outputs.universal_size }}
-      arm64-v8a_size: ${{ steps.set_commit.outputs.arm64-v8a_size }}
-      armeabi-v7a_size: ${{ steps.set_commit.outputs.armeabi-v7a_size }}
-      x86_size: ${{ steps.set_commit.outputs.x86_size }}
-      x86_64_size: ${{ steps.set_commit.outputs.x86_64_size }}
+      apk_size: ${{ steps.set_commit.outputs.apk_size }}
 
     steps:
       - name: Checkout repo
@@ -66,10 +62,10 @@ jobs:
           echo "build_time=$build_time" >> $GITHUB_OUTPUT
 
           mkdir -p output
-          # Explicitly find the signed universal APK
-          src=$(find app/build/outputs/apk/release -name "*-universal-release.apk" | head -n 1)
+          # Explicitly find the signed APK
+          src=$(find app/build/outputs/apk/release -name "*-release.apk" | head -n 1)
           if [ -z "$src" ]; then
-            echo "Signed universal APK not found!"
+            echo "Signed APK not found!"
             ls -R app/build/outputs/apk/release
             exit 1
           fi
@@ -77,7 +73,7 @@ jobs:
           cp "$src" "$dest"
           
           size=$(du -h "$dest" | cut -f1)
-          echo "universal_size=$size" >> $GITHUB_OUTPUT
+          echo "apk_size=$size" >> $GITHUB_OUTPUT
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -118,7 +114,7 @@ jobs:
             <p>Build time: ${build_time}</p>
             <p>Download the latest signed APK:</p>
             <ul>
-              <li><a href='TypeAssist-preview-r${commit_count}.apk'>Download APK (${{ needs.build.outputs.universal_size }})</a></li>
+              <li><a href='TypeAssist-preview-r${commit_count}.apk'>Download APK (${{ needs.build.outputs.apk_size }})</a></li>
             </ul>
             <p class='note'>Built automatically from the <code>master</code> branch.</p>
           </body>

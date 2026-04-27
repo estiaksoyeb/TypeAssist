@@ -58,8 +58,8 @@ jobs:
           # Decode Keystore from Secret (BASE64)
           echo "${{ secrets.SIGNING_KEY_BASE64 }}" | base64 -d > release.keystore
           
-          # Target the Universal APK produced by the split build
-          apk_file="$RELEASE_DIR/app-universal-release-unsigned.apk"
+          # Target the single APK produced when splits are disabled
+          apk_file="$RELEASE_DIR/app-release-unsigned.apk"
           signed_apk="$RELEASE_DIR/TypeAssist-${VERSION_TAG}.apk"
           
           if [ ! -f "$apk_file" ]; then

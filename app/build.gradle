@@ -13,41 +13,35 @@ if (keystorePropertiesFile.exists()) {
 // -----------------------------------------------
 
 android {
-    namespace 'com.typeassist.app'
-    compileSdk 35
+namespace 'com.typeassist.app'
+compileSdk 35
 
-    def isCi = System.getenv("GITHUB_ACTIONS") == "true"
-    def targetAbis = isCi ? ['arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64'] : ['arm64-v8a']
-
-    defaultConfig {
-        applicationId "com.typeassist.app"
-        minSdk 24
-        targetSdk 35
-        versionCode 8
-        versionName "3.4.4"
-        vectorDrawables {
-            useSupportLibrary true
-        }
-        
-        externalNativeBuild {
-            cmake {
-                cppFlags "-std=c++17"
-            }
-        }
-        ndk {
-            abiFilters.addAll(targetAbis)
-        }
+defaultConfig {
+    applicationId "com.typeassist.app"
+    minSdk 24
+    targetSdk 35
+    versionCode 8
+    versionName "3.4.4"
+    vectorDrawables {
+        useSupportLibrary true
     }
 
-    splits {
-        abi {
-            enable isCi
-            reset()
-            include 'arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64'
-            universalApk true
+    externalNativeBuild {
+        cmake {
+            cppFlags "-std=c++17"
         }
     }
+    ndk {
+        abiFilters 'arm64-v8a'
+    }
+}
 
+// Disable splits as we only target arm64-v8a now
+splits {
+    abi {
+        enable false
+    }
+}
     externalNativeBuild {
         cmake {
             path "src/main/cpp/CMakeLists.txt"
