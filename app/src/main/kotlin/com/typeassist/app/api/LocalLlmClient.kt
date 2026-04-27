@@ -93,7 +93,8 @@ class LocalLlmClient(private val service: MyAccessibilityService) : AiProvider {
                         callback(Result.failure(Exception(response)))
                     } else {
                         Log.d(TAG, "KOTLIN: Success! Returning response to Service.")
-                        callback(Result.success(response.trim()))
+                        val cleanedResponse = cleanResponse(response)
+                        callback(Result.success(cleanedResponse))
                     }
                 }
             } catch (e: Exception) {
@@ -101,6 +102,23 @@ class LocalLlmClient(private val service: MyAccessibilityService) : AiProvider {
                 mainHandler.post { callback(Result.failure(e)) }
             }
         }.start()
+    }
+
+    private fun cleanResponse(text: String): String {
+        var result = text.trim()
+        
+        // Remove surrounding pipe signs if present
+        if (result.startsWith("|") && result.endsWith("|")) {
+            result = result.substring(1, result.length - 1).trim()
+        }
+        
+        // Remove surrounding quotes if present
+        if ((result.startsWith("\"") && result.endsWith("\"")) || 
+            (result.startsWith("'") && result.endsWith("'"))) {
+            result = result.substring(1, result.length - 1).trim()
+        }
+
+        return result
     }
 
     private fun LogE(msg: String) {

@@ -364,19 +364,37 @@ class MyAccessibilityService : AccessibilityService() {
     }
 
     private fun processAiResult(config: AppConfig, node: AccessibilityNodeInfo, currentText: String?, aiText: String, replaceWhole: Boolean) {
+        val cleanedText = cleanAiText(aiText)
         val nightModeFlags = resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK
         val isDarkMode = nightModeFlags == android.content.res.Configuration.UI_MODE_NIGHT_YES
-        val wordCount = aiText.split("\\s+".toRegex()).size
+        val wordCount = cleanedText.split("\\s+".toRegex()).size
 
         if (wordCount > 15 && config.enablePreviewDialog) {
-            overlayManager.showPreviewDialog(aiText, isDarkMode) {
-                pasteText(node, aiText)
+            overlayManager.showPreviewDialog(cleanedText, isDarkMode) {
+                pasteText(node, cleanedText)
                 overlayManager.showUndoButton(config)
             }
         } else {
-            pasteText(node, aiText)
+            pasteText(node, cleanedText)
             overlayManager.showUndoButton(config)
         }
+    }
+
+    private fun cleanAiText(text: String): String {
+        var result = text.trim()
+
+        // Remove surrounding pipe signs if present
+        if (result.startsWith("|") && result.endsWith("|")) {
+            result = result.substring(1, result.length - 1).trim()
+        }
+
+        // Remove surrounding quotes if present
+        if ((result.startsWith("\"") && result.endsWith("\"")) ||
+            (result.startsWith("'") && result.endsWith("'"))) {
+            result = result.substring(1, result.length - 1).trim()
+        }
+
+        return result
     }
 
     private fun performAICall(config: AppConfig, prompt: String, userText: String, callback: (Result<String>) -> Unit) {
