@@ -20,8 +20,8 @@ defaultConfig {
     applicationId "com.typeassist.app"
     minSdk 24
     targetSdk 35
-    versionCode 8
-    versionName "3.4.4"
+    versionCode 9
+    versionName "4.1.0"
     vectorDrawables {
         useSupportLibrary true
     }
