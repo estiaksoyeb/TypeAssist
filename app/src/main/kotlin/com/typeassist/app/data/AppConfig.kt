@@ -75,7 +75,8 @@ data class InlineCommand(
 
 data class Snippet(
     var trigger: String,
-    var content: String
+    var content: String = "", // For migration
+    var contents: MutableList<String> = mutableListOf()
 ) : Serializable
 
 fun createDefaultConfig(): AppConfig {
@@ -107,8 +108,8 @@ fun createDefaultConfig(): AppConfig {
             InlineCommand("(%:.polite)", "Rewrite the text in a polite and professional tone. Return only the rewritten text.")
         ),
         snippets = mutableListOf(
-            Snippet("email", "user@example.com"),
-            Snippet("sign", "Best regards,\nUser")
+            Snippet("email", contents = mutableListOf("user@example.com")),
+            Snippet("sign", contents = mutableListOf("Best regards,\nUser"))
         ),
         undoCommandPattern = ".undo",
         snippetTriggerPrefix = "..",

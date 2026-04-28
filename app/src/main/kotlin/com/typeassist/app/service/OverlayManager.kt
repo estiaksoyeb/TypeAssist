@@ -27,8 +27,10 @@ class OverlayManager(private val context: Context) {
     private val hideUndoRunnable = Runnable { hideUndoButton() }
     private val hidePreviewRunnable = Runnable { hidePreviewDialog() }
     
-    // Callback for Undo action
+    // Callbacks
     var onUndoAction: (() -> Unit)? = null
+    var onOverlayShown: (() -> Unit)? = null
+    var onOverlayHidden: (() -> Unit)? = null
 
     init {
         windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
@@ -241,9 +243,155 @@ class OverlayManager(private val context: Context) {
         mainHandler.post { Toast.makeText(context, message, Toast.LENGTH_SHORT).show() }
     }
     
+    private var snippetSelectionView: FrameLayout? = null
+    private var currentSnippetTrigger: String? = null
+
+    fun showSnippetSelection(trigger: String, variations: List<String>, isDarkMode: Boolean, onSelected: (String) -> Unit) {
+        if (currentSnippetTrigger == trigger) return // Already showing this one
+        
+        currentSnippetTrigger = trigger
+        onOverlayShown?.invoke()
+
+        mainHandler.post {
+            hideSnippetSelectionViewOnly()
+
+            // Material 3 Colors from Theme.kt (Sync with showPreviewDialog)
+            val cardBgColor = if (isDarkMode) 0xFF1C1B1F.toInt() else 0xFFFFFBFE.toInt()
+            val primaryTextColor = if (isDarkMode) 0xFF818CF8.toInt() else 0xFF4F46E5.toInt()
+            val secondaryTextColor = if (isDarkMode) 0xFFE6E1E5.toInt() else 0xFF1C1B1F.toInt()
+            val surfaceVariantColor = if (isDarkMode) 0xFF49454F.toInt() else 0xFFE7E0EC.toInt()
+            val primaryColor = if (isDarkMode) 0xFF818CF8.toInt() else 0xFF4F46E5.toInt()
+
+            val container = android.widget.LinearLayout(context).apply {
+                orientation = android.widget.LinearLayout.VERTICAL
+                setPadding(40, 40, 40, 40)
+                background = GradientDrawable().apply {
+                    setColor(cardBgColor)
+                    cornerRadius = 32f
+                    setStroke(3, primaryColor)
+                }
+                isClickable = true
+                elevation = 20f
+            }
+
+            val title = android.widget.TextView(context).apply {
+                text = "Select Variation: $trigger"
+                textSize = 18f
+                setTextColor(primaryTextColor)
+                setTypeface(null, android.graphics.Typeface.BOLD)
+                setPadding(0, 0, 0, 20)
+            }
+            container.addView(title)
+
+            val scrollView = android.widget.ScrollView(context).apply {
+                layoutParams = android.widget.LinearLayout.LayoutParams(
+                    android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                    0
+                ).apply { 
+                    weight = 1f 
+                }
+            }
+            // Constrain height to 35% of screen like preview dialog
+            scrollView.layoutParams.height = (context.resources.displayMetrics.heightPixels * 0.35).toInt()
+            
+            val list = android.widget.LinearLayout(context).apply {
+                orientation = android.widget.LinearLayout.VERTICAL
+            }
+
+            variations.forEach { variation ->
+                val item = android.widget.LinearLayout(context).apply {
+                    orientation = android.widget.LinearLayout.VERTICAL
+                    setPadding(24, 32, 24, 32)
+                    isClickable = true
+                    val outValue = android.util.TypedValue()
+                    context.theme.resolveAttribute(android.R.attr.selectableItemBackground, outValue, true)
+                    setBackgroundResource(outValue.resourceId)
+                    
+                    setOnClickListener {
+                        onSelected(variation)
+                        hideSnippetSelection()
+                    }
+                }
+
+                val content = android.widget.TextView(context).apply {
+                    text = variation
+                    textSize = 14f
+                    setTextColor(secondaryTextColor)
+                    maxLines = 4
+                    ellipsize = android.text.TextUtils.TruncateAt.END
+                }
+                item.addView(content)
+                
+                // Divider
+                val divider = android.view.View(context).apply {
+                    layoutParams = android.widget.LinearLayout.LayoutParams(
+                        android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 2
+                    )
+                    setBackgroundColor(surfaceVariantColor)
+                }
+                
+                list.addView(item)
+                list.addView(divider)
+            }
+            scrollView.addView(list)
+            container.addView(scrollView)
+            
+            val btnRow = android.widget.LinearLayout(context).apply {
+                orientation = android.widget.LinearLayout.HORIZONTAL
+                gravity = Gravity.END
+                setPadding(0, 30, 0, 0)
+            }
+
+            val closeBtn = Button(context).apply {
+                text = "Cancel"
+                setTextColor(primaryTextColor)
+                setTypeface(null, android.graphics.Typeface.BOLD)
+                background = android.util.TypedValue().let { tv ->
+                    context.theme.resolveAttribute(android.R.attr.selectableItemBackground, tv, true)
+                    context.resources.getDrawable(tv.resourceId, context.theme)
+                }
+                setPadding(15, 20, 15, 20)
+                setOnClickListener { hideSnippetSelection() }
+            }
+            btnRow.addView(closeBtn)
+            container.addView(btnRow)
+
+            snippetSelectionView = FrameLayout(context)
+            snippetSelectionView?.addView(container)
+
+            val params = WindowManager.LayoutParams(
+                (context.resources.displayMetrics.widthPixels * 0.80).toInt(),
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+                PixelFormat.TRANSLUCENT
+            ).apply {
+                gravity = Gravity.CENTER
+            }
+
+            try { windowManager?.addView(snippetSelectionView, params) } catch (e: Exception) {}
+        }
+    }
+
+    fun hideSnippetSelection() {
+        currentSnippetTrigger = null
+        hideSnippetSelectionViewOnly()
+        onOverlayHidden?.invoke()
+    }
+
+    private fun hideSnippetSelectionViewOnly() {
+        mainHandler.post {
+            if (snippetSelectionView != null) {
+                try { windowManager?.removeView(snippetSelectionView); snippetSelectionView = null } catch (e: Exception) {}
+            }
+        }
+    }
+
     fun hideAll() {
         hideLoading()
         hideUndoButton()
         hidePreviewDialog()
+        hideSnippetSelection()
     }
 }

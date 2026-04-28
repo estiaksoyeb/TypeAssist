@@ -29,6 +29,7 @@ import android.util.Log
 class MyAccessibilityService : AccessibilityService() {
 
     private val TAG = "TypeAssistService"
+    @Volatile private var isSnippetSelectionVisible = false
 
     companion object {
         init {
@@ -64,6 +65,14 @@ class MyAccessibilityService : AccessibilityService() {
         Log.d(TAG, "JNI Test: ${stringFromJNI()}")
         overlayManager = OverlayManager(this)
         overlayManager.onUndoAction = { performUndo() }
+        overlayManager.onOverlayShown = { 
+            Log.d(TAG, "Callback: Overlay Shown")
+            isSnippetSelectionVisible = true 
+        }
+        overlayManager.onOverlayHidden = { 
+            Log.d(TAG, "Callback: Overlay Hidden")
+            isSnippetSelectionVisible = false 
+        }
         startPersistentNotification()
         Log.d(TAG, "Service Connected")
     }
@@ -104,7 +113,11 @@ class MyAccessibilityService : AccessibilityService() {
         }
     }
 
-    override fun onAccessibilityEvent(event: AccessibilityEvent?) {
+    private fun isDarkMode(): Boolean {
+        return (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES
+    }
+
+    override fun onAccessibilityEvent(event: AccessibilityEvent) {
         if (event == null) return
 
         if (event.packageName?.toString() == packageName) {
@@ -120,6 +133,11 @@ class MyAccessibilityService : AccessibilityService() {
         }
 
         if (event.eventType == AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED) {
+            // Skip processing for internal events with no actual changes
+            if (event.addedCount == 0 && event.removedCount == 0) return
+
+            Log.d(TAG, "Event: TYPE_VIEW_TEXT_CHANGED | added: ${event.addedCount} | removed: ${event.removedCount} | text: ${event.text}")
+            
             debounceHandler.removeCallbacksAndMessages(null)
 
             val inputNode = event.source ?: rootInActiveWindow?.findFocus(AccessibilityNodeInfo.FOCUS_INPUT) ?: return
@@ -127,13 +145,29 @@ class MyAccessibilityService : AccessibilityService() {
             if (currentText.isEmpty() && event.text.isNotEmpty()) {
                 currentText = event.text.joinToString("")
             }
+            Log.d(TAG, "Current Text: '$currentText'")
 
             val prefs = getSharedPreferences("GeminiConfig", Context.MODE_PRIVATE)
-            val configJson = prefs.getString("config_json", null) ?: return
+            val configJson = prefs.getString("config_json", null)
+            if (configJson == null) {
+                Log.e(TAG, "config_json is null!")
+                return
+            }
 
             try {
-                val gson = Gson()
+                val gson = com.google.gson.GsonBuilder().create()
                 val config = gson.fromJson(configJson, AppConfig::class.java)
+                
+                // Migration: Convert old single content to contents list
+                config.snippets?.forEach { snippet ->
+                    if (snippet.contents == null) snippet.contents = mutableListOf()
+                    if (snippet.content != null && snippet.content.isNotEmpty()) {
+                        if (!snippet.contents.contains(snippet.content)) {
+                            snippet.contents.add(snippet.content)
+                        }
+                        snippet.content = ""
+                    }
+                }
                 
                 if (!config.isAppEnabled) {
                     return
@@ -180,23 +214,54 @@ class MyAccessibilityService : AccessibilityService() {
                 val saveSnippetPattern = config.saveSnippetPattern
                 val snippets = config.snippets.sortedByDescending { it.trigger.length }
 
+                var matchedAnySnippet = false
                 for (s in snippets) {
                     val fullTrigger = snippetPrefix + s.trigger
                     val idx = currentText.lastIndexOf(fullTrigger)
                     if (idx != -1) {
                         val isAtEnd = idx + fullTrigger.length == currentText.length
                         if (config.allowTriggerAnywhere || isAtEnd) {
-                            val runnable = Runnable {
-                                if (!inputNode.refresh()) return@Runnable
-                                val prefix = currentText.substring(0, idx)
-                                val suffix = currentText.substring(idx + fullTrigger.length)
-                                val newText = prefix + s.content + suffix
-                                pasteText(inputNode, newText)
+                            matchedAnySnippet = true
+                            Log.d(TAG, "Snippet Match: ${s.trigger}, variations: ${s.contents?.size ?: "null"}")
+                            val variations = s.contents?.filter { it.isNotEmpty() } ?: emptyList()
+                            if (variations.size > 1) {
+                                // Show selection overlay
+                                Log.d(TAG, "Showing selection overlay for '${s.trigger}' with ${variations.size} variations")
+                                pendingTriggerRunnable?.let { debounceHandler.removeCallbacks(it) }
+                                overlayManager.showSnippetSelection(s.trigger, variations, isDarkMode()) { selected ->
+                                    Log.d(TAG, "Variation selected: '$selected'")
+                                    if (!inputNode.refresh()) {
+                                        Log.e(TAG, "Could not refresh input node for insertion")
+                                        return@showSnippetSelection
+                                    }
+                                    val prefix = currentText.substring(0, idx)
+                                    val suffix = currentText.substring(idx + fullTrigger.length)
+                                    val newText = prefix + selected + suffix
+                                    pasteText(inputNode, newText)
+                                }
+                                return
+                            } else if (variations.isNotEmpty() || s.content.isNotEmpty()) {
+                                val replacement = if (variations.isNotEmpty()) variations[0] else s.content
+                                Log.d(TAG, "Single variation match. Scheduling auto-replacement for '${s.trigger}'")
+                                val runnable = Runnable {
+                                    if (!inputNode.refresh()) return@Runnable
+                                    val prefix = currentText.substring(0, idx)
+                                    val suffix = currentText.substring(idx + fullTrigger.length)
+                                    val newText = prefix + replacement + suffix
+                                    pasteText(inputNode, newText)
+                                }
+                                pendingTriggerRunnable = runnable
+                                debounceHandler.postDelayed(runnable, config.triggerDebounceMs)
+                                return
                             }
-                            pendingTriggerRunnable = runnable
-                            debounceHandler.postDelayed(runnable, config.triggerDebounceMs)
-                            return
                         }
+                    }
+                }
+
+                if (!matchedAnySnippet && !isSnippetSelectionVisible) {
+                    if (overlayManager != null) { 
+                         Log.d(TAG, "No snippet match in current text. Hiding selection overlay.")
+                         overlayManager.hideSnippetSelection()
                     }
                 }
 
@@ -210,8 +275,14 @@ class MyAccessibilityService : AccessibilityService() {
                         val newContent = saveMatcher.group(2)?.trim() ?: ""
 
                         if (newTrigger.isNotEmpty() && newContent.isNotEmpty()) {
-                            config.snippets.removeIf { it.trigger == newTrigger }
-                            config.snippets.add(com.typeassist.app.data.Snippet(newTrigger, newContent))
+                            val existing = config.snippets.find { it.trigger == newTrigger }
+                            if (existing != null) {
+                                if (!existing.contents.contains(newContent)) {
+                                    existing.contents.add(newContent)
+                                }
+                            } else {
+                                config.snippets.add(com.typeassist.app.data.Snippet(newTrigger, contents = mutableListOf(newContent)))
+                            }
                             prefs.edit().putString("config_json", gson.toJson(config)).apply()
                             val cleanText = currentText.replace(fullMatch, newContent)
                             pasteText(inputNode, cleanText)

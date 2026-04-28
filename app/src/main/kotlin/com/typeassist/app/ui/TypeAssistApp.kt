@@ -49,6 +49,16 @@ fun TypeAssistApp(client: OkHttpClient, updateInfo: GitHubRelease?) {
                 if (loadedConfig.snippets == null) {
                     loadedConfig.snippets = mutableListOf()
                 }
+                // Migration: Convert old single content to contents list
+                loadedConfig.snippets?.forEach { snippet ->
+                    if (snippet.contents == null) snippet.contents = mutableListOf()
+                    if (snippet.content != null && snippet.content!!.isNotEmpty()) {
+                        if (!snippet.contents.contains(snippet.content!!)) {
+                            snippet.contents.add(snippet.content!!)
+                        }
+                        snippet.content = ""
+                    }
+                }
                 loadedConfig
             } else createDefaultConfig()
         } catch (e: Exception) { createDefaultConfig() })
