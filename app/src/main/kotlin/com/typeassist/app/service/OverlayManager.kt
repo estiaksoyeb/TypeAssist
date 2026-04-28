@@ -253,7 +253,7 @@ class OverlayManager(private val context: Context) {
         onOverlayShown?.invoke()
 
         mainHandler.post {
-            hideSnippetSelectionViewOnly()
+            removeSnippetSelectionInternal()
 
             // Material 3 Colors from Theme.kt (Sync with showPreviewDialog)
             val cardBgColor = if (isDarkMode) 0xFF1C1B1F.toInt() else 0xFFFFFBFE.toInt()
@@ -376,14 +376,19 @@ class OverlayManager(private val context: Context) {
 
     fun hideSnippetSelection() {
         currentSnippetTrigger = null
-        hideSnippetSelectionViewOnly()
         onOverlayHidden?.invoke()
+        mainHandler.post {
+            removeSnippetSelectionInternal()
+        }
     }
 
-    private fun hideSnippetSelectionViewOnly() {
-        mainHandler.post {
-            if (snippetSelectionView != null) {
-                try { windowManager?.removeView(snippetSelectionView); snippetSelectionView = null } catch (e: Exception) {}
+    private fun removeSnippetSelectionInternal() {
+        if (snippetSelectionView != null) {
+            try {
+                windowManager?.removeView(snippetSelectionView)
+            } catch (e: Exception) {
+            } finally {
+                snippetSelectionView = null
             }
         }
     }
