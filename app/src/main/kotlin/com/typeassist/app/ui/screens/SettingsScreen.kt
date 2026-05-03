@@ -271,47 +271,49 @@ fun GeneralSettingsTab(config: AppConfig, onSave: (AppConfig) -> Unit, onNavigat
     HorizontalDivider()
     Spacer(Modifier.height(16.dp))
 
-    Text("Updates", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = MaterialTheme.colorScheme.primary)
-    Spacer(Modifier.height(16.dp))
+    if (BuildConfig.SHOW_UPDATES) {
+        Text("Updates", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = MaterialTheme.colorScheme.primary)
+        Spacer(Modifier.height(16.dp))
 
-    val updateRepository = remember { com.typeassist.app.data.repository.UpdateRepository(context) }
-    val scope = rememberCoroutineScope()
-    var isCheckingForUpdate by remember { mutableStateOf(false) }
+        val updateRepository = remember { com.typeassist.app.data.repository.UpdateRepository(context) }
+        val scope = rememberCoroutineScope()
+        var isCheckingForUpdate by remember { mutableStateOf(false) }
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(enabled = !isCheckingForUpdate) {
-                isCheckingForUpdate = true
-                scope.launch {
-                    val result = updateRepository.checkForUpdate("estiaksoyeb", "TypeAssist")
-                    isCheckingForUpdate = false
-                    result.onSuccess { release ->
-                        if (release != null) {
-                            Toast.makeText(context, "New Update Available: ${release.tagName}", Toast.LENGTH_LONG).show()
-                            // We could trigger the dialog here, but for now a toast is fine since 
-                            // MainActivity will show it on next restart or we can just open the link.
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(release.htmlUrl))
-                            context.startActivity(intent)
-                        } else {
-                            Toast.makeText(context, "You are on the latest version! ✅", Toast.LENGTH_SHORT).show()
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(enabled = !isCheckingForUpdate) {
+                    isCheckingForUpdate = true
+                    scope.launch {
+                        val result = updateRepository.checkForUpdate("estiaksoyeb", "TypeAssist")
+                        isCheckingForUpdate = false
+                        result.onSuccess { release ->
+                            if (release != null) {
+                                Toast.makeText(context, "New Update Available: ${release.tagName}", Toast.LENGTH_LONG).show()
+                                // We could trigger the dialog here, but for now a toast is fine since 
+                                // MainActivity will show it on next restart or we can just open the link.
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(release.htmlUrl))
+                                context.startActivity(intent)
+                            } else {
+                                Toast.makeText(context, "You are on the latest version! ✅", Toast.LENGTH_SHORT).show()
+                            }
+                        }.onFailure {
+                            Toast.makeText(context, "Failed to check for updates: ${it.message}", Toast.LENGTH_SHORT).show()
                         }
-                    }.onFailure {
-                        Toast.makeText(context, "Failed to check for updates: ${it.message}", Toast.LENGTH_SHORT).show()
                     }
-                }
-            },
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text("Check for Updates", fontWeight = FontWeight.Bold)
-            Text(if (isCheckingForUpdate) "Checking..." else "Current Version: ${BuildConfig.VERSION_NAME}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        if (isCheckingForUpdate) {
-            CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
-        } else {
-            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, modifier = Modifier.rotate(180f))
+                },
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text("Check for Updates", fontWeight = FontWeight.Bold)
+                Text(if (isCheckingForUpdate) "Checking..." else "Current Version: ${BuildConfig.VERSION_NAME}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            if (isCheckingForUpdate) {
+                CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+            } else {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, modifier = Modifier.rotate(180f))
+            }
         }
     }
 }

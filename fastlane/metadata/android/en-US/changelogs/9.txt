@@ -1,0 +1,10 @@
+Major New Features:
+• Offline AI Support: Run AI models directly on your device without an internet connection.
+• Faster AI Performance: Optional hardware acceleration (Vulkan) for significantly faster responses.
+• Selection Overlay: Preview and pick from multiple AI variations instantly.
+• Local Model Management: Easily organize and switch between your GGUF models.
+
+Improvements & Fixes:
+• Enhanced AI output quality with better filtering of unwanted artifacts.
+• Improved stability and general performance optimizations.
+• And more :)

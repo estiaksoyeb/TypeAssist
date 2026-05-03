@@ -35,8 +35,10 @@ class MainActivity : ComponentActivity() {
         
         updateRepository = UpdateRepository(this)
 
-        loadCachedUpdateInfo()
-        checkForUpdates()
+        if (BuildConfig.SHOW_UPDATES) {
+            loadCachedUpdateInfo()
+            checkForUpdates()
+        }
 
         setContent {
             AppTheme {

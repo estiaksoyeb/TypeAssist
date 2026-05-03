@@ -23,6 +23,7 @@ defaultConfig {
     versionCode 9
     versionName "4.1.0"
     vectorDrawables {
+
         useSupportLibrary true
     }
 
@@ -36,6 +37,17 @@ defaultConfig {
     }
 }
 
+flavorDimensions "distribution"
+productFlavors {
+    full {
+        dimension "distribution"
+        buildConfigField "boolean", "SHOW_UPDATES", "true"
+    }
+    fdroid {
+        dimension "distribution"
+        buildConfigField "boolean", "SHOW_UPDATES", "false"
+    }
+}
 // Disable splits as we only target arm64-v8a now
 splits {
     abi {
