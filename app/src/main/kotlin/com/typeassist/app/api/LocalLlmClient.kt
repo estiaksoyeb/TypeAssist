@@ -66,9 +66,16 @@ class LocalLlmClient(private val service: MyAccessibilityService) : AiProvider {
                 }
 
                 // 3. Inference - Use ChatML template for Instruct models
+                // For reasoning models, optionally suppress thinking via /no_think hint
+                val systemInstruction = if (localLlmConfig.disableReasoning) {
+                    "$prompt\n/no_think"
+                } else {
+                    prompt
+                }
+
                 val fullPrompt = """
                     <|im_start|>system
-                    $prompt<|im_end|>
+                    $systemInstruction<|im_end|>
                     <|im_start|>user
                     $userText<|im_end|>
                     <|im_start|>assistant
@@ -106,14 +113,17 @@ class LocalLlmClient(private val service: MyAccessibilityService) : AiProvider {
 
     private fun cleanResponse(text: String): String {
         var result = text.trim()
-        
+
+        // Strip <think>...</think> reasoning blocks (reasoning models like DeepSeek-R1, QwQ)
+        result = result.replace(Regex("<think>[\\s\\S]*?</think>", RegexOption.IGNORE_CASE), "").trim()
+
         // Remove surrounding pipe signs if present
         if (result.startsWith("|") && result.endsWith("|")) {
             result = result.substring(1, result.length - 1).trim()
         }
-        
+
         // Remove surrounding quotes if present
-        if ((result.startsWith("\"") && result.endsWith("\"")) || 
+        if ((result.startsWith("\"") && result.endsWith("\"")) ||
             (result.startsWith("'") && result.endsWith("'"))) {
             result = result.substring(1, result.length - 1).trim()
         }

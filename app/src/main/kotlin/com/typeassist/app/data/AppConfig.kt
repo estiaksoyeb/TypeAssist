@@ -55,8 +55,16 @@ data class LocalLlmConfig(
     var topP: Float = 0.9f,
     var maxTokens: Int = 128,
     var numThreads: Int = 4,
-    var useGpu: Boolean = false
+    var useGpu: Boolean = false,
+    var disableReasoning: Boolean = false
 ) : Serializable
+
+/** Returns true if the model filename suggests it is a reasoning/thinking model. */
+fun isReasoningModel(modelPath: String): Boolean {
+    val name = modelPath.substringAfterLast("/").lowercase()
+    return listOf("qwq", "deepseek-r", "-r1", "-r2", "thinking", "reasoning", "reflect")
+        .any { name.contains(it) }
+}
 
 data class GenConfig(
     var temperature: Double = 0.2,

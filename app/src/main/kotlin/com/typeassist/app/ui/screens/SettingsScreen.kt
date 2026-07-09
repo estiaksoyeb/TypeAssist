@@ -37,6 +37,7 @@ import androidx.core.view.WindowCompat
 import com.typeassist.app.data.AppConfig
 import com.typeassist.app.data.CloudflareConfig
 import com.typeassist.app.data.CustomApiConfig
+import com.typeassist.app.data.isReasoningModel
 import com.typeassist.app.api.CloudflareApiClient
 import com.typeassist.app.api.CustomApiClient
 import com.typeassist.app.BuildConfig
@@ -674,6 +675,7 @@ fun LocalLlmSetup(config: AppConfig, onSave: (AppConfig) -> Unit) {
     var maxTokens by remember { mutableStateOf(config.localLlmConfig.maxTokens.toFloat()) }
     var threads by remember { mutableStateOf(config.localLlmConfig.numThreads.toFloat()) }
     var useGpu by remember { mutableStateOf(config.localLlmConfig.useGpu) }
+    var disableReasoning by remember { mutableStateOf(config.localLlmConfig.disableReasoning) }
 
     val launcher = androidx.activity.compose.rememberLauncherForActivityResult(
         contract = androidx.activity.result.contract.ActivityResultContracts.OpenDocument()
@@ -771,6 +773,71 @@ fun LocalLlmSetup(config: AppConfig, onSave: (AppConfig) -> Unit) {
             onCheckedChange = { 
                 useGpu = it
                 onSave(config.copy(localLlmConfig = config.localLlmConfig.copy(useGpu = it)))
+            }
+        )
+    }
+
+    Spacer(Modifier.height(16.dp))
+
+    // --- Reasoning Model Detection ---
+    val looksLikeReasoningModel = isReasoningModel(modelPath)
+    if (looksLikeReasoningModel) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.6f)
+            ),
+            shape = MaterialTheme.shapes.medium
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+            ) {
+                Text("🧠", fontSize = 18.sp)
+                Spacer(Modifier.width(10.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        "Reasoning Model Detected",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                    Text(
+                        "This model outputs internal thinking (\u003cthink\u003e...\u003c/think\u003e). " +
+                        "TypeAssist automatically strips it from the final output.",
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f),
+                        lineHeight = 14.sp
+                    )
+                }
+            }
+        }
+        Spacer(Modifier.height(12.dp))
+    }
+
+    // --- Disable Reasoning Toggle ---
+    Row(
+        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text("Disable Reasoning Output", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            Text(
+                if (looksLikeReasoningModel)
+                    "Send /no_think hint and strip \u003cthink\u003e blocks from response."
+                else
+                    "For reasoning models: suppress thinking tokens and strip \u003cthink\u003e blocks.",
+                fontSize = 11.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                lineHeight = 14.sp
+            )
+        }
+        Switch(
+            checked = disableReasoning,
+            onCheckedChange = {
+                disableReasoning = it
+                onSave(config.copy(localLlmConfig = config.localLlmConfig.copy(disableReasoning = it)))
             }
         )
     }
