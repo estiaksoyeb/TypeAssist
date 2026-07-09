@@ -100,8 +100,8 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: GitHubRelease?, 
     if (showApiKeyDialog) {
         AlertDialog(
             onDismissRequest = { showApiKeyDialog = false },
-            title = { Text("API Key Missing") },
-            text = { Text("You haven't set up a Gemini API Key.\n\nAI features will not work, but you can still use offline features like Snippets.") },
+            title = { Text("API Key Required") },
+            text = { Text("You haven't set up an API key for ${config.provider.replaceFirstChar { it.uppercase() }}.\n\nAI features will not work without it, but you can still use offline features like Snippets.") },
             confirmButton = {
                 Button(onClick = { 
                     showApiKeyDialog = false
@@ -175,7 +175,11 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: GitHubRelease?, 
                                     context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
                                     return@Switch
                                 }
-                                if (config.apiKey.isBlank()) {
+                                // Skip API check for providers that don't require an API key
+                                val isLocalReady = config.provider == "local" && config.localLlmConfig.modelPath.isNotBlank()
+                                val isCustomReady = config.provider == "custom" // API key is optional for custom
+                                val needsApiKey = !isLocalReady && !isCustomReady && config.apiKey.isBlank()
+                                if (needsApiKey) {
                                     showApiKeyDialog = true
                                     return@Switch
                                 }
