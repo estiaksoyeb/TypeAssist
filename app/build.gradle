@@ -13,55 +13,56 @@ if (keystorePropertiesFile.exists()) {
 // -----------------------------------------------
 
 android {
-namespace 'com.typeassist.app'
-compileSdk 35
+    namespace = 'com.typeassist.app'
+    compileSdk = 35
 
-defaultConfig {
-    applicationId "com.typeassist.app"
-    minSdk 24
-    targetSdk 35
-    versionCode 9
-    versionName "4.1.0"
-    vectorDrawables {
+    defaultConfig {
+        applicationId = "com.typeassist.app"
+        minSdk = 24
+        targetSdk = 35
+        versionCode = 9
+        versionName = "4.1.0"
+        vectorDrawables {
+            useSupportLibrary = true
+        }
 
-        useSupportLibrary true
+        externalNativeBuild {
+            cmake {
+                cppFlags "-std=c++17"
+            }
+        }
+        ndk {
+            abiFilters 'arm64-v8a'
+        }
+    }
+
+    flavorDimensions = ["distribution"]
+    productFlavors {
+        full {
+            dimension = "distribution"
+            buildConfigField "boolean", "SHOW_UPDATES", "true"
+        }
+        fdroid {
+            dimension = "distribution"
+            buildConfigField "boolean", "SHOW_UPDATES", "false"
+        }
+    }
+
+    // Disable splits as we only target arm64-v8a now
+    splits {
+        abi {
+            enable = false
+        }
     }
 
     externalNativeBuild {
         cmake {
-            cppFlags "-std=c++17"
-        }
-    }
-    ndk {
-        abiFilters 'arm64-v8a'
-    }
-}
-
-flavorDimensions "distribution"
-productFlavors {
-    full {
-        dimension "distribution"
-        buildConfigField "boolean", "SHOW_UPDATES", "true"
-    }
-    fdroid {
-        dimension "distribution"
-        buildConfigField "boolean", "SHOW_UPDATES", "false"
-    }
-}
-// Disable splits as we only target arm64-v8a now
-splits {
-    abi {
-        enable false
-    }
-}
-    externalNativeBuild {
-        cmake {
-            path "src/main/cpp/CMakeLists.txt"
-            version "3.22.1"
+            path = "src/main/cpp/CMakeLists.txt"
+            version = "3.22.1"
         }
     }
 
-    ndkVersion "27.0.12077973"
+    ndkVersion = "27.0.12077973"
 
     // Define Signing Config
     signingConfigs {
@@ -78,15 +79,15 @@ splits {
 
     buildTypes {
         debug {
-            applicationIdSuffix ".debug"
-            versionNameSuffix "-debug"
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
         }
         release {
-            minifyEnabled true
-            shrinkResources true
+            minifyEnabled = true
+            shrinkResources = true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             if (keystorePropertiesFile.exists()) {
-                signingConfig signingConfigs.release
+                signingConfig = signingConfigs.release
             }
         }
     }
@@ -97,19 +98,19 @@ splits {
     }
 */
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
-    
+
     kotlinOptions {
         jvmTarget = '17'
     }
 
     buildFeatures {
-        compose true
-        buildConfig true
+        compose = true
+        buildConfig = true
     }
-    
+
     composeOptions {
         // Version handled by plugin
     }
