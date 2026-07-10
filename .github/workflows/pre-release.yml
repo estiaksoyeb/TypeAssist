@@ -69,7 +69,11 @@ jobs:
           for FLAVOR in full fdroid; do
             RELEASE_DIR="app/build/outputs/apk/${FLAVOR}/release"
             apk_file="$RELEASE_DIR/app-${FLAVOR}-release-unsigned.apk"
-            signed_apk="$RELEASE_DIR/TypeAssist-${FLAVOR}-preview-${VERSION_TAG}.apk"
+            if [ "$FLAVOR" = "full" ]; then
+              signed_apk="$RELEASE_DIR/TypeAssist-${VERSION_TAG}.apk"
+            else
+              signed_apk="$RELEASE_DIR/TypeAssist-${FLAVOR}-${VERSION_TAG}.apk"
+            fi
 
             if [ ! -f "$apk_file" ]; then
               echo "APK not found: $apk_file"
@@ -118,8 +122,8 @@ jobs:
             | Full (Preview) | ${{ env.apk_sha256_full }} |
             | F-Droid (Preview) | ${{ env.apk_sha256_fdroid }} |
           files: |
-            app/build/outputs/apk/full/release/TypeAssist-full-preview-${{ env.VERSION_TAG }}.apk
-            app/build/outputs/apk/fdroid/release/TypeAssist-fdroid-preview-${{ env.VERSION_TAG }}.apk
+            app/build/outputs/apk/full/release/TypeAssist-${{ env.VERSION_TAG }}.apk
+            app/build/outputs/apk/fdroid/release/TypeAssist-fdroid-${{ env.VERSION_TAG }}.apk
           draft: false
           prerelease: true
         env:
