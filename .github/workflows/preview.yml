@@ -44,7 +44,7 @@ jobs:
         uses: r0adkll/sign-android-release@v1
         id: sign_app
         with:
-          releaseDirectory: app/build/outputs/apk/release
+          releaseDirectory: app/build/outputs/apk/full/release
           signingKeyBase64: ${{ secrets.SIGNING_KEY_BASE64 }}
           alias: ${{ secrets.ALIAS }}
           keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
@@ -62,11 +62,11 @@ jobs:
           echo "build_time=$build_time" >> $GITHUB_OUTPUT
 
           mkdir -p output
-          # Explicitly find the signed APK
-          src=$(find app/build/outputs/apk/release -name "*-release.apk" | head -n 1)
+          # Explicitly find the signed APK (full flavor)
+          src=$(find app/build/outputs/apk/full/release -name "*-release.apk" | head -n 1)
           if [ -z "$src" ]; then
             echo "Signed APK not found!"
-            ls -R app/build/outputs/apk/release
+            ls -R app/build/outputs/apk/full/release
             exit 1
           fi
           dest="output/TypeAssist-preview-r${commit_count}.apk"

@@ -39,8 +39,8 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew assembleRelease
 
-      - name: Upload Release Artifact
+      - name: Upload Release Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: TypeAssist-release-unsigned-${{ env.SHORT_SHA }}
-          path: app/build/outputs/apk/release/*.apk
+          path: app/build/outputs/apk/**/release/*.apk

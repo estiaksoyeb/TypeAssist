@@ -42,53 +42,68 @@ jobs:
 
       - name: Verify build output
         run: |
-          RELEASE_DIR="app/build/outputs/apk/release"
-          if [ ! -d "$RELEASE_DIR" ]; then
-            echo "Release directory does not exist!"
-            find app/build/outputs -name "*.apk" -type f
-            exit 1
-          fi
-          ls -lah "$RELEASE_DIR"
+          echo "=== All APKs found ==="
+          find app/build/outputs/apk -name "*.apk" -type f
+          for FLAVOR in full fdroid; do
+            RELEASE_DIR="app/build/outputs/apk/${FLAVOR}/release"
+            if [ ! -d "$RELEASE_DIR" ]; then
+              echo "Missing expected release dir: $RELEASE_DIR"
+              exit 1
+            fi
+            echo "--- $FLAVOR ---"
+            ls -lah "$RELEASE_DIR"
+          done
 
       - name: Sign APKs
         run: |
           set -e
-          RELEASE_DIR="app/build/outputs/apk/release"
-          
+
           # Decode the Keystore from the Secret (BASE64)
           echo "${{ secrets.SIGNING_KEY_BASE64 }}" | base64 -d > release.keystore
-          
-          # Target the single APK produced when splits are disabled
-          apk_file="$RELEASE_DIR/app-release-unsigned.apk"
-          # Rename output file to include tag
-          signed_apk="$RELEASE_DIR/TypeAssist-preview-${VERSION_TAG}.apk"
-          
-          if [ ! -f "$apk_file" ]; then
-            echo "Universal APK file not found: $apk_file"
-            echo "Contents of release directory:"
-            ls -lah "$RELEASE_DIR"
-            rm release.keystore
-            exit 1
-          fi
-          
-          # Sign the APK
-          $ANDROID_HOME/build-tools/34.0.0/apksigner sign \
-            --ks release.keystore \
-            --ks-key-alias "${{ secrets.ALIAS }}" \
-            --ks-pass "pass:${{ secrets.KEY_STORE_PASSWORD }}" \
-            --key-pass "pass:${{ secrets.KEY_PASSWORD }}" \
-            --out "$signed_apk" \
-            "$apk_file"
-          
-          # Verify the signature
-          $ANDROID_HOME/build-tools/34.0.0/apksigner verify "$signed_apk"
-          
+
+          APKSIGNER="$ANDROID_HOME/build-tools/34.0.0/apksigner"
+          SIGNED_PATHS=""
+          CHECKSUM_FULL=""
+          CHECKSUM_FDROID=""
+
+          for FLAVOR in full fdroid; do
+            RELEASE_DIR="app/build/outputs/apk/${FLAVOR}/release"
+            apk_file="$RELEASE_DIR/app-${FLAVOR}-release-unsigned.apk"
+            signed_apk="$RELEASE_DIR/TypeAssist-${FLAVOR}-preview-${VERSION_TAG}.apk"
+
+            if [ ! -f "$apk_file" ]; then
+              echo "APK not found: $apk_file"
+              ls -lah "$RELEASE_DIR"
+              rm release.keystore
+              exit 1
+            fi
+
+            $APKSIGNER sign \
+              --ks release.keystore \
+              --ks-key-alias "${{ secrets.ALIAS }}" \
+              --ks-pass "pass:${{ secrets.KEY_STORE_PASSWORD }}" \
+              --key-pass "pass:${{ secrets.KEY_PASSWORD }}" \
+              --out "$signed_apk" \
+              "$apk_file"
+
+            $APKSIGNER verify "$signed_apk"
+            ls -lh "$signed_apk"
+
+            checksum=$(sha256sum "$signed_apk" | awk '{ print $1 }')
+            if [ "$FLAVOR" = "full" ]; then
+              CHECKSUM_FULL="$checksum"
+            else
+              CHECKSUM_FDROID="$checksum"
+            fi
+            SIGNED_PATHS="$SIGNED_PATHS\n$signed_apk"
+          done
+
           rm release.keystore
-          ls -lh "$signed_apk"
-          
-          checksum=$(sha256sum "$signed_apk" | awk '{ print $1 }')
-          echo "apk_sha256=$checksum" >> "$GITHUB_ENV"
-          echo "signed_apk_path=$signed_apk" >> "$GITHUB_ENV"
+
+          echo "apk_sha256_full=$CHECKSUM_FULL" >> "$GITHUB_ENV"
+          echo "apk_sha256_fdroid=$CHECKSUM_FDROID" >> "$GITHUB_ENV"
+          printf "%b" "$SIGNED_PATHS" | sed '/^$/d' > signed_apk_paths.txt
+          echo "signed_apk_paths_file=signed_apk_paths.txt" >> "$GITHUB_ENV"
 
       - name: Create GitHub pre-release
         uses: softprops/action-gh-release@v1
@@ -96,13 +111,15 @@ jobs:
           tag_name: ${{ env.VERSION_TAG }}
           name: "TypeAssist ${{ env.VERSION_TAG }}"
           body: |
-            
+
             ### Checksums
             | Variant | SHA-256 |
             | ------- | ------- |
-            | Preview | ${{ env.apk_sha256 }} |
+            | Full (Preview) | ${{ env.apk_sha256_full }} |
+            | F-Droid (Preview) | ${{ env.apk_sha256_fdroid }} |
           files: |
-            ${{ env.signed_apk_path }}
+            app/build/outputs/apk/full/release/TypeAssist-full-preview-${{ env.VERSION_TAG }}.apk
+            app/build/outputs/apk/fdroid/release/TypeAssist-fdroid-preview-${{ env.VERSION_TAG }}.apk
           draft: false
           prerelease: true
         env:
