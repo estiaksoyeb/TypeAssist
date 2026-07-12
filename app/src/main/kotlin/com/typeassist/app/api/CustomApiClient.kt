@@ -102,7 +102,7 @@ class CustomApiClient(private val client: OkHttpClient) : AiProvider {
                         val choices = jsonResponse.getJSONArray("choices")
                         if (choices.length() > 0) {
                              val resultText = choices.getJSONObject(0).getJSONObject("message").getString("content")
-                             callback(Result.success(resultText.trim()))
+                             callback(Result.success(cleanModelResponse(resultText)))
                         } else {
                             callback(Result.failure(IOException("No choices returned")))
                         }

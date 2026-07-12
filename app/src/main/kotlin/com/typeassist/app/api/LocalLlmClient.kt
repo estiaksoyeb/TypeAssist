@@ -73,13 +73,13 @@ class LocalLlmClient(private val service: MyAccessibilityService) : AiProvider {
                     prompt
                 }
 
-                val fullPrompt = """
-                    <|im_start|>system
-                    $systemInstruction<|im_end|>
-                    <|im_start|>user
-                    $userText<|im_end|>
-                    <|im_start|>assistant
-                """.trimIndent()
+                // Build ChatML with plain concatenation — trimIndent() misbehaves when
+                // interpolated values contain newlines (e.g. multi-line prompts or /no_think)
+                val fullPrompt = buildString {
+                    append("<|im_start|>system\n").append(systemInstruction).append("<|im_end|>\n")
+                    append("<|im_start|>user\n").append(userText).append("<|im_end|>\n")
+                    append("<|im_start|>assistant\n")
+                }
                 
                 Log.d(TAG, "KOTLIN: Calling native inference bridge...")
                 Log.d(TAG, "KOTLIN: Full Prompt Sent to C++: [$fullPrompt]")
@@ -100,7 +100,7 @@ class LocalLlmClient(private val service: MyAccessibilityService) : AiProvider {
                         callback(Result.failure(Exception(response)))
                     } else {
                         Log.d(TAG, "KOTLIN: Success! Returning response to Service.")
-                        val cleanedResponse = cleanResponse(response)
+                        val cleanedResponse = cleanModelResponse(response)
                         callback(Result.success(cleanedResponse))
                     }
                 }
@@ -109,26 +109,6 @@ class LocalLlmClient(private val service: MyAccessibilityService) : AiProvider {
                 mainHandler.post { callback(Result.failure(e)) }
             }
         }.start()
-    }
-
-    private fun cleanResponse(text: String): String {
-        var result = text.trim()
-
-        // Strip <think>...</think> reasoning blocks (reasoning models like DeepSeek-R1, QwQ)
-        result = result.replace(Regex("<think>[\\s\\S]*?</think>", RegexOption.IGNORE_CASE), "").trim()
-
-        // Remove surrounding pipe signs if present
-        if (result.startsWith("|") && result.endsWith("|")) {
-            result = result.substring(1, result.length - 1).trim()
-        }
-
-        // Remove surrounding quotes if present
-        if ((result.startsWith("\"") && result.endsWith("\"")) ||
-            (result.startsWith("'") && result.endsWith("'"))) {
-            result = result.substring(1, result.length - 1).trim()
-        }
-
-        return result
     }
 
     private fun LogE(msg: String) {

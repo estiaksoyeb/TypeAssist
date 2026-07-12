@@ -62,8 +62,10 @@ data class LocalLlmConfig(
 /** Returns true if the model filename suggests it is a reasoning/thinking model. */
 fun isReasoningModel(modelPath: String): Boolean {
     val name = modelPath.substringAfterLast("/").lowercase()
-    return listOf("qwq", "deepseek-r", "-r1", "-r2", "thinking", "reasoning", "reflect")
-        .any { name.contains(it) }
+    return listOf(
+        "qwq", "qwen3", "deepseek-r", "-r1", "-r2",
+        "thinking", "reasoning", "reflect", "magistral", "phi-4-reasoning"
+    ).any { name.contains(it) }
 }
 
 data class GenConfig(
