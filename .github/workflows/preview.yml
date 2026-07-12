@@ -41,16 +41,35 @@ jobs:
         run: ./gradlew assembleRelease
 
       - name: Sign APK
-        uses: r0adkll/sign-android-release@v1
-        id: sign_app
-        with:
-          releaseDirectory: app/build/outputs/apk/full/release
-          signingKeyBase64: ${{ secrets.SIGNING_KEY_BASE64 }}
-          alias: ${{ secrets.ALIAS }}
-          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
-          keyPassword: ${{ secrets.KEY_PASSWORD }}
-        env:
-          BUILD_TOOLS_VERSION: "35.0.0"
+        run: |
+          set -e
+          # Decode Keystore from Secret (BASE64)
+          echo "${{ secrets.SIGNING_KEY_BASE64 }}" | base64 -d > release.keystore
+
+          APKSIGNER="$ANDROID_HOME/build-tools/34.0.0/apksigner"
+          RELEASE_DIR="app/build/outputs/apk/full/release"
+          apk_file="$RELEASE_DIR/app-full-release-unsigned.apk"
+          signed_apk="$RELEASE_DIR/app-full-release.apk"
+
+          if [ ! -f "$apk_file" ]; then
+            echo "APK not found: $apk_file"
+            ls -lah "$RELEASE_DIR"
+            rm -f release.keystore
+            exit 1
+          fi
+
+          $APKSIGNER sign \
+            --ks release.keystore \
+            --ks-key-alias "${{ secrets.ALIAS }}" \
+            --ks-pass "pass:${{ secrets.KEY_STORE_PASSWORD }}" \
+            --key-pass "pass:${{ secrets.KEY_PASSWORD }}" \
+            --out "$signed_apk" \
+            "$apk_file"
+
+          $APKSIGNER verify "$signed_apk"
+          ls -lh "$signed_apk"
+          rm -f release.keystore
+
 
       - name: Copy build artifacts
         id: set_commit
