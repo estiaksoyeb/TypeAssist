@@ -81,7 +81,7 @@ class GeminiApiClient(private val client: OkHttpClient) : AiProvider {
                         return
                     }
                     try {
-                        val responseData = it.body?.string()
+                        val responseData = it.body?.string() ?: throw IOException("Empty response body")
                         val jsonResponse = JSONObject(responseData)
                         val resultText = jsonResponse.getJSONArray("candidates").getJSONObject(0)
                             .getJSONObject("content").getJSONArray("parts").getJSONObject(0)
@@ -97,7 +97,7 @@ class GeminiApiClient(private val client: OkHttpClient) : AiProvider {
 
     private fun getErrorMessage(code: Int, body: String?): String {
         val message = try {
-            JSONObject(body).getJSONObject("error").getString("message")
+            JSONObject(body ?: "").getJSONObject("error").getString("message")
         } catch (e: Exception) {
             getErrorMessageForCode(code)
         }

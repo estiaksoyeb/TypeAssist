@@ -83,7 +83,7 @@ class CloudflareApiClient(private val client: OkHttpClient) : AiProvider {
                         return
                     }
                     try {
-                        val responseData = it.body?.string()
+                        val responseData = it.body?.string() ?: throw IOException("Empty response body")
                         val jsonResponse = JSONObject(responseData)
                         val resultText = jsonResponse.getJSONObject("result").getString("response")
                         callback(Result.success(cleanModelResponse(resultText)))
@@ -97,7 +97,7 @@ class CloudflareApiClient(private val client: OkHttpClient) : AiProvider {
 
     private fun getErrorMessage(code: Int, body: String?): String {
         return try {
-            val json = JSONObject(body)
+            val json = JSONObject(body ?: "")
             val errors = json.getJSONArray("errors")
             if (errors.length() > 0) {
                 val error = errors.getJSONObject(0)
