@@ -14,6 +14,7 @@ class LocalLlmClient(private val service: MyAccessibilityService) : AiProvider {
 
     private val TAG = "LocalLlmClient"
     private var lastResolvedUri: String = ""
+    private var currentModelUri: String = ""
     private var currentModelPath: String = ""
     private var currentUseGpu: Boolean = false
     private val mainHandler = Handler(Looper.getMainLooper())
@@ -41,6 +42,24 @@ class LocalLlmClient(private val service: MyAccessibilityService) : AiProvider {
                 // 0. Stop any previous generation
                 service.stopGenerationNative()
 
+                // Detect swap by *source URI*, not resolved path. All content://
+                // models resolve to the same cached file, so a resolved-path
+                // comparison hides swaps and leaves the old model mmap'd while
+                // the cache file gets overwritten underneath it — the source of
+                // the CJK output / crash on model change.
+                val needsReload = currentModelUri != modelUriOrPath ||
+                        currentUseGpu != localLlmConfig.useGpu
+
+                // Release the old mmap BEFORE resolveModelPath rewrites the
+                // shared cache file. unloadModel takes the native mutex, so it
+                // blocks until any in-flight generation exits.
+                if (needsReload && currentModelUri.isNotEmpty()) {
+                    Log.d(TAG, "KOTLIN: Model URI or GPU setting changed, unloading previous model")
+                    service.unloadModel()
+                    currentModelPath = ""
+                    currentModelUri = ""
+                }
+
                 // 1. Resolve Path
                 Log.d(TAG, "KOTLIN: Resolving model path...")
                 val finalPath = resolveModelPath(modelUriOrPath)
@@ -51,8 +70,8 @@ class LocalLlmClient(private val service: MyAccessibilityService) : AiProvider {
                 }
                 Log.d(TAG, "KOTLIN: Resolved path: $finalPath")
 
-                // 2. Load Model if path or GPU setting changed
-                if (currentModelPath != finalPath || currentUseGpu != localLlmConfig.useGpu) {
+                // 2. Load Model if we swapped, or if nothing is currently loaded
+                if (needsReload || currentModelPath != finalPath) {
                     Log.d(TAG, "KOTLIN: Requesting native model load (GPU: ${localLlmConfig.useGpu})...")
                     val success = service.loadModel(finalPath, localLlmConfig.useGpu)
                     if (!success) {
@@ -61,6 +80,7 @@ class LocalLlmClient(private val service: MyAccessibilityService) : AiProvider {
                         return@Thread
                     }
                     currentModelPath = finalPath
+                    currentModelUri = modelUriOrPath
                     currentUseGpu = localLlmConfig.useGpu
                     Log.d(TAG, "KOTLIN: Native loadModel successful")
                 }

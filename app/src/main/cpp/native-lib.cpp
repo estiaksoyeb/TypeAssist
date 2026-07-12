@@ -39,6 +39,12 @@ Java_com_typeassist_app_service_MyAccessibilityService_loadModel(
         jboolean use_gpu) {
     std::lock_guard<std::mutex> lock(g_mutex);
 
+    // Release any previously loaded model/context before mmap'ing a new file.
+    // Callers should also invoke unloadModel first when the on-disk file is
+    // about to be rewritten, but this makes the native side defensive.
+    if (ctx) { llama_free(ctx); ctx = nullptr; }
+    if (model) { llama_model_free(model); model = nullptr; }
+
     const char * path = env->GetStringUTFChars(model_path, nullptr);
     LOGD("NATIVE: Loading model: %s (GPU: %s)", path, use_gpu ? "ON" : "OFF");
 
@@ -221,8 +227,11 @@ extern "C" JNIEXPORT void JNICALL
 Java_com_typeassist_app_service_MyAccessibilityService_unloadModel(
         JNIEnv* env,
         jobject /* this */) {
+    // Serialize against any in-flight generation. Callers signal abort via
+    // stopGenerationNative(); we then block here until that generation
+    // releases the lock, guaranteeing it's safe to free ctx/model.
+    std::lock_guard<std::mutex> lock(g_mutex);
     if (ctx) { llama_free(ctx); ctx = nullptr; }
     if (model) { llama_model_free(model); model = nullptr; }
-    llama_backend_free();
     LOGD("NATIVE: Model unloaded");
 }
