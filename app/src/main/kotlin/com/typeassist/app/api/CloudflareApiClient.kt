@@ -86,7 +86,7 @@ class CloudflareApiClient(private val client: OkHttpClient) : AiProvider {
                         val responseData = it.body?.string()
                         val jsonResponse = JSONObject(responseData)
                         val resultText = jsonResponse.getJSONObject("result").getString("response")
-                        callback(Result.success(resultText.trim()))
+                        callback(Result.success(cleanModelResponse(resultText)))
                     } catch (e: Exception) {
                         callback(Result.failure(e))
                     }

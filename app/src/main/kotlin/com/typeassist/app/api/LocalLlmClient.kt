@@ -66,8 +66,13 @@ class LocalLlmClient(private val service: MyAccessibilityService) : AiProvider {
                 }
 
                 // 3. Inference - Use ChatML template for Instruct models
-                // For reasoning models, optionally suppress thinking via /no_think hint
-                val systemInstruction = if (localLlmConfig.disableReasoning) {
+                // /no_think is a Qwen3-family control token — a no-op on QwQ,
+                // DeepSeek-R1, Magistral, etc. Only append it for Qwen filenames;
+                // <think> stripping still runs for every provider via cleanModelResponse.
+                val isQwenFamily = finalPath.substringAfterLast("/")
+                    .lowercase()
+                    .let { it.contains("qwen") || it.contains("qwq") }
+                val systemInstruction = if (localLlmConfig.disableReasoning && isQwenFamily) {
                     "$prompt\n/no_think"
                 } else {
                     prompt

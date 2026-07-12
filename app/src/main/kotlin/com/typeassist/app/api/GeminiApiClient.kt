@@ -86,7 +86,7 @@ class GeminiApiClient(private val client: OkHttpClient) : AiProvider {
                         val resultText = jsonResponse.getJSONArray("candidates").getJSONObject(0)
                             .getJSONObject("content").getJSONArray("parts").getJSONObject(0)
                             .getString("text")
-                        callback(Result.success(resultText.trim()))
+                        callback(Result.success(cleanModelResponse(resultText)))
                     } catch (e: Exception) {
                         callback(Result.failure(e))
                     }
