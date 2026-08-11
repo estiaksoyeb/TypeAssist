@@ -28,7 +28,8 @@ android {
 
         externalNativeBuild {
             cmake {
-                cppFlags "-std=c++17"
+                cppFlags "-std=c++17 -O3"
+                arguments "-DCMAKE_BUILD_TYPE=Release"
             }
         }
         ndk {

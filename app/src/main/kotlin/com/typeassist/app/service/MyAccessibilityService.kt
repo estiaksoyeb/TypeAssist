@@ -436,6 +436,13 @@ class MyAccessibilityService : AccessibilityService() {
 
     private fun processAiResult(config: AppConfig, node: AccessibilityNodeInfo, currentText: String?, aiText: String, replaceWhole: Boolean) {
         val cleanedText = cleanAiText(aiText)
+
+        if (cleanedText.isBlank()) {
+            Log.w(TAG, "AI returned empty result after cleaning. Raw length=${aiText.length}")
+            overlayManager.showToast("Model returned empty output — try a smarter model or increase max tokens")
+            return
+        }
+
         val nightModeFlags = resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK
         val isDarkMode = nightModeFlags == android.content.res.Configuration.UI_MODE_NIGHT_YES
         val wordCount = cleanedText.split("\\s+".toRegex()).size
