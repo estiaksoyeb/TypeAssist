@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -576,7 +577,6 @@ fun AiProviderSettingsTab(config: AppConfig, client: OkHttpClient, onSave: (AppC
                             maxLines = 1,
                             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                         )
-                        Text(text = savedPath, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                     }
                     IconButton(onClick = {
                         val newSavedList = config.savedLocalModels.toMutableList()
@@ -697,6 +697,25 @@ fun LocalLlmSetup(config: AppConfig, onSave: (AppConfig) -> Unit) {
     var useGpu by remember { mutableStateOf(config.localLlmConfig.useGpu) }
     var disableReasoning by remember { mutableStateOf(config.localLlmConfig.disableReasoning) }
 
+    val cacheFile = remember(modelPath) { java.io.File(context.cacheDir, "local_model.gguf") }
+    var cachedSize by remember(modelPath) { mutableStateOf(if (cacheFile.exists()) cacheFile.length() else 0L) }
+
+    fun clearLocalModelStorage() {
+        val freedBytes = if (cacheFile.exists()) cacheFile.length() else 0L
+        if (cacheFile.exists()) {
+            try {
+                cacheFile.delete()
+            } catch (e: Exception) {
+                android.util.Log.e("SettingsScreen", "Failed to delete cached model file: ${e.message}")
+            }
+        }
+        cachedSize = 0L
+        modelPath = ""
+        onSave(config.copy(localLlmConfig = config.localLlmConfig.copy(modelPath = "")))
+        val freedText = if (freedBytes > 0) " Freed ${formatFileSize(freedBytes)} of storage." else ""
+        Toast.makeText(context, "Local model reference cleared.$freedText", Toast.LENGTH_LONG).show()
+    }
+
     val launcher = androidx.activity.compose.rememberLauncherForActivityResult(
         contract = androidx.activity.result.contract.ActivityResultContracts.OpenDocument()
     ) { uri: Uri? ->
@@ -737,40 +756,72 @@ fun LocalLlmSetup(config: AppConfig, onSave: (AppConfig) -> Unit) {
                 }
             }
             
-            if (modelPath.isNotBlank()) {
+            if (cachedSize > 0L) {
                 Spacer(Modifier.height(8.dp))
-                Text(
-                    text = "Path: $modelPath",
-                    fontSize = 10.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                    lineHeight = 12.sp
-                )
+                Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                    Text("📦 Internal App Cache: ", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
+                    Text(formatFileSize(cachedSize), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                }
             }
             
             Spacer(Modifier.height(16.dp))
             
-            Button(
-                onClick = { launcher.launch(arrayOf("*/*")) },
-                modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.small
-            ) {
-                Icon(Icons.Default.FolderOpen, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text(if (modelPath.isBlank()) "Select Model" else "Change Model")
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                Button(
+                    onClick = { launcher.launch(arrayOf("*/*")) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.small
+                ) {
+                    Icon(Icons.Default.FolderOpen, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text(if (modelPath.isBlank()) "Select Model" else "Change Model")
+                }
+
+                if (modelPath.isNotBlank() || cachedSize > 0L) {
+                    OutlinedButton(
+                        onClick = { clearLocalModelStorage() },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = MaterialTheme.shapes.small,
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.5f))
+                    ) {
+                        Icon(Icons.Default.Delete, contentDescription = "Clear Storage", modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text("Clear Model Cache")
+                    }
+                }
             }
         }
     }
 
     Spacer(Modifier.height(12.dp))
-    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-        Icon(Icons.Default.Info, contentDescription = null, modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-        Spacer(Modifier.width(4.dp))
-        Text(
-            "GGUF models are supported. Select a file from your storage.", 
-            fontSize = 11.sp, 
-            color = MaterialTheme.colorScheme.onSurfaceVariant, 
-            lineHeight = 14.sp
-        )
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.45f)
+        ),
+        shape = MaterialTheme.shapes.medium
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+        ) {
+            Icon(
+                Icons.Default.Warning,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(Modifier.width(10.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "Low-parameter models (e.g. under 1.5B parameters) may fail to follow complex prompt instructions, yield empty responses when token budget is low, or yield wrong/unexpected responses.",
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.85f),
+                    lineHeight = 14.sp
+                )
+            }
+        }
     }
 
     Spacer(Modifier.height(24.dp))
@@ -959,19 +1010,42 @@ fun CustomApiHelp(primaryColor: Color, context: android.content.Context) {
 
 private fun getFileName(context: android.content.Context, uriOrPath: String): String {
     if (uriOrPath.isBlank()) return "No model selected"
+    if (!uriOrPath.startsWith("content://")) {
+        return uriOrPath.substringAfterLast("/")
+    }
     return try {
         val uri = Uri.parse(uriOrPath)
-        if (uri.scheme == "content") {
-            context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
-                val nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
-                if (nameIndex != -1 && cursor.moveToFirst()) {
-                    cursor.getString(nameIndex)
-                } else null
-            } ?: uri.lastPathSegment ?: uriOrPath
-        } else {
-            uri.lastPathSegment ?: uriOrPath
+        var name: String? = null
+        
+        context.contentResolver.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
+            if (cursor.moveToFirst()) {
+                val idx = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                if (idx != -1) {
+                    name = cursor.getString(idx)
+                }
+            }
         }
+
+        if (name.isNullOrBlank()) {
+            val lastSeg = Uri.decode(uri.lastPathSegment ?: "")
+            name = when {
+                lastSeg.contains(":") -> lastSeg.substringAfterLast(":")
+                lastSeg.contains("/") -> lastSeg.substringAfterLast("/")
+                else -> lastSeg
+            }
+        }
+
+        if (!name.isNullOrBlank()) name!! else "Local GGUF Model"
     } catch (e: Exception) {
-        uriOrPath.substringAfterLast("/")
+        val last = uriOrPath.substringAfterLast("/")
+        Uri.decode(last).substringAfterLast(":")
     }
+}
+
+private fun formatFileSize(bytes: Long): String {
+    if (bytes <= 0) return "0 B"
+    val units = arrayOf("B", "KB", "MB", "GB", "TB")
+    val digitGroups = (Math.log10(bytes.toDouble()) / Math.log10(1024.0)).toInt()
+    val clampedGroup = digitGroups.coerceIn(0, units.size - 1)
+    return String.format("%.2f %s", bytes / Math.pow(1024.0, clampedGroup.toDouble()), units[clampedGroup])
 }
