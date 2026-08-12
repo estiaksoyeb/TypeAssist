@@ -343,7 +343,14 @@ fun AiProviderSettingsTab(config: AppConfig, client: OkHttpClient, onSave: (AppC
     var modelExpanded by remember { mutableStateOf(false) }
     
     val providers = listOf("gemini", "cloudflare", "custom")
-    val geminiModels = listOf("gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-2.5-pro", "gemma-3n-e2b-it", "gemma-3n-e4b-it")
+    val geminiModels = listOf(
+        "gemini-3.5-flash-lite",
+        "gemini-3.5-flash",
+        "gemini-3.6-flash",
+        "gemini-2.5-flash",
+        "gemma-4-31b-it",
+        "gemma-4-26b-a4b-it"
+    )
     val context = LocalContext.current
 
     fun verifyGemini(k: String) {
@@ -436,8 +443,21 @@ fun AiProviderSettingsTab(config: AppConfig, client: OkHttpClient, onSave: (AppC
         OutlinedTextField(value = geminiKey, onValueChange = { geminiKey = it }, label = { Text("Gemini API Key") }, modifier = Modifier.fillMaxWidth(), visualTransformation = if (isKeyVisible) VisualTransformation.None else PasswordVisualTransformation(), trailingIcon = { IconButton(onClick = { isKeyVisible = !isKeyVisible }) { Icon(if (isKeyVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff, null) } })
         Spacer(Modifier.height(16.dp))
         ExposedDropdownMenuBox(expanded = modelExpanded, onExpandedChange = { modelExpanded = !modelExpanded }, modifier = Modifier.fillMaxWidth()) {
-            OutlinedTextField(value = geminiModel, onValueChange = {}, readOnly = true, label = { Text("Select Gemini Model") }, trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = modelExpanded) }, colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(), modifier = Modifier.menuAnchor().fillMaxWidth())
-            ExposedDropdownMenu(expanded = modelExpanded, onDismissRequest = { modelExpanded = false }) { geminiModels.forEach { item -> DropdownMenuItem(text = { Text(text = item) }, onClick = { geminiModel = item; modelExpanded = false }) } }
+            OutlinedTextField(
+                value = geminiModel,
+                onValueChange = { geminiModel = it },
+                readOnly = false,
+                label = { Text("Gemini Model Name") },
+                placeholder = { Text("e.g. gemini-2.5-flash") },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = modelExpanded) },
+                colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+                modifier = Modifier.menuAnchor().fillMaxWidth()
+            )
+            ExposedDropdownMenu(expanded = modelExpanded, onDismissRequest = { modelExpanded = false }) {
+                geminiModels.forEach { item ->
+                    DropdownMenuItem(text = { Text(text = item) }, onClick = { geminiModel = item; modelExpanded = false })
+                }
+            }
         }
     } else if (selectedProvider == "cloudflare") {
         // Cloudflare Setup
@@ -618,7 +638,7 @@ fun AiProviderSettingsTab(config: AppConfig, client: OkHttpClient, onSave: (AppC
             var newConfig = config.copy(
                 provider = selectedProvider,
                 apiKey = geminiKey.trim(),
-                model = geminiModel,
+                model = geminiModel.trim(),
                 cloudflareConfig = newCloudflareConfig,
                 customApiConfig = newCustomConfig,
                 localLlmConfig = config.localLlmConfig, // This is updated via the sliders in LocalLlmSetup

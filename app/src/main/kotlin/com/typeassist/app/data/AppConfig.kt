@@ -6,7 +6,7 @@ data class AppConfig(
     var isAppEnabled: Boolean = false,
     var provider: String = "gemini", // "gemini", "cloudflare", "custom", "local"
     var apiKey: String = "",
-    var model: String = "gemini-2.5-flash-lite",
+    var model: String = "gemini-3.5-flash-lite",
     var cloudflareConfig: CloudflareConfig = CloudflareConfig(),
     var customApiConfig: CustomApiConfig = CustomApiConfig(),
     var localLlmConfig: LocalLlmConfig = LocalLlmConfig(),
@@ -94,7 +94,7 @@ fun createDefaultConfig(): AppConfig {
         isAppEnabled = false,
         provider = "gemini",
         apiKey = "", 
-        model = "gemini-2.5-flash-lite",
+        model = "gemini-3.5-flash-lite",
         cloudflareConfig = CloudflareConfig(),
         customApiConfig = CustomApiConfig(),
         localLlmConfig = LocalLlmConfig(),
