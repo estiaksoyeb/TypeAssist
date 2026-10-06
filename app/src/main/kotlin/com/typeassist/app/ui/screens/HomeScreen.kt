@@ -778,7 +778,7 @@ fun DonationItem(label: String, value: String, clipboardManager: androidx.compos
             clipboardManager.setText(AnnotatedString(value))
             android.widget.Toast.makeText(context, "Copied $label!", android.widget.Toast.LENGTH_SHORT).show()
         }) {
-            Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = Color.Gray)
+            Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

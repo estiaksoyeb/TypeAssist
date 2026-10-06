@@ -12,6 +12,7 @@ import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.Info
@@ -21,7 +22,6 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
@@ -157,7 +157,7 @@ fun GeneralSettingsTab(config: AppConfig, onSave: (AppConfig) -> Unit, onNavigat
             Text("Check Permissions", fontWeight = FontWeight.Bold)
             Text("Fix issues with background service, battery optimization, and notifications.", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, modifier = Modifier.rotate(180f)) // Forward arrow hack or use appropriate icon
+        Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
     }
 
     Spacer(Modifier.height(16.dp))
@@ -314,7 +314,7 @@ fun GeneralSettingsTab(config: AppConfig, onSave: (AppConfig) -> Unit, onNavigat
             if (isCheckingForUpdate) {
                 CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
             } else {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, modifier = Modifier.rotate(180f))
+                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
             }
         }
     }

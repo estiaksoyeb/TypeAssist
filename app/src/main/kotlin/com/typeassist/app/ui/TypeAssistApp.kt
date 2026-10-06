@@ -76,10 +76,11 @@ fun TypeAssistApp(client: OkHttpClient, updateInfo: GitHubRelease?) {
     }
 
     BackHandler(enabled = currentScreen != "home" && currentScreen != "welcome") {
-        if (currentScreen == "library") {
-            navigateTo("commands")
-        } else {
-            navigateTo("home")
+        val route = currentScreen.substringBefore(":")
+        when (route) {
+            "library" -> navigateTo("commands")
+            "permissions" -> navigateTo("settings:0")
+            else -> navigateTo("home")
         }
     }
 
@@ -88,11 +89,16 @@ fun TypeAssistApp(client: OkHttpClient, updateInfo: GitHubRelease?) {
             targetState = currentScreen,
             label = "Screen Animation",
             transitionSpec = {
+                // Strip tab suffix (e.g. "settings:0") so route comparisons are stable.
+                val targetRoute = targetState.substringBefore(":")
+                val previousRoute = previousScreen.substringBefore(":")
+
                 // Logic to determine if it's a "back" animation
-                val isBackTransition = (targetState == "home" && previousScreen != "home") ||
-                                       (targetState == "commands" && previousScreen == "library") ||
-                                       (targetState == "settings" && previousScreen == "permissions")
-                
+                val isBackTransition = (targetRoute == "home" && previousRoute != "home") ||
+                                       (targetRoute == "commands" && previousRoute == "library") ||
+                                       (targetRoute == "settings" && previousRoute == "permissions") ||
+                                       (targetRoute == "permissions" && previousRoute == "settings")
+
                 if (isBackTransition) {
                     slideInHorizontally { fullWidth -> -fullWidth } togetherWith // New screen from left
                     slideOutHorizontally { fullWidth -> fullWidth } // Old screen to right
