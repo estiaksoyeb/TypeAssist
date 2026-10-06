@@ -201,6 +201,25 @@ fun GeneralSettingsTab(config: AppConfig, onSave: (AppConfig) -> Unit, onNavigat
     HorizontalDivider()
     Spacer(Modifier.height(16.dp))
     
+    var dateFormatPattern by remember { mutableStateOf(config.dateFormatPattern) }
+    Text("Date Format Pattern", fontWeight = FontWeight.Bold)
+    Text("Java SimpleDateFormat pattern used by the .date macro. e.g. yyyy-MM-dd for ISO.", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Spacer(Modifier.height(8.dp))
+    OutlinedTextField(
+        value = dateFormatPattern,
+        onValueChange = { v ->
+            dateFormatPattern = v
+            onSave(config.copy(dateFormatPattern = v))
+        },
+        label = { Text("Pattern (e.g. yyyy-MM-dd)") },
+        singleLine = true,
+        modifier = Modifier.fillMaxWidth()
+    )
+
+    Spacer(Modifier.height(16.dp))
+    HorizontalDivider()
+    Spacer(Modifier.height(16.dp))
+
     var snippetTriggerPrefix by remember { mutableStateOf(config.snippetTriggerPrefix) }
     Text("Snippet Trigger Prefix", fontWeight = FontWeight.Bold)
     Text("Prefix typed before a snippet name to expand it.", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)

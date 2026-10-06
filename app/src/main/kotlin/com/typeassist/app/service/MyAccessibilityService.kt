@@ -312,8 +312,8 @@ class MyAccessibilityService : AccessibilityService() {
                 }
 
                 val utilityTriggers = mapOf(
-                    ".now" to { com.typeassist.app.utils.UtilityBelt.getTime() },
-                    ".date" to { com.typeassist.app.utils.UtilityBelt.getDate() },
+                    ".now" to { com.typeassist.app.utils.UtilityBelt.getTime(config.timeFormatPattern) },
+                    ".date" to { com.typeassist.app.utils.UtilityBelt.getDate(config.dateFormatPattern) },
                     ".pass" to { com.typeassist.app.utils.UtilityBelt.generatePassword() }
                 )
 

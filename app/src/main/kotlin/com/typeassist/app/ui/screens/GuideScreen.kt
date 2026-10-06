@@ -92,7 +92,7 @@ fun GuideScreen(onBack: () -> Unit) {
                 listOf(
                     GuideItem("(.c: math )", "Calculator", "Solves math expressions.\nExample: '(.c: 25 * 4 + 10)' -> '110'\nSupports: +, -, *, /, ^, (), sqrt, sin, cos, log"),
                     GuideItem(".now", "Time Stamp", "Inserts current time (YYYY-MM-DD HH:MM)."),
-                    GuideItem(".date", "Date Stamp", "Inserts current date (Friday, Dec 19)."),
+                    GuideItem(".date", "Date Stamp", "Inserts current date. Format configurable in Settings > Triggers & History (default: Friday, Dec 19)."),
                     GuideItem(".pass", "Password Gen", "Generates a strong random password.")
                 ))
             }

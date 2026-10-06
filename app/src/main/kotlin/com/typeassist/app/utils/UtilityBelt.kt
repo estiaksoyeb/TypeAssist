@@ -7,16 +7,23 @@ import kotlin.random.Random
 
 object UtilityBelt {
 
-    fun getDate(): String {
-        // Format: Friday, Dec 19
-        val sdf = SimpleDateFormat("EEEE, MMM d", Locale.getDefault())
-        return sdf.format(Date())
+    private const val DEFAULT_DATE_PATTERN = "EEEE, MMM d"
+    private const val DEFAULT_TIME_PATTERN = "yyyy-MM-dd HH:mm"
+
+    fun getDate(pattern: String = DEFAULT_DATE_PATTERN): String {
+        return try {
+            SimpleDateFormat(pattern, Locale.getDefault()).format(Date())
+        } catch (e: Exception) {
+            SimpleDateFormat(DEFAULT_DATE_PATTERN, Locale.getDefault()).format(Date())
+        }
     }
 
-    fun getTime(): String {
-        // Format: 2025-12-19 14:30
-        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
-        return sdf.format(Date())
+    fun getTime(pattern: String = DEFAULT_TIME_PATTERN): String {
+        return try {
+            SimpleDateFormat(pattern, Locale.getDefault()).format(Date())
+        } catch (e: Exception) {
+            SimpleDateFormat(DEFAULT_TIME_PATTERN, Locale.getDefault()).format(Date())
+        }
     }
 
     fun generatePassword(): String {
