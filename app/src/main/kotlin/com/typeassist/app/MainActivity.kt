@@ -14,7 +14,7 @@ import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.gson.Gson
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import com.typeassist.app.ui.AppTheme
+import com.typeassist.app.ui.theme.AppTheme
 import com.typeassist.app.ui.TypeAssistApp
 import com.typeassist.app.ui.components.UpdateDialog
 import com.typeassist.app.data.model.GitHubRelease
