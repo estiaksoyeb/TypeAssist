@@ -201,6 +201,26 @@ fun GeneralSettingsTab(config: AppConfig, onSave: (AppConfig) -> Unit, onNavigat
     HorizontalDivider()
     Spacer(Modifier.height(16.dp))
     
+    var snippetTriggerPrefix by remember { mutableStateOf(config.snippetTriggerPrefix) }
+    Text("Snippet Trigger Prefix", fontWeight = FontWeight.Bold)
+    Text("Prefix typed before a snippet name to expand it.", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Spacer(Modifier.height(8.dp))
+    OutlinedTextField(
+        value = snippetTriggerPrefix,
+        onValueChange = { newValue ->
+            val capped = newValue.take(4)
+            snippetTriggerPrefix = capped
+            onSave(config.copy(snippetTriggerPrefix = capped))
+        },
+        label = { Text("Prefix (e.g. ..)") },
+        singleLine = true,
+        modifier = Modifier.fillMaxWidth()
+    )
+
+    Spacer(Modifier.height(16.dp))
+    HorizontalDivider()
+    Spacer(Modifier.height(16.dp))
+
     Text("Global Trigger Pattern", fontWeight = FontWeight.Bold)
     Text("Pattern for rewriting text. Use '%' as the placeholder for instruction.", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
     Spacer(Modifier.height(8.dp))
