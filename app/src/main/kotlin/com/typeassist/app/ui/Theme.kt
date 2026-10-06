@@ -3,6 +3,8 @@ package com.typeassist.app.ui
 import android.app.Activity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Typography
+import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
@@ -45,6 +47,38 @@ private val LightColorScheme = lightColorScheme(
 )
 
 // Material 3 Dark Theme
+private val AppTypography = Typography(
+    displayLarge = androidx.compose.ui.text.TextStyle(
+        fontWeight = androidx.compose.ui.text.font.FontWeight.Normal
+    ),
+    displayMedium = androidx.compose.ui.text.TextStyle(
+        fontWeight = androidx.compose.ui.text.font.FontWeight.Normal
+    ),
+    displaySmall = androidx.compose.ui.text.TextStyle(
+        fontWeight = androidx.compose.ui.text.font.FontWeight.Normal
+    ),
+    headlineLarge = androidx.compose.ui.text.TextStyle(
+        fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold
+    ),
+    headlineMedium = androidx.compose.ui.text.TextStyle(
+        fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold
+    ),
+    headlineSmall = androidx.compose.ui.text.TextStyle(
+        fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold
+    ),
+    titleLarge = androidx.compose.ui.text.TextStyle(
+        fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold
+    ),
+    titleMedium = androidx.compose.ui.text.TextStyle(
+        fontWeight = androidx.compose.ui.text.font.FontWeight.Medium
+    ),
+    titleSmall = androidx.compose.ui.text.TextStyle(
+        fontWeight = androidx.compose.ui.text.font.FontWeight.Medium
+    )
+)
+
+private val AppShapes = Shapes()
+
 private val DarkColorScheme = darkColorScheme(
     primary = Color(0xFF818CF8), // Indigo 400
     onPrimary = Color(0xFF1E1B4B), // Indigo 950
@@ -97,6 +131,8 @@ fun AppTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
+        typography = AppTypography,
+        shapes = AppShapes,
         content = content
     )
 }

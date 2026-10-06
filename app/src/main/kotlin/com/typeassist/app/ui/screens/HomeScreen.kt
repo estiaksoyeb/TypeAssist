@@ -45,6 +45,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.util.lerp
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -53,7 +58,10 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.border
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.material.icons.filled.Lightbulb
 
 @Composable
@@ -117,82 +125,131 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: GitHubRelease?, 
         )
     }
 
-    Column(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
-        
-        // === 1. HEADER & MASTER SWITCH ===
-        Column(
-            modifier = Modifier.fillMaxWidth().zIndex(1f)
+    val scrollState = rememberScrollState()
+    val statusTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val expandedHeight = statusTop + 208.dp
+    val collapsedHeight = statusTop + 56.dp
+    val collapseDistance = expandedHeight - collapsedHeight
+    val collapsePx = with(androidx.compose.ui.platform.LocalDensity.current) { collapseDistance.toPx() }
+    val collapseFraction = (scrollState.value / collapsePx).coerceIn(0f, 1f)
+    val headerHeight = expandedHeight - (collapseDistance * collapseFraction)
+
+    val masterSwitch: @Composable () -> Unit = {
+        Switch(
+            checked = config.isAppEnabled,
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                checkedTrackColor = MaterialTheme.colorScheme.primary,
+                uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                uncheckedTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                uncheckedBorderColor = androidx.compose.ui.graphics.Color.Transparent
+            ),
+            onCheckedChange = { newState ->
+                if (newState) {
+                    if (!activity.isAccessibilityEnabled()) {
+                        android.widget.Toast.makeText(context, "Please Enable Accessibility Service first", android.widget.Toast.LENGTH_SHORT).show()
+                        context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                        return@Switch
+                    }
+                    // Skip API check for providers that don't require an API key
+                    val isLocalReady = config.provider == "local" && config.localLlmConfig.modelPath.isNotBlank()
+                    val isCustomReady = config.provider == "custom" // API key is optional for custom
+                    val needsApiKey = !isLocalReady && !isCustomReady && config.apiKey.isBlank()
+                    if (needsApiKey) {
+                        showApiKeyDialog = true
+                        return@Switch
+                    }
+                }
+                onToggle(newState)
+            }
+        )
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .navigationBarsPadding()
+    ) {
+                // === 1. SINGLE LOGO MORPH: CENTER -> LEFT ===
+        BoxWithConstraints(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(headerHeight)
+                .zIndex(1f)
+                .clipToBounds()
+                .background(MaterialTheme.colorScheme.background)
         ) {
-            // Header Section
-            Box(
+            val density = androidx.compose.ui.platform.LocalDensity.current
+            val maxWpx = with(density) { maxWidth.toPx() }
+            var logoWidthPx by remember { mutableStateOf(0f) }
+            val logoHalfWidthPx = logoWidthPx / 2f
+            val startX = 0f
+            val endX = with(density) { 16.dp.toPx() } + logoHalfWidthPx - (maxWpx / 2f)
+            val startY = with(density) { statusTop.toPx() + 8.dp.toPx() }
+            val endY = with(density) { statusTop.toPx() + (56.dp.toPx() - 28.dp.toPx()) / 2f }
+            val curX = androidx.compose.ui.util.lerp(startX, endX, collapseFraction)
+            val curY = androidx.compose.ui.util.lerp(startY, endY, collapseFraction)
+            val curSize = androidx.compose.ui.util.lerp(28f, 22f, collapseFraction)
+
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.surface)
+                    .statusBarsPadding()
+                    .padding(horizontal = 16.dp, vertical = 20.dp)
+                    .padding(top = 36.dp)
+                    .graphicsLayer {
+                        alpha = (1f - collapseFraction * 3f).coerceIn(0f, 1f)
+                        translationY = -16.dp.toPx() * collapseFraction
+                    },
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .statusBarsPadding()
-                        .padding(top = 16.dp, bottom = 16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                Text("AI Power for your keyboard", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(modifier = Modifier.height(20.dp))
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
                 ) {
-                    Text("TypeAssist", color = MaterialTheme.colorScheme.primary, fontSize = 28.sp, fontWeight = FontWeight.Bold)
-                    Text("AI Power for your keyboard", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
+                    Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text("Master Switch", style = MaterialTheme.typography.titleMedium)
+                            Text(if (config.isAppEnabled) "Service Active" else "Service Paused", style = MaterialTheme.typography.bodySmall, color = if (config.isAppEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        if (collapseFraction < 0.5f) masterSwitch()
+                    }
                 }
             }
 
-            // Master Switch Card
-            Card(
-                elevation = CardDefaults.cardElevation(2.dp),
+            Text(
+                text = "TypeAssist",
+                fontWeight = FontWeight.Bold,
+                fontSize = curSize.sp,
+                color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-            ) {
-                Row(
-                    modifier = Modifier.padding(20.dp).fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text("Master Switch", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = MaterialTheme.colorScheme.onSurface)
-                        val statusText = if(config.isAppEnabled) "Service Active" else "Service Paused"
-                        val statusColor = if(config.isAppEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                        Text(statusText, color = statusColor, fontSize = 12.sp)
+                    .align(Alignment.TopCenter)
+                    .onSizeChanged { logoWidthPx = it.width.toFloat() }
+                    .graphicsLayer {
+                        translationX = curX
+                        translationY = curY
                     }
-                    Switch(
-                        checked = config.isAppEnabled, 
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
-                            checkedTrackColor = MaterialTheme.colorScheme.primary,
-                            uncheckedThumbColor = MaterialTheme.colorScheme.outline,
-                            uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
-                        ),
-                        onCheckedChange = { newState ->
-                            if (newState) {
-                                if (!activity.isAccessibilityEnabled()) {
-                                    android.widget.Toast.makeText(context, "⚠️ Please Enable Accessibility Service first", android.widget.Toast.LENGTH_SHORT).show()
-                                    context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
-                                    return@Switch
-                                }
-                                // Skip API check for providers that don't require an API key
-                                val isLocalReady = config.provider == "local" && config.localLlmConfig.modelPath.isNotBlank()
-                                val isCustomReady = config.provider == "custom" // API key is optional for custom
-                                val needsApiKey = !isLocalReady && !isCustomReady && config.apiKey.isBlank()
-                                if (needsApiKey) {
-                                    showApiKeyDialog = true
-                                    return@Switch
-                                }
-                            }
-                            onToggle(newState)
-                        }
-                    )
-                }
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth().statusBarsPadding().height(56.dp).padding(horizontal = 16.dp).graphicsLayer { alpha = collapseFraction },
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                masterSwitch()
             }
         }
 
         // === 2. SCROLLABLE CONTENT ===
-        Column(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp).verticalScroll(rememberScrollState())) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp)
+                .verticalScroll(scrollState)
+                .padding(top = expandedHeight)
+        ) {
             
             Box(
                 modifier = Modifier.fillMaxWidth(),
@@ -214,51 +271,135 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: GitHubRelease?, 
                 hasSeen = hasSeenDidYouKnow
             )
             
-            Spacer(modifier = Modifier.height(24.dp))
-            
-            // Menus
-            Text("Menu", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                MenuCard(Modifier.weight(1f), "Commands", Icons.Default.Edit, MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer) { onNavigate("commands") }
-                MenuCard(Modifier.weight(1f), "Settings", Icons.Default.Settings, MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant) { onNavigate("settings") }
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Menu
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(34.dp)
+                        .background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(12.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.List,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Column {
+                    Text(
+                        text = "Menu",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "Jump to common actions",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
             Spacer(modifier = Modifier.height(12.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                MenuCard(Modifier.weight(1f), "Backup", Icons.Default.Code, MaterialTheme.colorScheme.secondaryContainer, MaterialTheme.colorScheme.onSecondaryContainer) { onNavigate("json") }
-                MenuCard(Modifier.weight(1f), "Test Lab", Icons.Default.Science, MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.colorScheme.onTertiaryContainer) { onNavigate("test") }
+                MenuCard(Modifier.weight(1f), "Commands", Icons.Default.Edit) { onNavigate("commands") }
+                MenuCard(Modifier.weight(1f), "Settings", Icons.Default.Settings) { onNavigate("settings") }
             }
             Spacer(modifier = Modifier.height(12.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                MenuCard(Modifier.weight(1f), "History", Icons.AutoMirrored.Filled.List, MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant) { onNavigate("history") }
-                MenuCard(Modifier.weight(1f), "Snippets", Icons.Default.Favorite, MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer) { onNavigate("snippets") }
+                MenuCard(Modifier.weight(1f), "Backup", Icons.Default.Code) { onNavigate("json") }
+                MenuCard(Modifier.weight(1f), "Test Lab", Icons.Default.Science) { onNavigate("test") }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                MenuCard(Modifier.weight(1f), "History", Icons.AutoMirrored.Filled.List) { onNavigate("history") }
+                MenuCard(Modifier.weight(1f), "Snippets", Icons.Default.Favorite) { onNavigate("snippets") }
             }
 
-            // Live Preview
             Spacer(modifier = Modifier.height(24.dp))
-            Text("How it Works", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Spacer(modifier = Modifier.height(8.dp))
+
+            // Live Preview
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(34.dp)
+                        .background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(12.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Science,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Column {
+                    Text(
+                        text = "How it Works",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "Watch sample triggers resolve",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
             TypingAnimationPreview()
 
             // Instructions
             Spacer(modifier = Modifier.height(24.dp))
             Card(
-                elevation = CardDefaults.cardElevation(1.dp), 
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                shape = RoundedCornerShape(20.dp),
+                elevation = CardDefaults.cardElevation(1.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.22f)),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+                Column(modifier = Modifier.padding(18.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Info, null, tint = MaterialTheme.colorScheme.primary)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("How to Use", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = MaterialTheme.colorScheme.onSurface)
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(12.dp)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Info,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = "How to Use",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "Get started in four steps",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
-                    Spacer(modifier = Modifier.height(12.dp))
-                    StepItem("1", "Enable Master Switch & Permission above.")
-                    StepItem("2", "Go to API Setup and add your Gemini Key.")
-                    StepItem("3", "Open any app (WhatsApp, Notes, etc).")
-                    StepItem("4", "Type text + trigger (e.g. 'i go home yestarday .g').")
-                    
+                    Spacer(modifier = Modifier.height(14.dp))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.18f))
+                    Spacer(modifier = Modifier.height(14.dp))
+                    StepItem("1", "Enable Master Switch and permission above.")
+                    StepItem("2", "Go to API Setup and add your Gemini key.")
+                    StepItem("3", "Open any app such as WhatsApp or Notes.")
+                    StepItem("4", "Type text plus a trigger, for example i go home yestarday .g")
                     Spacer(modifier = Modifier.height(16.dp))
                     OutlinedButton(
                         onClick = { onNavigate("guide") },
@@ -272,13 +413,40 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: GitHubRelease?, 
 
             // Useful Commands
             Spacer(modifier = Modifier.height(24.dp))
-            Text("Command Reference", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(bottom = 8.dp))
-            
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 10.dp)) {
+                Box(
+                    modifier = Modifier
+                        .size(34.dp)
+                        .background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(12.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Code,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Column {
+                    Text(
+                        text = "Command Reference",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "Shortcuts you can type anywhere",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
             CommandItem(".ta", "Ask AI", "Sends your text to AI and replaces it with the answer.")
             CommandItem(".g", "Grammar Fix", "Fixes spelling, punctuation, and grammar errors.")
             CommandItem(".tr", "Translate", "Translates your text into English.")
             CommandItem(".polite", "Polite Tone", "Rewrites your text to be more professional.")
-            
+
             Spacer(modifier = Modifier.height(40.dp))
 
             DonationSection()
@@ -294,118 +462,185 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: GitHubRelease?, 
 
 @Composable
 fun StepItem(num: String, text: String) {
-    Row(modifier = Modifier.padding(vertical = 4.dp)) {
-        Text(text = "$num.", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, modifier = Modifier.width(24.dp))
-        Text(text = text, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
+    Row(
+        modifier = Modifier.padding(vertical = 8.dp),
+        verticalAlignment = Alignment.Top
+    ) {
+        Box(
+            modifier = Modifier
+                .size(28.dp)
+                .background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(14.dp)),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = num,
+                fontWeight = FontWeight.Bold,
+                fontSize = 13.sp,
+                color = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+        }
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(
+            text = text,
+            fontSize = 14.sp,
+            lineHeight = 20.sp,
+            color = MaterialTheme.colorScheme.onSurface
+        )
     }
 }
 
 @Composable
 fun CommandItem(cmd: String, title: String, desc: String) {
     Card(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 5.dp),
+        shape = RoundedCornerShape(18.dp),
         elevation = CardDefaults.cardElevation(1.dp),
-        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.18f)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
         Row(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
-                    .width(70.dp) 
-                    .height(50.dp)
-                    .background(
-                        color = MaterialTheme.colorScheme.primaryContainer, 
-                        shape = RoundedCornerShape(8.dp)
-                    )
+                    .width(76.dp)
+                    .height(44.dp)
+                    .background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(14.dp))
+                    .padding(horizontal = 8.dp)
             ) {
                 Text(
-                    text = cmd, 
-                    fontWeight = FontWeight.Bold, 
+                    text = cmd,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = FontFamily.Monospace,
+                    fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    fontSize = 16.sp
+                    maxLines = 1
                 )
             }
-            Spacer(modifier = Modifier.width(16.dp))
-            
+            Spacer(modifier = Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(title, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
-                Text(desc, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, lineHeight = 18.sp)
+                Text(
+                    text = title,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = desc,
+                    fontSize = 13.sp,
+                    lineHeight = 18.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }
 }
 
 @Composable
-fun MenuCard(modifier: Modifier, title: String, icon: ImageVector, containerColor: Color, contentColor: Color, onClick: () -> Unit) {
+fun MenuCard(modifier: Modifier, title: String, icon: ImageVector, onClick: () -> Unit) {
+    val shape = MaterialTheme.shapes.medium
     Card(
-        modifier = modifier.height(90.dp).clickable { onClick() }, 
-        elevation = CardDefaults.cardElevation(2.dp),
-        colors = CardDefaults.cardColors(containerColor = containerColor)
+        modifier = modifier
+            .height(90.dp)
+            .clip(shape)
+            .clickable { onClick() },
+        shape = shape,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        )
     ) {
-        Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(icon, null, tint = contentColor)
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
+            )
             Spacer(modifier = Modifier.height(8.dp))
-            Text(title, fontWeight = FontWeight.Bold, color = contentColor)
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurface
+            )
         }
     }
 }
 
 @Composable
 fun DeveloperCreditSection() {
-    val uriHandler = LocalUriHandler.current
     Card(
-        elevation = CardDefaults.cardElevation(1.dp),
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        shape = RoundedCornerShape(20.dp),
+        elevation = CardDefaults.cardElevation(1.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.22f)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(18.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.Info, null, tint = MaterialTheme.colorScheme.primary)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    "DEVELOPER",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(12.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Info,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Column {
+                    Text(
+                        text = "Developer",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "Created by Istiak Ahmmed Soyeb",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
-            Spacer(modifier = Modifier.height(16.dp))
-
+            Spacer(modifier = Modifier.height(14.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.18f))
+            Spacer(modifier = Modifier.height(14.dp))
             Text(
-                "This app was created by Istiak Ahmmed Soyeb. You can find him on the following platforms:",
+                text = "This app is free and open source. Reach out on any platform below.",
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 14.sp,
                 lineHeight = 20.sp
             )
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Column {
-                SocialLink(
-                    icon = R.drawable.ic_fab_twitter,
-                    text = "Twitter",
-                    url = "https://twitter.com/estiaksoyeb"
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                SocialLink(
-                    icon = R.drawable.ic_fab_github,
-                    text = "Source Code (GitHub)",
-                    url = "https://github.com/estiaksoyeb/TypeAssist"
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                SocialLink(
-                    icon = R.drawable.ic_fab_telegram,
-                    text = "Telegram Group",
-                    url = "https://t.me/TypeAssist"
-                )
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-            
+            Spacer(modifier = Modifier.height(16.dp))
+            SocialLink(
+                icon = R.drawable.ic_fab_twitter,
+                text = "Twitter",
+                url = "https://twitter.com/estiaksoyeb"
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            SocialLink(
+                icon = R.drawable.ic_fab_github,
+                text = "Source Code (GitHub)",
+                url = "https://github.com/estiaksoyeb/TypeAssist"
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            SocialLink(
+                icon = R.drawable.ic_fab_telegram,
+                text = "Telegram Group",
+                url = "https://t.me/TypeAssist"
+            )
+            Spacer(modifier = Modifier.height(14.dp))
             Text(
-                "Feel free to reach out for any questions or feedback!",
+                text = "Feedback and pull requests are welcome.",
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 12.sp
             )
@@ -417,27 +652,44 @@ fun DeveloperCreditSection() {
 fun SocialLink(icon: Int, text: String, url: String) {
     val uriHandler = LocalUriHandler.current
     val annotatedString = buildAnnotatedString {
-        withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)) {
+        withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)) {
             append(text)
         }
     }
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.clickable { uriHandler.openUri(url) }
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .clickable { uriHandler.openUri(url) }
+            .padding(horizontal = 8.dp, vertical = 10.dp)
     ) {
-        Icon(
-            painter = painterResource(id = icon),
-            contentDescription = text,
-            tint = MaterialTheme.colorScheme.secondary,
-            modifier = Modifier.size(24.dp)
-        )
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(12.dp)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                painter = painterResource(id = icon),
+                contentDescription = text,
+                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.size(20.dp)
+            )
+        }
         Spacer(modifier = Modifier.width(12.dp))
-        Text(
-            text = annotatedString,
-            fontSize = 16.sp,
-            color = MaterialTheme.colorScheme.onSurface
-        )
+        Column {
+            Text(
+                text = annotatedString,
+                fontSize = 15.sp
+            )
+            Text(
+                text = "Open link",
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
     }
 }
 
@@ -445,39 +697,61 @@ fun SocialLink(icon: Int, text: String, url: String) {
 fun DonationSection() {
     val clipboardManager = LocalClipboardManager.current
     val context = LocalContext.current
-    
+
     Card(
-        elevation = CardDefaults.cardElevation(1.dp),
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        shape = RoundedCornerShape(20.dp),
+        elevation = CardDefaults.cardElevation(1.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.22f)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(18.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.Favorite, null, tint = MaterialTheme.colorScheme.error) // Heart uses error color (red)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    "Support Development",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .background(MaterialTheme.colorScheme.error.copy(alpha = 0.12f), RoundedCornerShape(12.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Favorite,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Column {
+                    Text(
+                        text = "Support Development",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "Keep TypeAssist free and open",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(14.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.18f))
+            Spacer(modifier = Modifier.height(14.dp))
             Text(
-                "This app is free and open source. If it saves you time, please consider supporting via Binance/Crypto.",
+                text = "If TypeAssist saves you time, you can support it with Binance Pay or USDT TRC20.",
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 14.sp
+                fontSize = 14.sp,
+                lineHeight = 20.sp
             )
-            
             Spacer(modifier = Modifier.height(16.dp))
-            
             DonationItem(
                 label = "Binance Pay ID (No Fee)",
                 value = "724197813",
                 clipboardManager = clipboardManager,
                 context = context
             )
-            HorizontalDivider(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f), modifier = Modifier.padding(vertical = 8.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.18f), modifier = Modifier.padding(vertical = 8.dp))
             DonationItem(
                 label = "USDT (TRC20)",
                 value = "TPP5S7HdV4Hrrtp5Cjz7TNtttUAfZXJz5a",
@@ -487,7 +761,6 @@ fun DonationSection() {
         }
     }
 }
-
 
 @Composable
 fun DonationItem(label: String, value: String, clipboardManager: androidx.compose.ui.platform.ClipboardManager, context: Context) {
@@ -541,38 +814,49 @@ fun DidYouKnowButton(onClick: () -> Unit, hasSeen: Boolean) {
         remember { mutableStateOf(1f) }
     }
 
-    val containerColor = if (!hasSeen) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
-    val contentColor = if (!hasSeen) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
-    val borderColor = if (!hasSeen) MaterialTheme.colorScheme.primary else Color.Transparent
+    val containerColor = if (!hasSeen) {
+        MaterialTheme.colorScheme.primaryContainer
+    } else {
+        MaterialTheme.colorScheme.surfaceContainer
+    }
+    val contentColor = if (!hasSeen) {
+        MaterialTheme.colorScheme.onPrimaryContainer
+    } else {
+        MaterialTheme.colorScheme.onSurface
+    }
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .height(80.dp)
             .scale(scale)
-            .clickable { onClick() }
-            .then(if (!hasSeen) Modifier.border(2.dp, borderColor.copy(alpha = alpha), RoundedCornerShape(12.dp)) else Modifier),
-        shape = RoundedCornerShape(12.dp),
+            .clickable { onClick() },
         colors = CardDefaults.cardColors(containerColor = containerColor)
     ) {
         Row(
-            modifier = Modifier.fillMaxSize().padding(16.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 20.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
-            Icon(Icons.Default.Lightbulb, null, tint = contentColor.copy(alpha = alpha), modifier = Modifier.size(32.dp))
+            Icon(
+                imageVector = Icons.Default.Lightbulb,
+                contentDescription = null,
+                tint = contentColor.copy(alpha = alpha),
+                modifier = Modifier.size(28.dp)
+            )
             Spacer(modifier = Modifier.width(16.dp))
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    "Did you know?",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
+                    text = "Did you know?",
+                    style = MaterialTheme.typography.titleMedium,
                     color = contentColor
                 )
                 if (!hasSeen) {
                     Text(
-                        "Tap to discover hidden power features!",
-                        fontSize = 12.sp,
+                        text = "Tap to discover hidden power features!",
+                        style = MaterialTheme.typography.bodySmall,
                         color = contentColor.copy(alpha = 0.8f)
                     )
                 }
