@@ -13,6 +13,7 @@ import android.widget.FrameLayout
 import android.widget.ProgressBar
 import android.widget.Toast
 import com.typeassist.app.data.AppConfig
+import com.typeassist.app.ui.theme.OverlayColors
 
 class OverlayManager(private val context: Context) {
 
@@ -109,12 +110,12 @@ class OverlayManager(private val context: Context) {
         mainHandler.post {
             removePreviewInternal()
             
-            // Material 3 Colors from Theme.kt
-            val cardBgColor = if (isDarkMode) 0xFF1C1B1F.toInt() else 0xFFFFFBFE.toInt() // Surface
-            val primaryTextColor = if (isDarkMode) 0xFF818CF8.toInt() else 0xFF4F46E5.toInt() // Primary
-            val secondaryTextColor = if (isDarkMode) 0xFFE6E1E5.toInt() else 0xFF1C1B1F.toInt() // OnSurface
-            val discardTextColor = if (isDarkMode) 0xFFCAC4D0.toInt() else 0xFF49454F.toInt() // OnSurfaceVariant
-            val insertTextColor = if (isDarkMode) 0xFF818CF8.toInt() else 0xFF4F46E5.toInt() // Primary
+            val colors = OverlayColors.forDark(isDarkMode)
+            val cardBgColor = colors.surface
+            val primaryTextColor = colors.primary
+            val secondaryTextColor = colors.onSurface
+            val discardTextColor = colors.onSurfaceVariant
+            val insertTextColor = colors.primary
 
             // The Card (As Root View)
             val card = android.widget.LinearLayout(context).apply {
@@ -255,12 +256,12 @@ class OverlayManager(private val context: Context) {
         mainHandler.post {
             removeSnippetSelectionInternal()
 
-            // Material 3 Colors from Theme.kt (Sync with showPreviewDialog)
-            val cardBgColor = if (isDarkMode) 0xFF1C1B1F.toInt() else 0xFFFFFBFE.toInt()
-            val primaryTextColor = if (isDarkMode) 0xFF818CF8.toInt() else 0xFF4F46E5.toInt()
-            val secondaryTextColor = if (isDarkMode) 0xFFE6E1E5.toInt() else 0xFF1C1B1F.toInt()
-            val surfaceVariantColor = if (isDarkMode) 0xFF49454F.toInt() else 0xFFE7E0EC.toInt()
-            val primaryColor = if (isDarkMode) 0xFF818CF8.toInt() else 0xFF4F46E5.toInt()
+            val colors = OverlayColors.forDark(isDarkMode)
+            val cardBgColor = colors.surface
+            val primaryTextColor = colors.primary
+            val secondaryTextColor = colors.onSurface
+            val surfaceVariantColor = colors.onSurfaceVariant
+            val primaryColor = colors.primary
 
             val container = android.widget.LinearLayout(context).apply {
                 orientation = android.widget.LinearLayout.VERTICAL
