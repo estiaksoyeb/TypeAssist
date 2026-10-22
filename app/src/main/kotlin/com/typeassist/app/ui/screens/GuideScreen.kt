@@ -1,6 +1,9 @@
 package com.typeassist.app.ui.screens
 
+import com.typeassist.app.R
+
 import android.app.Activity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -36,8 +39,8 @@ fun GuideScreen(onBack: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("User Guide") },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Back") } },
+                title = { Text(stringResource(R.string.ui_user_guide)) },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, stringResource(R.string.ui_back)) } },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface, titleContentColor = MaterialTheme.colorScheme.primary, navigationIconContentColor = MaterialTheme.colorScheme.primary)
             )
         }
@@ -45,62 +48,62 @@ fun GuideScreen(onBack: () -> Unit) {
         LazyColumn(modifier = Modifier.padding(p).padding(16.dp)) {
             item {
                 Text(
-                    "Welcome to TypeAssist!",
+                    stringResource(R.string.ui_welcome_to_typeassist),
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    "Master your new AI keyboard assistant.",
+                    stringResource(R.string.ui_master_your_new_ai_keyboard_assistant),
                     fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
             }
 
-            item { GuideSection("1. Basic AI Triggers", "Standard commands that work at the end of your text.", 
+            item { GuideSection(stringResource(R.string.ui_1_basic_ai_triggers), stringResource(R.string.ui_standard_commands_that_work_at_the_end_o),
                 listOf(
-                    GuideItem(".ta", "Ask AI", "Type your question and end with .ta\nExample: 'Capital of France? .ta'"),
-                    GuideItem(".g", "Fix Grammar", "Corrects spelling and grammar.\nExample: 'Im going home .g'"),
-                    GuideItem(".tr", "Translate", "Translates text to English.\nExample: 'Hola mundo .tr'"),
-                    GuideItem(".polite", "Polite Tone", "Rewrites text professionally.\nExample: 'Send me the file .polite'")
+                    GuideItem(stringResource(R.string.ui_ta), stringResource(R.string.ui_ask_ai), stringResource(R.string.ui_type_your_question_and_end_with_ta_nexam)),
+                    GuideItem(stringResource(R.string.ui_g), stringResource(R.string.ui_fix_grammar), stringResource(R.string.ui_corrects_spelling_and_grammar_nexample_i)),
+                    GuideItem(stringResource(R.string.ui_tr), stringResource(R.string.ui_translate), stringResource(R.string.ui_translates_text_to_english_nexample_hola)),
+                    GuideItem(stringResource(R.string.ui_polite), stringResource(R.string.ui_polite_tone), stringResource(R.string.ui_rewrites_text_professionally_nexample_se))
                 )) 
             }
 
-            item { GuideSection("2. Inline AI Commands", "Powerful commands you can place ANYWHERE in your text.", 
+            item { GuideSection(stringResource(R.string.ui_2_inline_ai_commands), stringResource(R.string.ui_powerful_commands_you_can_place_anywhere),
                 listOf(
-                    GuideItem("(.ta: ... )", "Inline Ask", "Ask AI in the middle of a sentence.\nExample: 'I am visiting (.ta: capital of Japan) next week.'"),
-                    GuideItem("Custom", "Make Your Own", "You can create your own patterns like [fix:%] in the Commands tab.")
+                    GuideItem(stringResource(R.string.ui_ta_2), stringResource(R.string.ui_inline_ask), stringResource(R.string.ui_ask_ai_in_the_middle_of_a_sentence_nexam)),
+                    GuideItem(stringResource(R.string.ui_custom), stringResource(R.string.ui_make_your_own), stringResource(R.string.ui_you_can_create_your_own_patterns_like_fi))
                 ))
             }
 
-            item { GuideSection("3. Global Transformation", "Rewrite everything in the text box with one command.", 
+            item { GuideSection(stringResource(R.string.ui_3_global_transformation), stringResource(R.string.ui_rewrite_everything_in_the_text_box_with_),
                 listOf(
-                    GuideItem("...instruction...", "Global Rewrite", "Transform the whole text field.\nExample: 'Hi, I am late ...make this polite...'\nResult: 'Hello, I apologize for being late.'"),
-                    GuideItem("Post-Correction", "Refine Output", "Quickly fix AI results.\nExample: '...remove markdown...' or '...translate to Spanish...'")
+                    GuideItem(stringResource(R.string.ui_instruction), stringResource(R.string.ui_global_rewrite), stringResource(R.string.ui_transform_the_whole_text_field_nexample_)),
+                    GuideItem(stringResource(R.string.ui_post_correction), stringResource(R.string.ui_refine_output), stringResource(R.string.ui_quickly_fix_ai_results_nexample_remove_m))
                 ))
             }
 
-            item { GuideSection("4. Snippets (Text Expander)", "Save frequently used text for quick access.", 
+            item { GuideSection(stringResource(R.string.ui_4_snippets_text_expander), stringResource(R.string.ui_save_frequently_used_text_for_quick_acce),
                 listOf(
-                    GuideItem("..name", "Expand Snippet", "Type the prefix '..' followed by the snippet name.\nExample: '..email' -> 'user@example.com'"),
-                    GuideItem("(.save:name:content)", "Quick Save", "Save a new snippet instantly.\nExample: '(.save:addr:123 Main St)'")
+                    GuideItem(stringResource(R.string.ui_name), stringResource(R.string.ui_expand_snippet), stringResource(R.string.ui_type_the_prefix_followed_by_the_snippet_)),
+                    GuideItem(stringResource(R.string.ui_save_name_content), stringResource(R.string.ui_quick_save_2), stringResource(R.string.ui_save_a_new_snippet_instantly_nexample_sa))
                 ))
             }
 
-            item { GuideSection("5. Utility Belt (Offline Tools)", "Smart tools that run locally without AI.", 
+            item { GuideSection(stringResource(R.string.ui_5_utility_belt_offline_tools), stringResource(R.string.ui_smart_tools_that_run_locally_without_ai),
                 listOf(
-                    GuideItem("(.c: math )", "Calculator", "Solves math expressions.\nExample: '(.c: 25 * 4 + 10)' -> '110'\nSupports: +, -, *, /, ^, (), sqrt, sin, cos, log"),
-                    GuideItem(".now", "Time Stamp", "Inserts current time (YYYY-MM-DD HH:MM)."),
-                    GuideItem(".date", "Date Stamp", "Inserts current date. Format configurable in Settings > Triggers & History (default: Friday, Dec 19)."),
-                    GuideItem(".pass", "Password Gen", "Generates a strong random password.")
+                    GuideItem(stringResource(R.string.ui_c_math), stringResource(R.string.ui_calculator), stringResource(R.string.ui_solves_math_expressions_nexample_c_25_4_)),
+                    GuideItem(stringResource(R.string.ui_now), stringResource(R.string.ui_time_stamp), stringResource(R.string.ui_inserts_current_time_yyyy_mm_dd_hh_mm)),
+                    GuideItem(stringResource(R.string.ui_date), stringResource(R.string.ui_date_stamp), stringResource(R.string.ui_inserts_current_date_format_configurable)),
+                    GuideItem(stringResource(R.string.ui_pass), stringResource(R.string.ui_password_gen), stringResource(R.string.ui_generates_a_strong_random_password))
                 ))
             }
 
-            item { GuideSection("6. Safety & History", "Never lose your work.", 
+            item { GuideSection(stringResource(R.string.ui_6_safety_history), stringResource(R.string.ui_never_lose_your_work),
                 listOf(
-                    GuideItem("Undo", "Global Undo", "Press the UNDO button or type '.undo' to revert changes. Works for 5 minutes."),
-                    GuideItem("History", "Clipboard History", "View and copy the last 5 minutes of original text from the History screen.")
+                    GuideItem(stringResource(R.string.ui_undo_2), stringResource(R.string.ui_global_undo), stringResource(R.string.ui_press_the_undo_button_or_type_undo_to_re)),
+                    GuideItem(stringResource(R.string.ui_history), stringResource(R.string.ui_clipboard_history), stringResource(R.string.ui_view_and_copy_the_last_5_minutes_of_orig))
                 ))
             }
             

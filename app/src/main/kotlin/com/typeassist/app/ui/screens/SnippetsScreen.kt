@@ -1,6 +1,9 @@
 package com.typeassist.app.ui.screens
 
+import com.typeassist.app.R
+
 import android.app.Activity
+import androidx.compose.ui.res.stringResource
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -62,13 +65,13 @@ fun SnippetsScreen(config: AppConfig, onSave: (AppConfig) -> Unit, onBack: () ->
     Scaffold(
         topBar = { 
             TopAppBar(
-                title = { Text("Snippets") }, 
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Back") } },
+                title = { Text(stringResource(R.string.ui_snippets)) },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, stringResource(R.string.ui_back)) } },
                 actions = {
                     IconButton(onClick = { isSortAlphabetical = !isSortAlphabetical }) {
                         Icon(
                             Icons.Default.Sort,
-                            contentDescription = "Toggle Sort",
+                            contentDescription = stringResource(R.string.ui_toggle_sort),
                             tint = if (isSortAlphabetical) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -88,7 +91,7 @@ fun SnippetsScreen(config: AppConfig, onSave: (AppConfig) -> Unit, onBack: () ->
                 }, 
                 containerColor = MaterialTheme.colorScheme.primary
             ) { 
-                Icon(Icons.Default.Add, "Add New Snippet") 
+                Icon(Icons.Default.Add, stringResource(R.string.ui_add_new_snippet))
             } 
         }
     ) { p ->
@@ -98,11 +101,11 @@ fun SnippetsScreen(config: AppConfig, onSave: (AppConfig) -> Unit, onBack: () ->
                 modifier = Modifier.fillMaxWidth().padding(16.dp)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Usage:", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSecondaryContainer)
-                    Text("Type '${config.snippetTriggerPrefix}' + Trigger Name to expand.", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                    Text(stringResource(R.string.ui_usage), fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                    Text(stringResource(R.string.ui_type_1_s_trigger_name_to_expand, config.snippetTriggerPrefix), fontSize = 14.sp, color = MaterialTheme.colorScheme.onSecondaryContainer)
                     Spacer(Modifier.height(4.dp))
-                    Text("Quick Save:", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSecondaryContainer)
-                    Text("Type '(.save:name:content)' to save instantly.", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                    Text(stringResource(R.string.ui_quick_save), fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                    Text(stringResource(R.string.ui_type_save_name_content_to_save_instant), fontSize = 14.sp, color = MaterialTheme.colorScheme.onSecondaryContainer)
                 }
             }
 
@@ -112,12 +115,12 @@ fun SnippetsScreen(config: AppConfig, onSave: (AppConfig) -> Unit, onBack: () ->
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
-                placeholder = { Text("Search snippets...") },
-                leadingIcon = { Icon(Icons.Default.Search, "Search") },
+                placeholder = { Text(stringResource(R.string.ui_search_snippets)) },
+                leadingIcon = { Icon(Icons.Default.Search, stringResource(R.string.ui_search)) },
                 trailingIcon = {
                     if (searchQuery.isNotEmpty()) {
                         IconButton(onClick = { searchQuery = "" }) {
-                            Icon(Icons.Default.Clear, "Clear")
+                            Icon(Icons.Default.Clear, stringResource(R.string.ui_clear))
                         }
                     }
                 },
@@ -164,18 +167,18 @@ fun SnippetsScreen(config: AppConfig, onSave: (AppConfig) -> Unit, onBack: () ->
         if (showEditDialog) {
             AlertDialog(
                 onDismissRequest = { showEditDialog = false },
-                title = { Text(if (originalTrigger == null) "New Snippet" else "Edit Snippet") },
+                title = { Text(if (originalTrigger == null) stringResource(R.string.ui_new_snippet) else stringResource(R.string.ui_edit_snippet)) },
                 text = {
                     Column(modifier = Modifier.fillMaxWidth()) {
                         OutlinedTextField(
                             value = tTrigger, 
                             onValueChange = { tTrigger = it }, 
-                            label = { Text("Trigger Name (e.g. email)") },
+                            label = { Text(stringResource(R.string.ui_trigger_name_e_g_email)) },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth()
                         )
                         Spacer(Modifier.height(16.dp))
-                        Text("Variations:", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        Text(stringResource(R.string.ui_variations), fontWeight = FontWeight.Bold, fontSize = 14.sp)
                         
                         Box(modifier = Modifier.weight(1f, fill = false).heightIn(max = 300.dp)) {
                             LazyColumn {
@@ -187,13 +190,13 @@ fun SnippetsScreen(config: AppConfig, onSave: (AppConfig) -> Unit, onBack: () ->
                                         OutlinedTextField(
                                             value = content,
                                             onValueChange = { tContents[index] = it },
-                                            label = { Text("Variation ${index + 1}") },
+                                            label = { Text(stringResource(R.string.ui_variation_1_s, index + 1)) },
                                             modifier = Modifier.weight(1f),
                                             minLines = 1
                                         )
                                         if (tContents.size > 1) {
                                             IconButton(onClick = { tContents.removeAt(index) }) {
-                                                Icon(Icons.Default.Close, "Remove", tint = MaterialTheme.colorScheme.error)
+                                                Icon(Icons.Default.Close, stringResource(R.string.ui_remove), tint = MaterialTheme.colorScheme.error)
                                             }
                                         }
                                     }
@@ -202,9 +205,9 @@ fun SnippetsScreen(config: AppConfig, onSave: (AppConfig) -> Unit, onBack: () ->
                                     TextButton(
                                         onClick = { tContents.add("") }
                                     ) {
-                                        Icon(Icons.Default.Add, "Add")
+                                        Icon(Icons.Default.Add, stringResource(R.string.ui_add))
                                         Spacer(Modifier.width(8.dp))
-                                        Text("Add Variation")
+                                        Text(stringResource(R.string.ui_add_variation))
                                     }
                                 }
                             }
@@ -219,7 +222,7 @@ fun SnippetsScreen(config: AppConfig, onSave: (AppConfig) -> Unit, onBack: () ->
 
                             // Check for duplicate trigger if creating NEW snippet OR changing trigger of existing one
                             if (tTrigger != originalTrigger && n.any { it.trigger == tTrigger }) {
-                                Toast.makeText(context, "Snippet '$tTrigger' already exists!", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.ui_snippet_1_s_already_exists , tTrigger), Toast.LENGTH_SHORT).show()
                                 return@Button
                             }
 
@@ -229,10 +232,10 @@ fun SnippetsScreen(config: AppConfig, onSave: (AppConfig) -> Unit, onBack: () ->
                             onSave(config.copy(snippets = n))
                             showEditDialog = false
                         }
-                    }) { Text("Save") }
+                    }) { Text(stringResource(R.string.ui_save)) }
                 },
                 dismissButton = { 
-                    TextButton(onClick = { showEditDialog = false }) { Text("Cancel") } 
+                    TextButton(onClick = { showEditDialog = false }) { Text(stringResource(R.string.ui_cancel)) }
                 }
             )
         }
@@ -240,8 +243,8 @@ fun SnippetsScreen(config: AppConfig, onSave: (AppConfig) -> Unit, onBack: () ->
         if (snippetToDelete != null) {
             AlertDialog(
                 onDismissRequest = { snippetToDelete = null },
-                title = { Text("Delete Snippet?") },
-                text = { Text("Are you sure you want to delete '${snippetToDelete?.trigger}'?") },
+                title = { Text(stringResource(R.string.ui_delete_snippet)) },
+                text = { Text(stringResource(R.string.ui_are_you_sure_you_want_to_delete_1_s, snippetToDelete?.trigger.orEmpty())) },
                 confirmButton = {
                     Button(
                         onClick = {
@@ -251,10 +254,10 @@ fun SnippetsScreen(config: AppConfig, onSave: (AppConfig) -> Unit, onBack: () ->
                             snippetToDelete = null
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                    ) { Text("Delete") }
+                    ) { Text(stringResource(R.string.ui_delete)) }
                 },
                 dismissButton = { 
-                    TextButton(onClick = { snippetToDelete = null }) { Text("Cancel") } 
+                    TextButton(onClick = { snippetToDelete = null }) { Text(stringResource(R.string.ui_cancel)) }
                 }
             )
         }

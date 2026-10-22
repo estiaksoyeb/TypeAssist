@@ -1,6 +1,9 @@
 package com.typeassist.app.ui.screens
 
+import com.typeassist.app.R
+
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
@@ -95,12 +98,12 @@ fun WelcomeContent(onNext: () -> Unit) {
         // 1. Header
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = "Welcome to",
+                text = stringResource(R.string.ui_welcome_to),
                 fontSize = 20.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = "TypeAssist",
+                text = stringResource(R.string.app_name),
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
@@ -112,7 +115,7 @@ fun WelcomeContent(onNext: () -> Unit) {
 
         // 3. Explanation
         Text(
-            text = "Type anywhere, add a trigger, and let AI handle the rest.",
+            text = stringResource(R.string.ui_type_anywhere_add_a_trigger_and_let_ai),
             textAlign = TextAlign.Center,
             fontSize = 16.sp,
             color = MaterialTheme.colorScheme.onSurface,
@@ -126,7 +129,7 @@ fun WelcomeContent(onNext: () -> Unit) {
             modifier = Modifier.fillMaxWidth().height(50.dp),
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
         ) {
-            Text("Next")
+            Text(stringResource(R.string.ui_next))
             Spacer(modifier = Modifier.width(8.dp))
             Icon(Icons.Default.ArrowForward, contentDescription = null)
         }

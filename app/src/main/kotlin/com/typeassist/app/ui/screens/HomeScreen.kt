@@ -1,6 +1,7 @@
 package com.typeassist.app.ui.screens
 
 import com.typeassist.app.MainActivity
+import androidx.compose.ui.res.stringResource
 import com.typeassist.app.data.AppConfig
 import com.typeassist.app.data.model.GitHubRelease
 import com.typeassist.app.R
@@ -91,16 +92,16 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: GitHubRelease?, 
     if (showTroubleshootDialog) {
         AlertDialog(
             onDismissRequest = { showTroubleshootDialog = false },
-            title = { Text("App not working?") },
-            text = { Text("If the app is not working, the Accessibility Service might be in a 'ghost' state.\n\nTry turning the Accessibility Service OFF and then ON again to reset it.") },
+            title = { Text(stringResource(R.string.ui_app_not_working)) },
+            text = { Text(stringResource(R.string.ui_if_the_app_is_not_working_the_accessib)) },
             confirmButton = {
                 Button(onClick = {
                     showTroubleshootDialog = false
                     context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
-                }) { Text("Open Settings") }
+                }) { Text(stringResource(R.string.ui_open_settings)) }
             },
             dismissButton = {
-                TextButton(onClick = { showTroubleshootDialog = false }) { Text("Cancel") }
+                TextButton(onClick = { showTroubleshootDialog = false }) { Text(stringResource(R.string.ui_cancel)) }
             }
         )
     }
@@ -108,19 +109,19 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: GitHubRelease?, 
     if (showApiKeyDialog) {
         AlertDialog(
             onDismissRequest = { showApiKeyDialog = false },
-            title = { Text("API Key Required") },
-            text = { Text("You haven't set up an API key for ${config.provider.replaceFirstChar { it.uppercase() }}.\n\nAI features will not work without it, but you can still use offline features like Snippets.") },
+            title = { Text(stringResource(R.string.ui_api_key_required)) },
+            text = { Text(stringResource(R.string.ui_you_haven_t_set_up_an_api_key_for_1_s_, config.provider.replaceFirstChar { it.uppercase() })) },
             confirmButton = {
                 Button(onClick = { 
                     showApiKeyDialog = false
                     onNavigate("settings:1") 
-                }) { Text("Setup API") }
+                }) { Text(stringResource(R.string.ui_setup_api)) }
             },
             dismissButton = {
                 TextButton(onClick = { 
                     showApiKeyDialog = false
                     onToggle(true) // Enable offline mode
-                }) { Text("Use Offline") }
+                }) { Text(stringResource(R.string.ui_use_offline)) }
             }
         )
     }
@@ -147,7 +148,7 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: GitHubRelease?, 
             onCheckedChange = { newState ->
                 if (newState) {
                     if (!activity.isAccessibilityEnabled()) {
-                        android.widget.Toast.makeText(context, "Please Enable Accessibility Service first", android.widget.Toast.LENGTH_SHORT).show()
+                        android.widget.Toast.makeText(context, context.getString(R.string.ui_please_enable_accessibility_service), android.widget.Toast.LENGTH_SHORT).show()
                         context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
                         return@Switch
                     }
@@ -203,7 +204,7 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: GitHubRelease?, 
                     },
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("AI Power for your keyboard", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.ui_ai_power_for_your_keyboard), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(modifier = Modifier.height(20.dp))
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -211,8 +212,8 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: GitHubRelease?, 
                 ) {
                     Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
-                            Text("Master Switch", style = MaterialTheme.typography.titleMedium)
-                            Text(if (config.isAppEnabled) "Service Active" else "Service Paused", style = MaterialTheme.typography.bodySmall, color = if (config.isAppEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(stringResource(R.string.ui_master_switch), style = MaterialTheme.typography.titleMedium)
+                            Text(if (config.isAppEnabled) stringResource(R.string.ui_service_active) else stringResource(R.string.ui_service_paused), style = MaterialTheme.typography.bodySmall, color = if (config.isAppEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         if (collapseFraction < 0.5f) masterSwitch()
                     }
@@ -220,7 +221,7 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: GitHubRelease?, 
             }
 
             Text(
-                text = "TypeAssist",
+                text = stringResource(R.string.app_name),
                 fontWeight = FontWeight.Bold,
                 fontSize = curSize.sp,
                 color = MaterialTheme.colorScheme.primary,
@@ -256,7 +257,7 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: GitHubRelease?, 
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "App not working? Troubleshoot",
+                    text = stringResource(R.string.ui_app_not_working_troubleshoot),
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.clickable { showTroubleshootDialog = true }
@@ -291,13 +292,13 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: GitHubRelease?, 
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
                     Text(
-                        text = "Menu",
+                        text = stringResource(R.string.ui_menu),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "Jump to common actions",
+                        text = stringResource(R.string.ui_jump_to_common_actions),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -305,18 +306,18 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: GitHubRelease?, 
             }
             Spacer(modifier = Modifier.height(12.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                MenuCard(Modifier.weight(1f), "Commands", Icons.Default.Edit) { onNavigate("commands") }
-                MenuCard(Modifier.weight(1f), "Settings", Icons.Default.Settings) { onNavigate("settings") }
+                MenuCard(Modifier.weight(1f), stringResource(R.string.ui_commands), Icons.Default.Edit) { onNavigate("commands") }
+                MenuCard(Modifier.weight(1f), stringResource(R.string.ui_settings), Icons.Default.Settings) { onNavigate("settings") }
             }
             Spacer(modifier = Modifier.height(12.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                MenuCard(Modifier.weight(1f), "Backup", Icons.Default.Code) { onNavigate("json") }
-                MenuCard(Modifier.weight(1f), "Test Lab", Icons.Default.Science) { onNavigate("test") }
+                MenuCard(Modifier.weight(1f), stringResource(R.string.ui_backup), Icons.Default.Code) { onNavigate("json") }
+                MenuCard(Modifier.weight(1f), stringResource(R.string.ui_test_lab), Icons.Default.Science) { onNavigate("test") }
             }
             Spacer(modifier = Modifier.height(12.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                MenuCard(Modifier.weight(1f), "History", Icons.AutoMirrored.Filled.List) { onNavigate("history") }
-                MenuCard(Modifier.weight(1f), "Snippets", Icons.Default.Favorite) { onNavigate("snippets") }
+                MenuCard(Modifier.weight(1f), stringResource(R.string.ui_history), Icons.AutoMirrored.Filled.List) { onNavigate("history") }
+                MenuCard(Modifier.weight(1f), stringResource(R.string.ui_snippets), Icons.Default.Favorite) { onNavigate("snippets") }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -339,13 +340,13 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: GitHubRelease?, 
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
                     Text(
-                        text = "How it Works",
+                        text = stringResource(R.string.ui_how_it_works),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "Watch sample triggers resolve",
+                        text = stringResource(R.string.ui_watch_sample_triggers_resolve),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -381,13 +382,13 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: GitHubRelease?, 
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
                             Text(
-                                text = "How to Use",
+                                text = stringResource(R.string.ui_how_to_use),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = "Get started in four steps",
+                                text = stringResource(R.string.ui_get_started_in_four_steps),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -396,17 +397,17 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: GitHubRelease?, 
                     Spacer(modifier = Modifier.height(14.dp))
                     HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.18f))
                     Spacer(modifier = Modifier.height(14.dp))
-                    StepItem("1", "Enable Master Switch and permission above.")
-                    StepItem("2", "Go to API Setup and add your Gemini key.")
-                    StepItem("3", "Open any app such as WhatsApp or Notes.")
-                    StepItem("4", "Type text plus a trigger, for example i go home yestarday .g")
+                    StepItem("1", stringResource(R.string.ui_enable_master_switch_and_permission_abov))
+                    StepItem("2", stringResource(R.string.ui_go_to_api_setup_and_add_your_gemini_key))
+                    StepItem("3", stringResource(R.string.ui_open_any_app_such_as_whatsapp_or_notes))
+                    StepItem("4", stringResource(R.string.ui_type_text_plus_a_trigger_for_example_i_g))
                     Spacer(modifier = Modifier.height(16.dp))
                     OutlinedButton(
                         onClick = { onNavigate("guide") },
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary)
                     ) {
-                        Text("Learn More Features")
+                        Text(stringResource(R.string.ui_learn_more_features))
                     }
                 }
             }
@@ -430,22 +431,22 @@ fun HomeScreen(config: AppConfig, context: Context, updateInfo: GitHubRelease?, 
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
                     Text(
-                        text = "Command Reference",
+                        text = stringResource(R.string.ui_command_reference),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "Shortcuts you can type anywhere",
+                        text = stringResource(R.string.ui_shortcuts_you_can_type_anywhere),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
-            CommandItem(".ta", "Ask AI", "Sends your text to AI and replaces it with the answer.")
-            CommandItem(".g", "Grammar Fix", "Fixes spelling, punctuation, and grammar errors.")
-            CommandItem(".tr", "Translate", "Translates your text into English.")
-            CommandItem(".polite", "Polite Tone", "Rewrites your text to be more professional.")
+            CommandItem(stringResource(R.string.ui_ta), stringResource(R.string.ui_ask_ai), stringResource(R.string.ui_sends_your_text_to_ai_and_replaces_it_wi))
+            CommandItem(stringResource(R.string.ui_g), stringResource(R.string.ui_grammar_fix), stringResource(R.string.ui_fixes_spelling_punctuation_and_grammar_e))
+            CommandItem(stringResource(R.string.ui_tr), stringResource(R.string.ui_translate), stringResource(R.string.ui_translates_your_text_into_english))
+            CommandItem(stringResource(R.string.ui_polite), stringResource(R.string.ui_polite_tone), stringResource(R.string.ui_rewrites_your_text_to_be_more_profession))
 
             Spacer(modifier = Modifier.height(40.dp))
 
@@ -599,13 +600,13 @@ fun DeveloperCreditSection() {
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
                     Text(
-                        text = "Developer",
+                        text = stringResource(R.string.ui_developer),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "Created by Istiak Ahmmed Soyeb",
+                        text = stringResource(R.string.ui_created_by_istiak_ahmmed_soyeb),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -615,7 +616,7 @@ fun DeveloperCreditSection() {
             HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.18f))
             Spacer(modifier = Modifier.height(14.dp))
             Text(
-                text = "This app is free and open source. Reach out on any platform below.",
+                text = stringResource(R.string.ui_this_app_is_free_and_open_source_reach),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 14.sp,
                 lineHeight = 20.sp
@@ -623,24 +624,24 @@ fun DeveloperCreditSection() {
             Spacer(modifier = Modifier.height(16.dp))
             SocialLink(
                 icon = R.drawable.ic_fab_twitter,
-                text = "Twitter",
+                text = stringResource(R.string.ui_twitter),
                 url = "https://twitter.com/estiaksoyeb"
             )
             Spacer(modifier = Modifier.height(8.dp))
             SocialLink(
                 icon = R.drawable.ic_fab_github,
-                text = "Source Code (GitHub)",
+                text = stringResource(R.string.ui_source_code_github),
                 url = "https://github.com/estiaksoyeb/TypeAssist"
             )
             Spacer(modifier = Modifier.height(8.dp))
             SocialLink(
                 icon = R.drawable.ic_fab_telegram,
-                text = "Telegram Group",
+                text = stringResource(R.string.ui_telegram_group),
                 url = "https://t.me/TypeAssist"
             )
             Spacer(modifier = Modifier.height(14.dp))
             Text(
-                text = "Feedback and pull requests are welcome.",
+                text = stringResource(R.string.ui_feedback_and_pull_requests_are_welcome),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 12.sp
             )
@@ -685,7 +686,7 @@ fun SocialLink(icon: Int, text: String, url: String) {
                 fontSize = 15.sp
             )
             Text(
-                text = "Open link",
+                text = stringResource(R.string.ui_open_link),
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -723,13 +724,13 @@ fun DonationSection() {
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
                     Text(
-                        text = "Support Development",
+                        text = stringResource(R.string.ui_support_development),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "Keep TypeAssist free and open",
+                        text = stringResource(R.string.ui_keep_typeassist_free_and_open),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -739,21 +740,21 @@ fun DonationSection() {
             HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.18f))
             Spacer(modifier = Modifier.height(14.dp))
             Text(
-                text = "If TypeAssist saves you time, you can support it with Binance Pay or USDT TRC20.",
+                text = stringResource(R.string.ui_if_typeassist_saves_you_time_you_can_s),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 14.sp,
                 lineHeight = 20.sp
             )
             Spacer(modifier = Modifier.height(16.dp))
             DonationItem(
-                label = "Binance Pay ID (No Fee)",
+                label = stringResource(R.string.ui_binance_pay_id_no_fee),
                 value = "724197813",
                 clipboardManager = clipboardManager,
                 context = context
             )
             HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.18f), modifier = Modifier.padding(vertical = 8.dp))
             DonationItem(
-                label = "USDT (TRC20)",
+                label = stringResource(R.string.ui_usdt_trc20),
                 value = "TPP5S7HdV4Hrrtp5Cjz7TNtttUAfZXJz5a",
                 clipboardManager = clipboardManager,
                 context = context
@@ -776,9 +777,9 @@ fun DonationItem(label: String, value: String, clipboardManager: androidx.compos
         
         IconButton(onClick = {
             clipboardManager.setText(AnnotatedString(value))
-            android.widget.Toast.makeText(context, "Copied $label!", android.widget.Toast.LENGTH_SHORT).show()
+            android.widget.Toast.makeText(context, context.getString(R.string.ui_copied_1_s , label), android.widget.Toast.LENGTH_SHORT).show()
         }) {
-            Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            Icon(Icons.Default.ContentCopy, contentDescription = stringResource(R.string.ui_copy), tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -849,13 +850,13 @@ fun DidYouKnowButton(onClick: () -> Unit, hasSeen: Boolean) {
             Spacer(modifier = Modifier.width(16.dp))
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = "Did you know?",
+                    text = stringResource(R.string.ui_did_you_know_2),
                     style = MaterialTheme.typography.titleMedium,
                     color = contentColor
                 )
                 if (!hasSeen) {
                     Text(
-                        text = "Tap to discover hidden power features!",
+                        text = stringResource(R.string.ui_tap_to_discover_hidden_power_features),
                         style = MaterialTheme.typography.bodySmall,
                         color = contentColor.copy(alpha = 0.8f)
                     )

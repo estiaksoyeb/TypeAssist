@@ -1,6 +1,9 @@
 package com.typeassist.app.ui.components
 
+import com.typeassist.app.R
+
 import android.content.Intent
+import androidx.compose.ui.res.stringResource
 import android.net.Uri
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -33,13 +36,13 @@ fun UpdateDialog(release: GitHubRelease, onDismiss: () -> Unit) {
             Icon(Icons.Default.RocketLaunch, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(48.dp)) 
         },
         title = { 
-            Text(text = "New Update Available!", fontWeight = FontWeight.Bold) 
+            Text(text = stringResource(R.string.ui_new_update_available), fontWeight = FontWeight.Bold)
         },
         text = {
             Column {
-                Text("Version ${release.tagName} is now available.", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.ui_version_1_s_is_now_available, release.tagName), fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(modifier = Modifier.height(16.dp))
-                Text("What's New:", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text(stringResource(R.string.ui_what_s_new), fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 Spacer(modifier = Modifier.height(8.dp))
                 Box(modifier = Modifier
                     .heightIn(max = 250.dp)
@@ -66,7 +69,7 @@ fun UpdateDialog(release: GitHubRelease, onDismiss: () -> Unit) {
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
-                Text("View Release")
+                Text(stringResource(R.string.ui_view_release))
             }
         },
         dismissButton = {
@@ -74,7 +77,7 @@ fun UpdateDialog(release: GitHubRelease, onDismiss: () -> Unit) {
                 onClick = onDismiss,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Later", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.ui_later), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     )

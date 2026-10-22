@@ -85,7 +85,7 @@ class MyAccessibilityService : AccessibilityService() {
                     "TypeAssist Service",
                     NotificationManager.IMPORTANCE_LOW
                 ).apply {
-                    description = "Keeps TypeAssist running in the background"
+                    description = getString(R.string.ui_keeps_typeassist_running_in_the_bac)
                     setShowBadge(false)
                 }
                 val manager = getSystemService(NotificationManager::class.java)
@@ -98,8 +98,8 @@ class MyAccessibilityService : AccessibilityService() {
             val largeIcon = android.graphics.BitmapFactory.decodeResource(resources, R.mipmap.ic_launcher)
 
             val notification = NotificationCompat.Builder(this, "typeassist_service")
-                .setContentTitle("TypeAssist is Active")
-                .setContentText("Ready to assist with your typing.")
+                .setContentTitle(getString(R.string.ui_typeassist_is_active))
+                .setContentText(getString(R.string.ui_ready_to_assist_with_your_typing))
                 .setSmallIcon(R.drawable.ic_notification_monochrome) 
                 .setLargeIcon(largeIcon)
                 .setContentIntent(pendingIntent)
@@ -286,7 +286,7 @@ class MyAccessibilityService : AccessibilityService() {
                             prefs.edit().putString("config_json", gson.toJson(config)).apply()
                             val cleanText = currentText.replace(fullMatch, newContent)
                             pasteText(inputNode, cleanText)
-                            overlayManager.showToast("Snippet '$newTrigger' saved!")
+                            overlayManager.showToast(getString(R.string.ui_snippet_1_s_saved , newTrigger))
                             return
                         }
                     }
@@ -439,7 +439,7 @@ class MyAccessibilityService : AccessibilityService() {
 
         if (cleanedText.isBlank()) {
             Log.w(TAG, "AI returned empty result after cleaning. Raw length=${aiText.length}")
-            overlayManager.showToast("Model returned empty output — try a smarter model or increase max tokens")
+            overlayManager.showToast(getString(R.string.ui_model_returned_empty_output_try_a_s))
             return
         }
 
@@ -512,7 +512,7 @@ class MyAccessibilityService : AccessibilityService() {
         if (lastNode != null && originalTextCache.isNotEmpty() && timeSinceCache < 300000) {
             if (lastNode!!.refresh()) {
                 pasteText(lastNode!!, originalTextCache)
-                overlayManager.showToast("Undone!")
+                overlayManager.showToast(getString(R.string.ui_undone))
             }
         }
         overlayManager.hideUndoButton()

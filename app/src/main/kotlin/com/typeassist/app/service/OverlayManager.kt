@@ -1,5 +1,7 @@
 package com.typeassist.app.service
 
+import com.typeassist.app.R
+
 import android.content.Context
 import android.graphics.Color
 import android.graphics.PixelFormat
@@ -67,7 +69,7 @@ class OverlayManager(private val context: Context) {
             if (undoView != null) return@post
             undoView = FrameLayout(context)
             val btn = Button(context).apply {
-                text = "UNDO"
+                text = context.getString(R.string.ui_undo)
                 textSize = 14f
                 setTextColor(Color.WHITE)
                 background = GradientDrawable().apply { setColor(0xEE333333.toInt()); cornerRadius = 50f; setStroke(2, Color.WHITE) }
@@ -131,7 +133,7 @@ class OverlayManager(private val context: Context) {
             }
 
             val title = android.widget.TextView(context).apply {
-                this.text = "Preview Response"
+                this.text = context.getString(R.string.ui_preview_response)
                 textSize = 18f
                 setTextColor(primaryTextColor)
                 setTypeface(null, android.graphics.Typeface.BOLD)
@@ -140,7 +142,7 @@ class OverlayManager(private val context: Context) {
             card.addView(title)
 
             val hint = android.widget.TextView(context).apply {
-                this.text = "Long press and drag to select text portion"
+                this.text = context.getString(R.string.ui_long_press_and_drag_to_select_text_)
                 textSize = 11f
                 setTextColor(discardTextColor)
                 setTypeface(null, android.graphics.Typeface.ITALIC)
@@ -186,8 +188,8 @@ class OverlayManager(private val context: Context) {
                 }
             }
 
-            val discardBtn = createButton("Discard", discardTextColor) { hidePreviewDialog() }
-            val copyBtn = createButton("Copy", primaryTextColor) {
+            val discardBtn = createButton(context.getString(R.string.ui_discard), discardTextColor) { hidePreviewDialog() }
+            val copyBtn = createButton(context.getString(R.string.ui_copy), primaryTextColor) {
                 val start = contentText.selectionStart
                 val end = contentText.selectionEnd
                 val min = kotlin.math.min(start, end)
@@ -204,12 +206,12 @@ class OverlayManager(private val context: Context) {
                 clipboard.setPrimaryClip(clip)
                 
                 if (min >= 0 && max > min) {
-                    showToast("Copied selection")
+                    showToast(context.getString(R.string.ui_copied_selection))
                 } else {
-                    showToast("Copied full text")
+                    showToast(context.getString(R.string.ui_copied_full_text))
                 }
             }
-            val insertBtn = createButton("Insert", insertTextColor) { 
+            val insertBtn = createButton(context.getString(R.string.ui_insert), insertTextColor) {
                 onInsert()
                 hidePreviewDialog() 
             }
@@ -276,7 +278,7 @@ class OverlayManager(private val context: Context) {
             }
 
             val title = android.widget.TextView(context).apply {
-                text = "Select Variation: $trigger"
+                text = context.getString(R.string.ui_select_variation_1_s , trigger)
                 textSize = 18f
                 setTextColor(primaryTextColor)
                 setTypeface(null, android.graphics.Typeface.BOLD)
@@ -344,7 +346,7 @@ class OverlayManager(private val context: Context) {
             }
 
             val closeBtn = Button(context).apply {
-                text = "Cancel"
+                text = context.getString(R.string.ui_cancel)
                 setTextColor(primaryTextColor)
                 setTypeface(null, android.graphics.Typeface.BOLD)
                 background = android.util.TypedValue().let { tv ->

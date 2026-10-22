@@ -1,6 +1,9 @@
 package com.typeassist.app.ui.screens
 
+import com.typeassist.app.R
+
 import android.app.Activity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -38,12 +41,12 @@ fun TestScreen(onStartTest: () -> Unit, onStopTest: () -> Unit, onBack: () -> Un
         "এটি একটি এআই ভিত্তিক অ্যাপ। .tr"
     )
 
-    Scaffold(topBar = { TopAppBar(title = { Text("Test Lab") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Back") } }, colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface, titleContentColor = MaterialTheme.colorScheme.primary, navigationIconContentColor = MaterialTheme.colorScheme.primary)) }) { p ->
+    Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.ui_test_lab)) }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Back") } }, colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface, titleContentColor = MaterialTheme.colorScheme.primary, navigationIconContentColor = MaterialTheme.colorScheme.primary)) }) { p ->
         Column(modifier = Modifier.padding(p).padding(16.dp).verticalScroll(rememberScrollState())) {
-            Text("The Accessibility Service is active here.", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp, modifier = Modifier.padding(bottom=8.dp))
-            OutlinedTextField(value = t, onValueChange = { t=it }, label = { Text("Type or tap a preset...") }, modifier = Modifier.fillMaxWidth().height(150.dp))
+            Text(stringResource(R.string.ui_the_accessibility_service_is_active_he), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp, modifier = Modifier.padding(bottom=8.dp))
+            OutlinedTextField(value = t, onValueChange = { t=it }, label = { Text(stringResource(R.string.ui_type_or_tap_a_preset)) }, modifier = Modifier.fillMaxWidth().height(150.dp))
             Spacer(Modifier.height(24.dp))
-            Text("Quick Test Triggers:", fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.ui_quick_test_triggers), fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(8.dp))
             presets.forEach { item ->
                 Card(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).clickable { t = item }, elevation = CardDefaults.cardElevation(2.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {

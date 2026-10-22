@@ -1,6 +1,9 @@
 package com.typeassist.app.ui.screens
 
+import com.typeassist.app.R
+
 import android.Manifest
+import androidx.compose.ui.res.stringResource
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -99,10 +102,10 @@ fun PermissionsScreen(
         topBar = {
             if (isStandalone) {
                 TopAppBar(
-                    title = { Text("Troubleshooting") },
+                    title = { Text(stringResource(R.string.ui_troubleshooting)) },
                     navigationIcon = {
                         IconButton(onClick = onFinished) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.ui_back))
                         }
                     }
                 )
@@ -117,7 +120,7 @@ fun PermissionsScreen(
         ) {
             if (!isStandalone) {
                 Text(
-                    text = "Permissions",
+                    text = stringResource(R.string.ui_permissions),
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
@@ -125,7 +128,7 @@ fun PermissionsScreen(
                 Spacer(modifier = Modifier.height(8.dp))
             }
         Text(
-            text = "TypeAssist works best with these permissions.",
+            text = stringResource(R.string.ui_typeassist_works_best_with_these_permi),
             fontSize = 14.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -139,7 +142,7 @@ fun PermissionsScreen(
         ) {
             // --- REQUIRED ---
             Text(
-                text = "REQUIRED",
+                text = stringResource(R.string.ui_required),
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
@@ -147,8 +150,8 @@ fun PermissionsScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             PermissionToggle(
-                title = "Accessibility Service",
-                description = "Required to read and replace text.",
+                title = stringResource(R.string.ui_accessibility_service),
+                description = stringResource(R.string.ui_required_to_read_and_replace_text),
                 isGranted = isAccessibilityEnabled,
                 onClick = { context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
             )
@@ -157,7 +160,7 @@ fun PermissionsScreen(
 
             // --- RECOMMENDED ---
             Text(
-                text = "RECOMMENDED FOR STABILITY",
+                text = stringResource(R.string.ui_recommended_for_stability),
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.secondary
@@ -166,8 +169,8 @@ fun PermissionsScreen(
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 PermissionToggle(
-                    title = "Notifications",
-                    description = "Required to keep the service running.",
+                    title = stringResource(R.string.ui_notifications),
+                    description = stringResource(R.string.ui_required_to_keep_the_service_running),
                     isGranted = isNotificationsEnabled,
                     onClick = { 
                         val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
@@ -180,8 +183,8 @@ fun PermissionsScreen(
             }
 
             PermissionToggle(
-                title = "Ignore Battery Opt.",
-                description = "Prevent system from killing the app.",
+                title = stringResource(R.string.ui_ignore_battery_opt),
+                description = stringResource(R.string.ui_prevent_system_from_killing_the_app),
                 isGranted = !isBatteryOptimized,
                 onClick = {
                     val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
@@ -194,8 +197,8 @@ fun PermissionsScreen(
             
             if (isXiaomi) {
                 PermissionToggle(
-                    title = "Xiaomi Setup",
-                    description = "Enable 'Autostart' & 'Pop-up windows'.",
+                    title = stringResource(R.string.ui_xiaomi_setup),
+                    description = stringResource(R.string.ui_enable_autostart_pop_up_windows),
                     isGranted = isXiaomiBgStartEnabled,
                     onClick = { 
                         XiaomiUtils.openAutostartSettings(context)
@@ -223,15 +226,15 @@ fun PermissionsScreen(
                 disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant
             )
         ) {
-            Text(if (isStandalone) "Back to Settings" else "Get Started")
+            Text(if (isStandalone) stringResource(R.string.ui_back_to_settings) else stringResource(R.string.ui_get_started))
         }
     } }
     
     if (showSkipDialog) {
         AlertDialog(
             onDismissRequest = { showSkipDialog = false },
-            title = { Text("Skip Stability Settings?") },
-            text = { Text("Without these permissions, TypeAssist may stop working unexpectedly.\n\nIf the app doesn't work then you have to grant permission.") },
+            title = { Text(stringResource(R.string.ui_skip_stability_settings)) },
+            text = { Text(stringResource(R.string.ui_without_these_permissions_typeassist_m)) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -243,12 +246,12 @@ fun PermissionsScreen(
                         contentColor = MaterialTheme.colorScheme.onTertiaryContainer
                     )
                 ) {
-                    Text("Okay")
+                    Text(stringResource(R.string.ui_okay))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showSkipDialog = false }) {
-                    Text("Go Back")
+                    Text(stringResource(R.string.ui_go_back))
                 }
             }
         )

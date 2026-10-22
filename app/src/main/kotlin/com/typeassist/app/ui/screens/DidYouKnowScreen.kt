@@ -1,6 +1,9 @@
 package com.typeassist.app.ui.screens
 
+import com.typeassist.app.R
+
 import android.app.Activity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -42,45 +45,45 @@ fun DidYouKnowScreen(onFinished: () -> Unit) {
 
     val features = listOf(
         DiscoveryFeature(
-            title = "Prompt Anywhere",
-            subtitle = "Reshape text with custom prompts",
-            description = "Instead of fixed trigger commands, this super command lets you add custom trigger commands to reshape your texts.\n\nWrite your prompts between ...here... and it will process according to your prompts.\n\nImagine you are writing an email and want to make it formal. You don't need to delete and rewrite. Just append ...Make it formal... and watch the magic happen.",
+            title = stringResource(R.string.ui_prompt_anywhere),
+            subtitle = stringResource(R.string.ui_reshape_text_with_custom_prompts),
+            description = stringResource(R.string.ui_instead_of_fixed_trigger_commands_this),
             examples = listOf(
-                "Hey boss i cant come today ...Make it formal..." to "Dear Manager,\nI am writing to inform you that I will be unable to attend work today.",
-                "Hola amigo ...Translate to English..." to "Hello friend",
-                "Meeting at 5pm ...Add calendar emoji..." to "Meeting at 5pm 📅"
+                stringResource(R.string.ui_demo_formal_input) to stringResource(R.string.ui_demo_formal_output),
+                stringResource(R.string.ui_demo_translate_input) to stringResource(R.string.ui_demo_translate_output),
+                stringResource(R.string.ui_demo_calendar_input) to stringResource(R.string.ui_demo_calendar_output)
             ),
             containerColor = MaterialTheme.colorScheme.primaryContainer,
             contentColor = MaterialTheme.colorScheme.onPrimaryContainer
         ),
         DiscoveryFeature(
-            title = "Instant Math",
-            subtitle = "Calculate inside any app",
-            description = "Solve math problems instantly. Just wrap the expression in '(.c: ... )'.\n\nGreat for calculating costs, splitting bills, or quick conversions while chatting.",
+            title = stringResource(R.string.ui_instant_math),
+            subtitle = stringResource(R.string.ui_calculate_inside_any_app),
+            description = stringResource(R.string.ui_solve_math_problems_instantly_just_wra),
             examples = listOf(
-                "Total: (.c: 25 * 4)" to "Total: 100",
-                "Share: (.c: 150 / 3)" to "Share: 50",
-                "Area: (.c: 3.14 * 5^2)" to "Area: 78.5"
+                stringResource(R.string.ui_demo_math_total) to stringResource(R.string.ui_demo_math_total_output),
+                stringResource(R.string.ui_demo_math_share) to stringResource(R.string.ui_demo_math_share_output),
+                stringResource(R.string.ui_demo_math_area) to stringResource(R.string.ui_demo_math_area_output)
             ),
             containerColor = MaterialTheme.colorScheme.secondaryContainer,
             contentColor = MaterialTheme.colorScheme.onSecondaryContainer
         ),
         DiscoveryFeature(
-            title = "Snippets",
-            subtitle = "Text Expander",
-            description = "Save frequently used text for quick access.\n\nType the prefix '..' followed by the snippet name to expand it.\n\nUse '(.save:name:content)' to save a new snippet instantly without opening the app.",
+            title = stringResource(R.string.ui_snippets),
+            subtitle = stringResource(R.string.ui_text_expander),
+            description = stringResource(R.string.ui_save_frequently_used_text_for_quick_ac),
             examples = listOf(
-                "..email" to "my.name@example.com",
-                "..addr" to "123 Main St, New York, NY",
-                "(.save:ph:+15550199)" to "(Snippet 'ph' saved!)"
+                stringResource(R.string.ui_demo_email_prefix) to stringResource(R.string.ui_demo_email_output),
+                stringResource(R.string.ui_demo_address_prefix) to stringResource(R.string.ui_demo_address_output),
+                stringResource(R.string.ui_demo_save_command) to stringResource(R.string.ui_demo_save_output)
             ),
             containerColor = MaterialTheme.colorScheme.tertiaryContainer,
             contentColor = MaterialTheme.colorScheme.onTertiaryContainer
         ),
         DiscoveryFeature(
-            title = "Wrong Language?",
-            subtitle = "Customize AI Prompts",
-            description = "Is the AI replying in English when you want German or Spanish?\n\nYou can edit ANY command! Go to the 'Commands' menu, tap a trigger, and add 'Return in same language.' to the system prompt.\n\nIt's all about prompting—you are in control.",
+            title = stringResource(R.string.ui_wrong_language),
+            subtitle = stringResource(R.string.ui_customize_ai_prompts),
+            description = stringResource(R.string.ui_is_the_ai_replying_in_english_when_you),
             examples = emptyList(),
             containerColor = MaterialTheme.colorScheme.errorContainer,
             contentColor = MaterialTheme.colorScheme.onErrorContainer,
@@ -106,9 +109,9 @@ fun DidYouKnowScreen(onFinished: () -> Unit) {
                 contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
                 if (pagerState.currentPage < features.size - 1) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowForward, "Next")
+                    Icon(Icons.AutoMirrored.Filled.ArrowForward, stringResource(R.string.ui_next))
                 } else {
-                    Icon(Icons.Default.Check, "Got it")
+                    Icon(Icons.Default.Check, stringResource(R.string.ui_got_it))
                 }
             }
         }
@@ -121,12 +124,12 @@ fun DidYouKnowScreen(onFinished: () -> Unit) {
         ) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 IconButton(onClick = onFinished) {
-                    Icon(Icons.Default.Close, "Close", tint = MaterialTheme.colorScheme.onBackground)
+                    Icon(Icons.Default.Close, stringResource(R.string.ui_close), tint = MaterialTheme.colorScheme.onBackground)
                 }
             }
 
             Text(
-                "Did You Know?",
+                stringResource(R.string.ui_did_you_know),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
@@ -230,6 +233,7 @@ fun StaticExamplesBox(examples: List<Pair<String, String>>) {
 
 @Composable
 fun LivePreviewBox(examples: List<Pair<String, String>>) {
+    val processingText = stringResource(R.string.ui_processing)
     var displayedText by remember { mutableStateOf("") }
     var isTyping by remember { mutableStateOf(true) }
     var currentExampleIndex by remember { mutableStateOf(0) }
@@ -247,7 +251,7 @@ fun LivePreviewBox(examples: List<Pair<String, String>>) {
             delay(500)
             
             isTyping = false
-            displayedText = "Processing..."
+            displayedText = processingText
             delay(800)
             
             displayedText = output
@@ -265,7 +269,7 @@ fun LivePreviewBox(examples: List<Pair<String, String>>) {
         Box(Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.CenterStart) {
             Text(
                 text = buildAnnotatedString {
-                    if (displayedText == "Processing...") {
+                    if (displayedText == processingText) {
                         withStyle(SpanStyle(color = MaterialTheme.colorScheme.onSurfaceVariant, fontStyle = FontStyle.Italic)) {
                             append(displayedText)
                         }
