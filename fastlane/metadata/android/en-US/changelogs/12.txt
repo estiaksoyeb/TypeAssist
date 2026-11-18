@@ -1,0 +1,11 @@
+New:
+• Custom date format for .date, set in Settings (#18)
+• Editable snippet trigger prefix in Settings (#20)
+• New Material 3 theme and refreshed Home screen
+
+Fixes:
+• Back from Permissions returns to Settings
+• Correct screen transition directions
+• Safer handling of invalid date patterns
+
+Tooling upgrades under the hood.

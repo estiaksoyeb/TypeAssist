@@ -15,6 +15,10 @@
   <a href="https://github.com/estiaksoyeb/TypeAssist/releases"><img src="https://img.shields.io/github/downloads/estiaksoyeb/TypeAssist/total?logo=Github"/></a>
 </p>
 
+<p align="center">
+  <a href="https://f-droid.org/en/packages/com.typeassist.app/"><img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" alt="Get it on F-Droid" height="80" /></a>
+</p>
+
 TypeAssist uses Accessibility to trigger AI actions via simple commands, with support for multiple AI providers.
 
 ---
@@ -23,9 +27,9 @@ TypeAssist uses Accessibility to trigger AI actions via simple commands, with su
 
   <!-- Screenshots -->
   <div align="center">
-    <img src="screenshots/7.PNG" width="30%"  alt=""/>
-    <img src="screenshots/8.PNG" width="30%"  alt=""/>
-    <img src="screenshots/9.PNG" width="30%"  alt=""/>
+    <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/01.png" width="30%"  alt=""/>
+    <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/02.png" width="30%"  alt=""/>
+    <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/03.png" width="30%"  alt=""/>
   </div>
 
 ---
