@@ -1,6 +1,9 @@
 package com.typeassist.app.ui.screens
 
+import com.typeassist.app.R
+
 import android.app.Activity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -53,11 +56,11 @@ fun CommandsScreen(config: AppConfig, onSave: (AppConfig) -> Unit, onBack: () ->
     Scaffold(
         topBar = { 
             TopAppBar(
-                title = { Text("Commands") }, 
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Back") } },
+                title = { Text(stringResource(R.string.ui_commands)) },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, stringResource(R.string.ui_back)) } },
                 actions = {
                     IconButton(onClick = onNavigateLibrary) {
-                        Icon(Icons.Default.AutoAwesome, "Browse Gallery", tint = MaterialTheme.colorScheme.primary)
+                        Icon(Icons.Default.AutoAwesome, stringResource(R.string.ui_browse_gallery), tint = MaterialTheme.colorScheme.primary)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -78,7 +81,7 @@ fun CommandsScreen(config: AppConfig, onSave: (AppConfig) -> Unit, onBack: () ->
                 }, 
                 containerColor = MaterialTheme.colorScheme.primary
             ) { 
-                Icon(Icons.Default.Add, "Add New Command") 
+                Icon(Icons.Default.Add, stringResource(R.string.ui_add_new_command))
             } 
         }
     ) { p ->
@@ -88,8 +91,8 @@ fun CommandsScreen(config: AppConfig, onSave: (AppConfig) -> Unit, onBack: () ->
                 containerColor = MaterialTheme.colorScheme.surface,
                 contentColor = MaterialTheme.colorScheme.primary
             ) {
-                Tab(selected = selectedTab == 0, onClick = { selectedTab = 0 }, text = { Text("Standard") })
-                Tab(selected = selectedTab == 1, onClick = { selectedTab = 1 }, text = { Text("Inline") })
+                Tab(selected = selectedTab == 0, onClick = { selectedTab = 0 }, text = { Text(stringResource(R.string.ui_standard)) })
+                Tab(selected = selectedTab == 1, onClick = { selectedTab = 1 }, text = { Text(stringResource(R.string.ui_inline_2)) })
             }
 
             LazyColumn(modifier = Modifier.padding(16.dp)) {
@@ -103,22 +106,22 @@ fun CommandsScreen(config: AppConfig, onSave: (AppConfig) -> Unit, onBack: () ->
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Icon(Icons.Default.Lightbulb, null, tint = MaterialTheme.colorScheme.onSecondaryContainer)
                                     Spacer(Modifier.width(8.dp))
-                                    Text("Pro Tip: Edit Mid-Sentence", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                                    Text(stringResource(R.string.ui_pro_tip_edit_mid_sentence), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondaryContainer)
                                     Spacer(Modifier.weight(1f))
                                     IconButton(onClick = { showTip = false }, modifier = Modifier.size(24.dp)) {
-                                        Icon(Icons.Default.Close, "Dismiss", tint = MaterialTheme.colorScheme.onSecondaryContainer)
+                                        Icon(Icons.Default.Close, stringResource(R.string.ui_dismiss), tint = MaterialTheme.colorScheme.onSecondaryContainer)
                                     }
                                 }
                                 Spacer(Modifier.height(8.dp))
                                 Text(
-                                    "You can create custom commands to transform just a part of your text without losing context.",
+                                    stringResource(R.string.ui_you_can_create_custom_commands_to_tran),
                                     fontSize = 13.sp,
                                     lineHeight = 18.sp,
                                     color = MaterialTheme.colorScheme.onSecondaryContainer
                                 )
                                 Spacer(Modifier.height(8.dp))
                                 Text(
-                                    "Example: Create a command '.syn' with prompt 'Find a synonym for the last word' to search for words on the fly!",
+                                    stringResource(R.string.ui_example_create_a_command_syn_with_prom),
                                     fontSize = 12.sp,
                                     color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f),
                                     fontWeight = FontWeight.Medium
@@ -163,24 +166,24 @@ fun CommandsScreen(config: AppConfig, onSave: (AppConfig) -> Unit, onBack: () ->
         if (showEditDialog) {
             AlertDialog(
                 onDismissRequest = { showEditDialog = false },
-                title = { Text(if (originalPattern == null) "New Command" else "Edit Command") },
+                title = { Text(if (originalPattern == null) stringResource(R.string.ui_new_command) else stringResource(R.string.ui_edit_command)) },
                 text = {
                     Column {
                         OutlinedTextField(
                             value = tPattern, 
                             onValueChange = { tPattern = it }, 
-                            label = { Text("Pattern") },
+                            label = { Text(stringResource(R.string.ui_pattern)) },
                             singleLine = true
                         )
                         Spacer(Modifier.height(8.dp))
                         OutlinedTextField(
                             value = tPrompt, 
                             onValueChange = { tPrompt = it }, 
-                            label = { Text("System Prompt") }, 
+                            label = { Text(stringResource(R.string.ui_system_prompt_2)) },
                             minLines = 3
                         )
                         if (selectedTab == 1) {
-                            Text("Use '%' as placeholder for user text.", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
+                            Text(stringResource(R.string.ui_use_as_placeholder_for_user_text), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
                         }
                     }
                 },
@@ -202,10 +205,10 @@ fun CommandsScreen(config: AppConfig, onSave: (AppConfig) -> Unit, onBack: () ->
                             onSave(config.copy(inlineCommands = n))
                         }
                         showEditDialog = false
-                    }) { Text("Save") }
+                    }) { Text(stringResource(R.string.ui_save)) }
                 },
                 dismissButton = { 
-                    TextButton(onClick = { showEditDialog = false }) { Text("Cancel") } 
+                    TextButton(onClick = { showEditDialog = false }) { Text(stringResource(R.string.ui_cancel)) }
                 }
             )
         }
@@ -267,16 +270,16 @@ fun CommandItem(pattern: String, prompt: String, onEdit: () -> Unit, onDelete: (
 fun DeleteDialog(pattern: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Delete Command?") },
-        text = { Text("Are you sure you want to delete '$pattern'?") },
+        title = { Text(stringResource(R.string.ui_delete_command)) },
+        text = { Text(stringResource(R.string.ui_are_you_sure_you_want_to_delete_1_s, pattern)) },
         confirmButton = {
             Button(
                 onClick = onConfirm,
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-            ) { Text("Delete") }
+            ) { Text(stringResource(R.string.ui_delete)) }
         },
         dismissButton = { 
-            TextButton(onClick = onDismiss) { Text("Cancel") } 
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.ui_cancel)) }
         }
     )
 }

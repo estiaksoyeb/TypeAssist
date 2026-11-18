@@ -1,6 +1,9 @@
 package com.typeassist.app.ui.components
 
+import com.typeassist.app.R
+
 import androidx.compose.animation.core.*
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -21,9 +24,9 @@ import kotlinx.coroutines.delay
 @Composable
 fun TypingAnimationPreview() {
     val scenarios = listOf(
-        Pair("Capital of France? .ta", "Paris"),
-        Pair("i go home yestarday .g", "I went home yesterday."),
-        Pair("你好世界 .tr", "Hello World")
+        Pair(stringResource(R.string.ui_preview_question), stringResource(R.string.ui_preview_answer)),
+        Pair(stringResource(R.string.ui_preview_grammar_query), stringResource(R.string.ui_preview_grammar_answer)),
+        Pair(stringResource(R.string.ui_preview_translate_query), stringResource(R.string.ui_preview_translate_answer))
     )
     
     var currentScenarioIndex by remember { mutableStateOf(0) }
@@ -94,7 +97,7 @@ fun TypingAnimationPreview() {
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = "AI is thinking",
+                        text = stringResource(R.string.ui_ai_is_thinking),
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold
                     )
@@ -121,7 +124,7 @@ fun TypingAnimationPreview() {
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text = "Live Preview",
+                        text = stringResource(R.string.ui_live_preview),
                         fontSize = 10.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
