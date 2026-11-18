@@ -23,9 +23,9 @@ TypeAssist uses Accessibility to trigger AI actions via simple commands, with su
 
   <!-- Screenshots -->
   <div align="center">
-    <img src="screenshots/7.PNG" width="30%"  alt=""/>
-    <img src="screenshots/8.PNG" width="30%"  alt=""/>
-    <img src="screenshots/9.PNG" width="30%"  alt=""/>
+    <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/01.png" width="30%"  alt=""/>
+    <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/02.png" width="30%"  alt=""/>
+    <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/03.png" width="30%"  alt=""/>
   </div>
 
 ---
