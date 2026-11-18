@@ -1,4 +1,4 @@
-# TypeAssist 🚀
+# TypeAssist
 
 <p align="center">
   <img src="app/src/main/ic_launcher-playstore.png" width="128" height="128" />
@@ -11,7 +11,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Platform-Android-brightgreen.svg" />
   <img src="https://img.shields.io/badge/License-GPLv3-blue.svg" />
-  <img src="https://img.shields.io/badge/Kotlin-2.1.0-purple.svg" />
+  <img src="https://img.shields.io/badge/Kotlin-2.4.10-purple.svg" />
   <a href="https://github.com/estiaksoyeb/TypeAssist/releases"><img src="https://img.shields.io/github/downloads/estiaksoyeb/TypeAssist/total?logo=Github"/></a>
 </p>
 
@@ -52,8 +52,8 @@ TypeAssist uses Accessibility to trigger AI actions via simple commands, with su
 *   **Snippets (Text Expander):** Expand shortcuts into full text blocks.
     *   Example: `..email` -> `user@example.com`
     *   **Quick Save:** Save new snippets instantly without opening the app: `(.save:trigger:content)`
-*   **Date & Time:** Insert current timestamps with `.now` or `.date`.
-*   **Password Generator:** Generate strong random passwords on the fly with `.pass`.
+*   **Date & Time:** Insert the current date or time using `.date` or `.now`. Both formats are customizable in Settings.
+*   **Password Generator:** Generate a random 12-character password on the fly with `.pass`.
 
 ### 💾 Data Management
 *   **Backup & Restore:** Securely export your settings, snippets, and API configurations to a `.tabak` file.
@@ -62,7 +62,7 @@ TypeAssist uses Accessibility to trigger AI actions via simple commands, with su
 ### 🛡 Safety & Privacy
 *   **Global Undo:** Revert any action instantly using `.undo`.
 *   **History Manager:** View and recover original text from the last 5 minutes.
-*   **Privacy First:** Processes text **only** when a trigger is detected. No data is stored permanently.
+*   **Privacy First:** Sends text only when you use a trigger, and only to the provider you configured. History is kept in memory for 5 minutes and is not stored persistently.
 
 ---
 
@@ -77,8 +77,17 @@ Type your text followed by a trigger to process it.
 | `.g` | Fix Grammar | `i go home yestarday .g` |
 | `.tr` | Translate | `你好世界 .tr` |
 | `.polite` | Polite Tone | `Give me the money .polite` |
+| `.casual` | Casual Tone | `We require your presence .casual` |
+| `.improve` | Improve Writing | `the report needs done .improve` |
 | `...` | Global Rewrite | `I am late ...make polite...` |
 | `.undo` | Undo | Reverts the last replacement |
+| `.date` | Insert Date | `Sent .date` |
+| `.now` | Insert Date & Time | `Logged .now` |
+| `.pass` | Random Password | `Password: .pass` |
+| `(.c: ...)` | Calculator | `Total: (.c: 25 * 4 + 10)` |
+| `..name` | Expand Snippet | `..email` |
+
+A text trigger must appear at the end of the field by default. Inline commands such as `(.ta: ...)`, `(.g: ...)` and `(.polite: ...)` work anywhere inside a sentence, and Settings → Triggers & History lets you change the triggers, the snippet prefix (`..` by default) and whether triggers are allowed anywhere in the text.
 
 
 
@@ -94,7 +103,7 @@ Want to try the latest features before they are officially released? You can dow
 
 ## 📥 Installation & Setup
 
-1.  **Download:** Get the latest APK from the [Releases](https://github.com/estiaksoyeb/TypeAssist/releases) page.
+1.  **Download:** Install from [F-Droid](https://f-droid.org/en/packages/com.typeassist.app/) or the latest APK from the [Releases](https://github.com/estiaksoyeb/TypeAssist/releases) page.
 2.  **Permissions:** Enable the **TypeAssist Accessibility Service** in your Android Settings.
 3.  **API Key:** Open the app, go to **Settings**, and add your API keys.
     *   Supports Google Gemini, Cloudflare Workers AI, and Custom OpenAI Endpoints.
@@ -119,10 +128,10 @@ If TypeAssist helps you in your daily workflow, consider supporting the developm
 
 ## 🛠 Tech Stack
 *   **UI:** Jetpack Compose (Material 3)
-*   **Language:** Kotlin 2.1.0
-*   **Network:** OkHttp / Gson
+*   **Language:** Kotlin 2.4.10
+*   **Network:** OkHttp / Retrofit / Gson
 *   **Service:** Android AccessibilityService
-*   **Architecture:** MVVM
+*   **Architecture:** Single-activity Compose app with repository-based data layer
 
 ---
 
@@ -136,8 +145,8 @@ Distributed under the **GPLv3 License**. See `LICENSE` for more information.
 TypeAssist is designed with a **Zero-Middleman Architecture** to ensure your privacy is paramount.
 
 ### How We Handle Data
-*   **Direct Connection:** Text is sent **directly** from your device to your chosen API provider (Google or Cloudflare). **No intermediate servers** are used, meaning we have no access to your data.
-*   **On-Demand Only:** The Accessibility Service runs locally. No data leaves your device unless you explicitly type a trigger (e.g., `.ta`, `.g`).
+*   **Direct Connection:** Text is sent **directly** from your device to the provider you configure (Google Gemini, Cloudflare Workers AI, or any OpenAI-compatible endpoint, including a local model). **No intermediate servers** are used, meaning we have no access to your data.
+*   **On-Demand Only:** The Accessibility Service runs locally. Text leaves your device only when you type a trigger that calls an online provider (e.g., `.ta`, `.g`).
 *   **Open Source:** The entire codebase is open for audit. You can verify exactly how your data is handled.
 
 ### 📜 Provider Policies
